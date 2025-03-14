@@ -1,24 +1,24 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect } from 'react'
+import Body from './pages/body';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { bodyRoutes } from './utils/BodyRoutes';
+import Dashboard from './components/admin/dashboard';
+import NotFound from './pages/notfound';
 
 function App() {
+  console.log(Object.entries(bodyRoutes))
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Routes>
+      <Route path="/" element={<Body />}>
+        {Object.entries(bodyRoutes).map(([category, routes]) =>
+          routes.map((route, index) => (
+            <Route key={index} path={route.path} element={route.element} />
+          ))
+        )}
+      </Route>
+      <Route path="/admin" element={<Dashboard />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
