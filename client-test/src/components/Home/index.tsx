@@ -1,14 +1,14 @@
+import { Link } from "react-router-dom"
 import { ArrowRight, Code, Trophy, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Link } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DailyChallengeCard } from "@/components/daily-challenge-card"
 import { HeroSection } from "@/components/hero-section"
 import { FeatureCard } from "@/components/feature-card"
 
-const Home = () => {
+export default function Home() {
     return (
-        <div>
+        <div className="flex flex-col min-h-screen">
             <HeroSection />
 
             <section className="container py-12 space-y-6 md:py-16 lg:py-24">
@@ -115,4 +115,3 @@ const Home = () => {
     )
 }
 
-export default Home
