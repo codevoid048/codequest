@@ -1,5 +1,4 @@
-import { FaGithub, FaLinkedin, FaTwitter, FaInstagram, FaDiscord, FaUser } from 'react-icons/fa';
-import { HiMail } from 'react-icons/hi';
+import { Github, Linkedin, Twitter, Instagram, MessageCircle, User, Mail } from 'lucide-react';
 
 const Footer = () => {
     return (
@@ -24,19 +23,19 @@ const Footer = () => {
                         </p>
                         <div className="flex space-x-4 mt-6">
                             <a className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300" href="#">
-                                <FaGithub className="w-6 h-6" />
+                                <Github className="w-6 h-6" />
                             </a>
                             <a className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300" href="#">
-                                <FaLinkedin className="w-6 h-6" />
+                                <Linkedin className="w-6 h-6" />
                             </a>
                             <a className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300" href="#">
-                                <FaTwitter className="w-6 h-6" />
+                                <Twitter className="w-6 h-6" />
                             </a>
                             <a className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300" href="#">
-                                <FaInstagram className="w-6 h-6" />
+                                <Instagram className="w-6 h-6" />
                             </a>
                             <a className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300" href="#">
-                                <FaDiscord className="w-6 h-6" />
+                                <MessageCircle className="w-6 h-6" />
                             </a>
                         </div>
                     </div>
@@ -49,7 +48,7 @@ const Footer = () => {
                         <ul className="grid grid-cols-1 md:grid-cols-2 sm:grid-cols-1 lg:grid-cols-3">
                             <li className="flex items-center group">
                                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg text-white mr-3 group-hover:scale-110 transition-transform duration-300">
-                                    <FaUser className="w-5 h-5" />
+                                    <User className="w-5 h-5" />
                                 </div>
                                 <div>
                                     <h4 className="text-blue-700 font-medium">Dr. Ramakrishna</h4>
@@ -58,7 +57,7 @@ const Footer = () => {
                             </li>
                             <li className="flex items-center group">
                                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg text-white mr-3 group-hover:scale-110 transition-transform duration-300">
-                                    <FaUser className="w-5 h-5" />
+                                    <User className="w-5 h-5" />
                                 </div>
                                 <div>
                                     <h4 className="text-blue-700 font-medium">Dr. Ramakrishna</h4>
@@ -67,7 +66,7 @@ const Footer = () => {
                             </li>
                             <li className="flex items-center group">
                                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg text-white mr-3 group-hover:scale-110 transition-transform duration-300">
-                                    <FaUser className="w-5 h-5" />
+                                    <User className="w-5 h-5" />
                                 </div>
                                 <div className='mt-0'>
                                     <h4 className="text-blue-700 font-medium">Dr. Ramakrishna</h4>
@@ -82,7 +81,7 @@ const Footer = () => {
                 <div className="mt-12 border-t border-indigo-500 pt-8">
                     <div className="flex flex-col md:flex-row justify-between items-center">
                         <div className="flex items-center mb-4 md:mb-0">
-                            <HiMail className="w-6 h-6 text-blue-500 mr-2" />
+                            <Mail className="w-6 h-6 text-blue-500 mr-2" />
                             <span className="text-muted-500 text-sm">contact@srkrcodingclub.com</span>
                         </div>
                         <p className="text-muted-500 text-sm">
@@ -95,4 +94,4 @@ const Footer = () => {
     );
 };
 
-export default Footer; 
+export default Footer;
