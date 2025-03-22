@@ -1,4 +1,5 @@
 import { useState } from "react"
+
 import { motion } from "framer-motion"
 import { ArrowRight, CheckCircle, Clock, Code2, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -83,3 +84,4 @@ export function DailyChallengeCard() {
         </motion.div>
     )
 }
+
