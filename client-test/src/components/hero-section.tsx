@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { motion } from "framer-motion"
@@ -17,14 +15,14 @@ export function HeroSection() {
     if (!mounted) return null
 
     return (
-        <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 to-background pt-16 pb-24 md:py-24 lg:py-32">
+        <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 to-background pt-16 pb-24 md:py-24 lg:py-32 flex justify-center">
             <div className="absolute inset-0 bg-grid-pattern opacity-10" />
 
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="container relative z-10 flex flex-col items-center text-center"
+                className="container relative z-10 flex flex-col items-center text-center max-w-5xl mx-auto"
             >
                 <motion.div
                     initial={{ scale: 0.9, opacity: 0 }}
@@ -39,7 +37,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.5 }}
-                    className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl max-w-3xl mb-6"
+                    className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl max-w-3xl mb-6 text-center"
                 >
                     Level Up Your <span className="text-primary">Coding Skills</span> One Challenge at a Time
                 </motion.h1>
@@ -48,7 +46,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4, duration: 0.5 }}
-                    className="max-w-[700px] text-muted-foreground md:text-xl mb-8"
+                    className="max-w-[700px] text-muted-foreground md:text-xl mb-8 text-center"
                 >
                     CodeQuest delivers daily coding challenges to help you build a consistent coding habit, improve your
                     problem-solving skills, and prepare for technical interviews.
@@ -58,7 +56,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5, duration: 0.5 }}
-                    className="flex flex-col sm:flex-row gap-4"
+                    className="flex flex-col sm:flex-row gap-4 justify-center"
                 >
                     <Button asChild size="lg" className="group">
                         <Link to="/register">
@@ -97,4 +95,3 @@ export function HeroSection() {
         </section>
     )
 }
-

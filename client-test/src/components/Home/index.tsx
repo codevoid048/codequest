@@ -1,25 +1,25 @@
-import { Link } from "react-router-dom"
 import { ArrowRight, Code, Trophy, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Link } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DailyChallengeCard } from "@/components/daily-challenge-card"
 import { HeroSection } from "@/components/hero-section"
 import { FeatureCard } from "@/components/feature-card"
 
-export default function Home() {
+const Home = () => {
     return (
-        <div className="flex flex-col min-h-screen">
+        <div>
             <HeroSection />
 
-            <section className="container py-12 space-y-6 md:py-16 lg:py-24">
-                <div className="text-center space-y-4">
+            <section className="container mx-auto py-12 space-y-6 md:py-16 lg:py-24 flex flex-col items-center">
+                <div className="text-center space-y-4 max-w-[900px]">
                     <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">How CodeQuest Works</h2>
                     <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                         Join thousands of students improving their coding skills with daily challenges
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3 w-full max-w-[1200px]">
                     <FeatureCard
                         icon={<Code className="h-10 w-10 text-primary" />}
                         title="Daily Challenges"
@@ -39,17 +39,19 @@ export default function Home() {
             </section>
 
             <section className="bg-muted py-12 md:py-16 lg:py-24">
-                <div className="container space-y-8">
-                    <div className="text-center space-y-4">
+                <div className="container mx-auto space-y-8 flex flex-col items-center max-w-4xl">
+                    <div className="text-center space-y-4 w-full">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Today's Challenge</h2>
                         <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                             Solve today's problem and start your coding streak
                         </p>
                     </div>
 
-                    <DailyChallengeCard />
+                    <div className="w-full">
+                        <DailyChallengeCard />
+                    </div>
 
-                    <div className="flex justify-center">
+                    <div className="flex justify-center pt-4">
                         <Button asChild size="lg" className="group">
                             <Link to="/challenges">
                                 View All Challenges
@@ -60,15 +62,15 @@ export default function Home() {
                 </div>
             </section>
 
-            <section className="container py-12 space-y-8 md:py-16 lg:py-24">
-                <div className="text-center space-y-4">
+            <section className="container mx-auto py-12 space-y-8 md:py-16 lg:py-24 flex flex-col items-center">
+                <div className="text-center space-y-4 w-full max-w-4xl">
                     <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Join Our Community</h2>
                     <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                         Connect with other coders, share your solutions, and learn together
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3 w-full max-w-4xl">
                     <Card>
                         <CardHeader>
                             <CardTitle>10,000+</CardTitle>
@@ -102,7 +104,7 @@ export default function Home() {
                     </Card>
                 </div>
 
-                <div className="flex justify-center pt-8">
+                <div className="flex justify-center pt-8 w-full">
                     <Button asChild size="lg" variant="secondary" className="group">
                         <Link to="/register">
                             Start Coding Today
@@ -115,3 +117,4 @@ export default function Home() {
     )
 }
 
+export default Home
