@@ -1,23 +1,24 @@
-import { useCallback, useEffect, useState } from "react"
-import Particles from "react-tsparticles"
-import { loadSlim } from "tsparticles-slim"
-import { useTheme } from "@/context/ThemeContext"
+import { useCallback, useEffect, useState } from "react";
+import Particles from "react-tsparticles";
+import { loadSlim } from "tsparticles-slim";
+import { useTheme } from "@/context/ThemeContext";
+import { Engine } from "node_modules/tsparticles-engine/types/export-types";
 
 export function ParticlesBackground() {
-    const { theme } = useTheme()
-    const [mounted, setMounted] = useState(false)
+    const { theme } = useTheme();
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true)
-    }, [])
+        setMounted(true);
+    }, []);
 
-    const particlesInit = useCallback(async (engine: any) => {
-        await loadSlim(engine)
-    }, [])
+    const particlesInit = useCallback(async (engine: Engine) => {
+        await loadSlim(engine);
+    }, []);
 
-    if (!mounted) return null
+    if (!mounted) return null;
 
-    const isDarkMode = theme === "dark"
+    const isDarkMode = theme === "dark";
 
     return (
         <Particles
@@ -34,13 +35,13 @@ export function ParticlesBackground() {
                 fpsLimit: 120,
                 particles: {
                     color: {
-                        value: isDarkMode ? "#ffffff" : "#3b82f6",
+                        value: isDarkMode ? "#3b82f6" : "#ffffff", // Adjusted colors for better visibility
                     },
                     links: {
-                        color: isDarkMode ? "#ffffff" : "#3b82f6",
+                        color: isDarkMode ? "#3b82f6" : "#ffffff", // Adjusted colors for better visibility
                         distance: 150,
                         enable: true,
-                        opacity: isDarkMode ? 0.2 : 0.3,
+                        opacity: isDarkMode ? 0.3 : 0.2,
                         width: 1,
                     },
                     move: {
@@ -61,7 +62,7 @@ export function ParticlesBackground() {
                         value: 80,
                     },
                     opacity: {
-                        value: isDarkMode ? 0.3 : 0.5,
+                        value: isDarkMode ? 0.5 : 0.3,
                     },
                     shape: {
                         type: "circle",
@@ -73,5 +74,5 @@ export function ParticlesBackground() {
                 detectRetina: true,
             }}
         />
-    )
+    );
 }

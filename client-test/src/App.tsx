@@ -3,9 +3,9 @@ import './App.css'
 import { Navbar } from '../../client-test/src/components/Navbar'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Home from './components/Home'
-import Potd from './components/challanges/challange'
-import LoginPage from './components/login'
-import RegisterPage from './components/register'
+import Potd from './components/Challenges'
+import LoginPage from './components/Login'
+import RegisterPage from './components/SignUp'
 import Footer from './components/footer'
 
 function App() {
