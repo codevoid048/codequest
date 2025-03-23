@@ -54,7 +54,7 @@ export default function AboutPage() {
         }
 
         window.addEventListener("scroll", handleScroll)
-        handleScroll() // Check initial visibility
+        handleScroll() 
 
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
