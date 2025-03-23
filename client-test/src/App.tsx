@@ -6,6 +6,7 @@ import Potd from './components/Challenges'
 import LoginPage from './components/Login'
 import RegisterPage from './components/SignUp'
 import Footer from './components/footer'
+import AboutPage from './components/About'
 
 function App() {
 
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/challenges" element={<Potd />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Routes>
           <Footer/>
