@@ -1,38 +1,68 @@
-import React from "react";
-import { Button } from './ui/button';
-import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent, } from "./ui/card";
-import { Input } from './ui/input.tsx';
-import { Label } from "./ui/label.tsx";
-import { ParticlesBackground } from "./particles-background";
+import { Link } from "react-router-dom"
+import { Check } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ParticlesBackground } from "@/components/particles-background"
 
-interface LoginPageProps { }
-
-const LoginPage: React.FC<LoginPageProps> = () => {
+export default function RegisterPage() {
     return (
         <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">
             <ParticlesBackground />
 
             <Card className="w-full max-w-md mx-4 shadow-lg">
                 <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-                    <CardDescription>Enter your credentials to access your account</CardDescription>
+                    <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+                    <CardDescription>Enter your information to get started with CodeQuest</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="first-name">First name</Label>
+                            <Input id="first-name" placeholder="John" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="last-name">Last name</Label>
+                            <Input id="last-name" placeholder="Doe" />
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <Input id="email" type="email" placeholder="m@example.com" />
                     </div>
+
                     <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor="password">Password</Label>
-                            <a href="/forgot-password" className="text-xs text-primary hover:underline">
-                                Forgot password?
-                            </a>
-                        </div>
+                        <Label htmlFor="password">Password</Label>
                         <Input id="password" type="password" />
                     </div>
 
-                    <Button className="w-full">Sign In</Button>
+                    <div className="space-y-2">
+                        <Label htmlFor="confirm-password">Confirm password</Label>
+                        <Input id="confirm-password" type="password" />
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex items-start space-x-2">
+                            <div className="mt-0.5 border rounded h-4 w-4 flex items-center justify-center">
+                                <Check className="h-3 w-3 text-primary" />
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                                By creating an account, you agree to our{" "}
+                                <Link to="/terms" className="text-primary hover:underline">
+                                    Terms of Service
+                                </Link>{" "}
+                                and{" "}
+                                <Link to="/privacy" className="text-primary hover:underline">
+                                    Privacy Policy
+                                </Link>
+                                .
+                            </div>
+                        </div>
+                    </div>
+
+                    <Button className="w-full">Create Account</Button>
 
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
@@ -76,15 +106,14 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-4">
                     <div className="text-sm text-center text-muted-foreground">
-                        Don&apos;t have an account?{" "}
-                        <a href="/register" className="text-primary hover:underline">
-                            Sign up
-                        </a>
+                        Already have an account?{" "}
+                        <Link to="/login" className="text-primary hover:underline">
+                            Sign in
+                        </Link>
                     </div>
                 </CardFooter>
             </Card>
         </div>
-    );
-};
+    )
+}
 
-export default LoginPage;
