@@ -9,11 +9,9 @@ import {
     BookOpen,
     Zap,
     ChevronDown,
-    ArrowRight,
     Star,
     Award,
     Rocket,
-    Heart,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
