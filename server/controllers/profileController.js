@@ -1,5 +1,5 @@
-import { User } from "../models/User";
-import { Activity } from "../models/Activity";
+import { User } from "../models/User.js";
+import { Activity } from "../models/Activity.js";
 
 export const getUserProfile = async (req, res) => {
     try {

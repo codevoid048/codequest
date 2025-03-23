@@ -1,4 +1,4 @@
-import { User } from "../models/User"
+import { User } from "../models/User.js"
 import NodeCache from "node-cache"
 
 const leaderBoardCache = new NodeCache({ stdTTL: 600 });
