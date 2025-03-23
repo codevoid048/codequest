@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { motion, useAnimation } from "framer-motion";
 import { Code, Menu, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "../../context/ThemeContext";
+import { cn } from "@/lib/utils"; // Import the cn function
 import { Link } from "react-router-dom";
 
 // Define the props for the Motion component
@@ -25,8 +27,9 @@ interface NavItem {
 export function Navbar() {
     const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
     const [isScrolled, setIsScrolled] = useState<boolean>(false);
-    const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState<boolean>(false);
+    const { theme, setTheme } = useTheme();
+    const isDarkMode = theme === "dark"; // Define the isDarkMode variable
 
     useEffect(() => {
         setMounted(true);
@@ -91,18 +94,20 @@ export function Navbar() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {mounted && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            className="mr-2 cursor-pointer"
-                        >
-                            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                            <span className="sr-only">Toggle theme</span>
-                        </Button>
-                    )}
-
+                {mounted && (
+  <Button
+    variant="ghost"
+    size="icon"
+    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+    className="mr-2 cursor-pointer group"
+  >
+    <div className="transition-transform duration-400 group-active:rotate-360">
+      {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+    </div>
+    <span className="sr-only">Toggle theme</span>
+  </Button>
+)}
+                     
                     <div className="hidden md:flex gap-4">
                         <Link to="/login">
                             Log In
