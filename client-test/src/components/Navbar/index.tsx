@@ -52,7 +52,7 @@ export function Navbar() {
         { href: "/", label: "Home" },
         { href: "/challenges", label: "Challenges" },
         { href: "/leaderboard", label: "Leaderboard" },
-        { href: "/learn", label: "Learn" },
+        { href: "/about", label: "About" },
     ]
 
     return (
@@ -116,9 +116,11 @@ export function Navbar() {
                             variant="ghost"
                             size="icon"
                             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            className="mr-2"
+                            className="mr-2 cursor-pointer group" 
                         >
+                            <div className="transition-transform duration-400 group-active:rotate-360">
                             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                            </div>
                             <span className="sr-only">Toggle theme</span>
                         </Button>
                     )}
