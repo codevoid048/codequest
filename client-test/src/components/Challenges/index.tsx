@@ -306,7 +306,7 @@ const Challenges: React.FC = () => {
           <Card
             className={`shadow-lg border-0 bg-card ${isFilterOpen ? "block" : "hidden lg:block"}`}
           >
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-6 space-y-6 ">
               <div>
                 <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
                   <Flame className="h-5 w-5 mr-2 text-amber-400 dark:text-amber-900" /> Difficulty
