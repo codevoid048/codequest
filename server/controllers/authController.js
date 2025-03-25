@@ -5,7 +5,7 @@ import { Activity } from "../models/Activity.js"
 import { sendVerificationEmail } from "../utils/emailService.js"
 import { isEmailValid } from "../utils/isEmailValid.js";
 
-// Generate JWT token
+// Generate JWT token function
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '30d'

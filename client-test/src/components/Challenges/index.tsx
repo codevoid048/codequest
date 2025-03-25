@@ -1,262 +1,701 @@
-import React, { useState } from 'react';
-import { Calendar, Filter, CheckCircle, Clock } from 'lucide-react';
+"use client";
 
-// Define types
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Award,
+  Calendar,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Code,
+  Filter,
+  Flame,
+  Search,
+  Tag,
+} from "lucide-react";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
+
 interface Problem {
   id: number;
   date: string;
   title: string;
-  category: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  platform: string;
-  status: 'Solved' | 'Unsolved';
+  categories: string[];
+  difficulty: "Easy" | "Medium" | "Hard";
+  platform: "LeetCode" | "GFG" | "CodeChef";
+  status: "Solved" | "Unsolved";
   description: string;
+  problemUrl?: string;
 }
 
-type TabType = 'all' | 'solved' | 'unsolved';
+type FilterTab = "all" | "solved" | "unsolved";
+type SortOption = "date" | "difficulty" | "status";
 
-const Potd: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('all');
-  const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
-  
-  // Mock data - would be fetched from API
-  const problems: Problem[] = [
-    {
-      id: 1,
-      date: '2025-03-17',
-      title: 'Two Sum',
-      category: 'Arrays',
-      difficulty: 'Easy',
-      platform: 'LeetCode',
-      status: 'Solved',
-      description: `
-Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.
+const Challenges: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" });
+  const [problemsList, setProblemsList] = useState<Problem[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOption, setSortOption] = useState<SortOption>("date");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const itemsPerPage = 5;
 
-You may assume that each input would have exactly one solution, and you may not use the same element twice.
+  useEffect(() => {
+    const loadProblems = async () => {
+      setIsLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setProblemsList([
+        {
+          id: 1,
+          date: "2025-03-22",
+          title: "Stickler Thief II",
+          categories: ["Dynamic Programming", "Arrays", "Algorithms"],
+          difficulty: "Medium",
+          platform: "GFG",
+          status: "Unsolved",
+          description: "Find the maximum possible stolen value from houses...",
+          problemUrl: "https://www.geeksforgeeks.org/stickler-thief/",
+        },
+        {
+          id: 2,
+          date: "2025-03-21",
+          title: "Two Sum",
+          categories: ["Arrays", "Hash Table"],
+          difficulty: "Easy",
+          platform: "LeetCode",
+          status: "Solved",
+          description: "Find two numbers that sum up to target...",
+          problemUrl: "https://leetcode.com/problems/two-sum/",
+        },
+        {
+          id: 3,
+          date: "2025-03-20",
+          title: "Merge K Sorted Lists",
+          categories: ["Linked List", "Heap", "Divide and Conquer"],
+          difficulty: "Hard",
+          platform: "LeetCode",
+          status: "Unsolved",
+          description: "Merge k sorted linked lists into one sorted list...",
+          problemUrl: "https://leetcode.com/problems/merge-k-sorted-lists/",
+        },
+        {
+          id: 4,
+          date: "2025-03-19",
+          title: "Maximum Subarray",
+          categories: ["Arrays", "Dynamic Programming"],
+          difficulty: "Medium",
+          platform: "CodeChef",
+          status: "Solved",
+          description: "Find the contiguous subarray with the largest sum...",
+          problemUrl: "https://www.codechef.com/problems/MAXSUB",
+        },
+      ]);
+      setIsLoading(false);
+    };
+    loadProblems();
+  }, []);
 
-Example:
-Input: nums = [2,7,11,15], target = 9
-Output: [0,1]
-Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      const timeDiff = midnight.getTime() - now.getTime();
+      const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+      setCountdown({
+        hours: hours.toString().padStart(2, "0"),
+        minutes: minutes.toString().padStart(2, "0"),
+        seconds: seconds.toString().padStart(2, "0"),
+      });
+    };
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-Constraints:
-- 2 <= nums.length <= 10^4
-- -10^9 <= nums[i] <= 10^9
-- -10^9 <= target <= 10^9
-- Only one valid answer exists.
-      `
-    },
-    {
-      id: 2,
-      date: '2025-03-16',
-      title: 'Valid Parentheses',
-      category: 'Stacks',
-      difficulty: 'Medium',
-      platform: 'LeetCode',
-      status: 'Unsolved',
-      description: `
-Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.
+  const dailyProblem = useMemo(
+    () => problemsList[new Date().getDate() % (problemsList.length || 1)] || problemsList[0],
+    [problemsList]
+  );
+  const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList]);
+  const difficultyLevels = ["Easy", "Medium", "Hard"];
 
-An input string is valid if:
-1. Open brackets must be closed by the same type of brackets.
-2. Open brackets must be closed in the correct order.
-3. Every close bracket has a corresponding open bracket of the same type.
+  const filteredProblems = useMemo(() => {
+    const result = problemsList.filter((problem) => {
+      const matchesTab = activeTab === "all" || problem.status.toLowerCase() === activeTab;
+      const matchesDifficulty = selectedDifficulties.length === 0 || selectedDifficulties.includes(problem.difficulty);
+      const matchesCategory =
+        selectedCategories.length === 0 || problem.categories.some((cat) => selectedCategories.includes(cat));
+      const matchesSearch =
+        !searchTerm ||
+        problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        problem.description.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesTab && matchesDifficulty && matchesCategory && matchesSearch;
+    });
 
-Example:
-Input: s = "()[]{}"
-Output: true
-      `
-    },
-    {
-      id: 3,
-      date: '2025-03-15',
-      title: 'Longest Substring Without Repeating Characters',
-      category: 'Strings',
-      difficulty: 'Hard',
-      platform: 'GFG',
-      status: 'Solved',
-      description: `
-Given a string s, find the length of the longest substring without repeating characters.
+    result.sort((a, b) => {
+      switch (sortOption) {
+        case "date":
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case "difficulty":
+          return ["Easy", "Medium", "Hard"].indexOf(a.difficulty) - ["Easy", "Medium", "Hard"].indexOf(b.difficulty);
+        case "status":
+          return a.status.localeCompare(b.status);
+        default:
+          return 0;
+      }
+    });
 
-Example:
-Input: s = "abcabcbb"
-Output: 3
-Explanation: The answer is "abc", with the length of 3.
-      `
-    }
-  ];
+    return result;
+  }, [problemsList, activeTab, selectedDifficulties, selectedCategories, searchTerm, sortOption]);
 
-  const filteredProblems = activeTab === 'all' 
-    ? problems 
-    : problems.filter(p => p.status.toLowerCase() === activeTab);
+  const lastItemIndex = currentPage * itemsPerPage;
+  const firstItemIndex = lastItemIndex - itemsPerPage;
+  const currentItems = filteredProblems.slice(firstItemIndex, lastItemIndex);
+  const totalPages = Math.ceil(filteredProblems.length / itemsPerPage);
 
-  const difficultyColor = (difficulty: Problem['difficulty']): string => {
-    switch(difficulty) {
-      case 'Easy': return 'bg-green-100 text-green-800';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800';
-      case 'Hard': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const toggleDifficulty = (difficulty: string) => {
+    setSelectedDifficulties((prev) =>
+      prev.includes(difficulty) ? prev.filter((d) => d !== difficulty) : [...prev, difficulty]
+    );
   };
 
-  const handleProblemClick = (problem: Problem): void => {
-    setSelectedProblem(problem);
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
+    );
   };
+
+  const markSolved = (id: number) => {
+    setProblemsList((prev) => prev.map((p) => (p.id === id ? { ...p, status: "Solved" } : p)));
+  };
+
+  const getDifficultyStyle = (difficulty: string) => {
+    return {
+      Easy: "text-emerald-400 bg-emerald-900/50 dark:text-emerald-600 dark:bg-emerald-100",
+      Medium: "text-amber-400 bg-amber-900/50 dark:text-amber-600 dark:bg-amber-100",
+      Hard: "text-rose-400 bg-rose-900/50 dark:text-rose-600 dark:bg-rose-100",
+    }[difficulty] || "";
+  };
+
+  const getDifficultyIcon = (difficulty: string) => {
+    return {
+      Easy: <Award className="h-4 w-4 text-emerald-400 dark:text-emerald-600" />,
+      Medium: <Flame className="h-4 w-4 text-amber-400 dark:text-amber-600" />,
+      Hard: <Award className="h-4 w-4 text-rose-400 dark:text-rose-600" />,
+    }[difficulty] || null;
+  };
+
+  const openProblemLink = (url?: string) => url && window.open(url, "_blank");
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Left side - Problem listing */}
-        <div className="w-full md:w-1/3">
-          <div className="bg-muted shadow rounded-lg p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-bold text-white-900">Problems</h1>
-              <button className="p-2 text-gray-400 hover:text-gray-500">
-                <Filter className="h-5 w-5" />
-              </button>
+    <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
+      {/* Problem of the Day Section */}
+      <Card className="border-0 shadow-xl bg-gray-900 dark:bg-white rounded-xl overflow-hidden">
+        <div
+          style={{
+            background: "#3B82F6", // Fallback
+            backgroundColor: "oklch(0.544 0.143 262.88)", // OKLCH color
+          }}
+        ></div>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div className="flex items-center">
+              <div className="mr-3 bg-[#3B82F6]/10 dark:bg-[#3B82F6]/20 p-2 rounded-lg">
+                <Flame
+                  className="h-6 w-6"
+                  style={{
+                    color: "#3B82F6",
+                    color: "oklch(0.544 0.143 262.88)",
+                  }}
+                />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 dark:text-gray-900">
+                Problem of the Day
+              </h2>
             </div>
-
-            {/* Tabs */}
-            <div className="border-b border-gray-200 mb-6">
-              <nav className="flex space-x-8" aria-label="Tabs">
-                <button
-                  onClick={() => setActiveTab('all')}
-                  className={`${
-                    activeTab === 'all'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-white-500 hover:text-blue-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                >
-                  All Problems
-                </button>
-                <button
-                  onClick={() => setActiveTab('solved')}
-                  className={`${
-                    activeTab === 'solved'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-white-500 hover:text-blue-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                >
-                  Solved
-                </button>
-                <button
-                  onClick={() => setActiveTab('unsolved')}
-                  className={`${
-                    activeTab === 'unsolved'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-white-500 hover:text-blue-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                >
-                  Unsolved
-                </button>
-              </nav>
-            </div>
-
-            {/* Problem list */}
-            <div className="space-y-4">
-              {filteredProblems.map((problem) => (
-                <div 
-                  key={problem.id}
-                  onClick={() => handleProblemClick(problem)}
-                  className={`border rounded-lg p-4 cursor-pointer hover:border-indigo-500 transition-colors duration-150 ${selectedProblem?.id === problem.id ? 'border-indigo-500 bg-muted' : 'border-gray-200'}`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-medium text-white-900">{problem.title}</h3>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${difficultyColor(problem.difficulty)}`}>
-                          {problem.difficulty}
-                        </span>
-                        <span className="text-xs text-gray-500">{problem.category}</span>
-                        <span className="text-xs text-gray-500">{problem.platform}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      {problem.status === 'Solved' ? (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <Clock className="h-5 w-5 text-yellow-500" />
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-2 flex items-center text-xs text-gray-500">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    <span>{problem.date}</span>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-gray-800 dark:bg-gray-100 px-3 py-2 rounded-lg">
+              <Clock
+                className="h-5 w-5 mr-2"
+                style={{
+                  color: "#3B82F6",
+                  color: "oklch(0.544 0.143 262.88)",
+                }}
+              />
+              <span className="bg-gray-900 dark:bg-white text-gray-100 dark:text-gray-900 px-3 py-1 rounded shadow-sm">
+                {countdown.hours}
+              </span>
+              <span className="text-gray-400 dark:text-gray-500 px-1">:</span>
+              <span className="bg-gray-900 dark:bg-white text-gray-100 dark:text-gray-900 px-3 py-1 rounded shadow-sm">
+                {countdown.minutes}
+              </span>
+              <span className="text-gray-400 dark:text-gray-500 px-1">:</span>
+              <span className="bg-gray-900 dark:bg-white text-gray-100 dark:text-gray-900 px-3 py-1 rounded shadow-sm">
+                {countdown.seconds}
+              </span>
             </div>
           </div>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <div
+                className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2"
+                style={{
+                  borderTopColor: "#3B82F6",
+                  borderBottomColor: "#3B82F6",
+                  borderTopColor: "oklch(0.544 0.143 262.88)",
+                  borderBottomColor: "oklch(0.544 0.143 262.88)",
+                }}
+              ></div>
+            </div>
+          ) : (
+            <Card
+              className="border-1 cursor-pointer  bg-gray-900 dark:bg-white rounded-xl overflow-hidden mt-4"
+              onClick={() => openProblemLink(dailyProblem?.problemUrl)}
+            >
+              <CardContent>
+                <div className="flex flex-col sm:flex-row justify-between gap-6">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center text-sm text-gray-400 dark:text-gray-500">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {new Date().toISOString().split("T")[0]}
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-100 dark:text-gray-900">
+                      {dailyProblem?.title}
+                    </h3>
+                    <p className="text-gray-300 dark:text-gray-600 text-sm line-clamp-2">
+                      {dailyProblem?.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {dailyProblem?.categories.map((cat) => (
+                        <Badge
+                          key={cat}
+                          variant="secondary"
+                          className="text-xs py-1 px-2 bg-gray-800 dark:bg-gray-200 text-gray-200 dark:text-gray-800"
+                        >
+                          {cat}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-4 justify-center">
+                    <Button
+                      className="text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6"
+                      style={{
+                        background: "#3B82F6",
+                        backgroundColor: "oklch(0.544 0.143 262.88)",
+                        background: "linear-gradient(to right, #3B82F6, #3B82F6)", // Fallback gradient (same color)
+                        background: "linear-gradient(to right, oklch(0.544 0.143 262.88), oklch(0.544 0.143 262.88))",
+                        "&:hover": {
+                          background: "oklch(0.5 0.143 262.88)", // Slightly darker for hover
+                        },
+                      }}
+                    >
+                      Solve Now
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-6 pt-4 border-t border-gray-700 dark:border-gray-200 flex flex-wrap gap-4 text-sm">
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${getDifficultyStyle(
+                      dailyProblem?.difficulty
+                    )}`}
+                  >
+                    {getDifficultyIcon(dailyProblem?.difficulty)}
+                    {dailyProblem?.difficulty}
+                  </span>
+                  <span className="flex items-center gap-2 bg-gray-800 dark:bg-gray-200 px-3 py-1 rounded-full text-gray-200 dark:text-gray-800">
+                    <Code
+                      className="h-4 w-4"
+                      style={{
+                        color: "#3B82F6",
+                        color: "oklch(0.544 0.143 262.88)",
+                      }}
+                    />
+                    {dailyProblem?.platform}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Main Content Layout */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Filters Panel */}
+        <div className="lg:w-1/4 w-full">
+          <div className="lg:hidden mb-4">
+            <Button
+              variant="outline"
+              className="w-full flex justify-between items-center text-sm py-2 px-4 border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-700"
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+            >
+              <span className="flex items-center">
+                <Filter className="h-4 w-4 mr-2" /> Filters
+              </span>
+              {isFilterOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
+          <Card
+            className={`shadow-lg border-0 bg-gray-900 dark:bg-white ${isFilterOpen ? "block" : "hidden lg:block"}`}
+          >
+            <CardContent className="p-6 space-y-6">
+              <div>
+                <h3 className="text-lg font-medium mb-4 flex items-center text-gray-100 dark:text-gray-900">
+                  <Flame className="h-5 w-5 mr-2 text-amber-400 dark:text-amber-900" /> Difficulty
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {difficultyLevels.map((level) => (
+                    <div key={level} className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleDifficulty(level)}
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
+                          selectedDifficulties.includes(level)
+                            ? "border-none"
+                            : "border-gray-300 dark:border-gray-600"
+                        }`}
+                        style={{
+                          backgroundColor: selectedDifficulties.includes(level) ? "oklch(0.544 0.143 262.88)" : "transparent",
+                          backgroundColor: selectedDifficulties.includes(level) ? "#3B82F6" : "transparent",
+                        }}
+                      >
+                        {selectedDifficulties.includes(level) && (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-3 w-3 text-white"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        )}
+                      </button>
+                      <label
+                        htmlFor={level}
+                        className="text-sm font-medium flex items-center gap-2 cursor-pointer text-gray-300 dark:text-gray-700"
+                        onClick={() => toggleDifficulty(level)}
+                      >
+                        {getDifficultyIcon(level)}
+                        <span>{level}</span>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <h3 className="text-lg font-medium mb-4 flex items-center text-gray-100 dark:text-gray-900">
+                  <Tag
+                    className="h-5 w-5 mr-2"
+                    style={{
+                      color: "#3B82F6",
+                      color: "oklch(0.544 0.143 262.88)",
+                    }}
+                  />
+                  Categories
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {uniqueCategories.map((cat) => (
+                    <div key={cat} className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleCategory(cat)}
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
+                          selectedCategories.includes(cat)
+                            ? "border-none"
+                            : "border-gray-300 dark:border-gray-600"
+                        }`}
+                        style={{
+                          backgroundColor: selectedCategories.includes(cat) ? "oklch(0.544 0.143 262.88)" : "transparent",
+                          backgroundColor: selectedCategories.includes(cat) ? "#3B82F6" : "transparent",
+                        }}
+                      >
+                        {selectedCategories.includes(cat) && (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-3 w-3 text-white"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        )}
+                      </button>
+                      <label
+                        htmlFor={cat}
+                        className="text-sm font-medium cursor-pointer text-gray-300 dark:text-gray-700"
+                        onClick={() => toggleCategory(cat)}
+                      >
+                        {cat}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Right side - Problem detail */}
-        <div className="w-full md:w-2/3">
-          <div className="bg-muted shadow rounded-lg p-6 h-full">
-            {selectedProblem ? (
-              <div>
-                <div className="border-b border-gray-200 pb-6">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h2 className="text-2xl font-bold text-white-900">{selectedProblem.title}</h2>
-                      <div className="flex items-center space-x-3 mt-2">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${difficultyColor(selectedProblem.difficulty)}`}>
-                          {selectedProblem.difficulty}
-                        </span>
-                        <span className="text-sm text-gray-500">{selectedProblem.category}</span>
-                        <span className="text-sm text-gray-500">{selectedProblem.platform}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Solve Problem
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="py-6">
-                  <div className="prose max-w-none">
-                    <pre className="whitespace-pre-wrap font-sans text-white-800">{selectedProblem.description}</pre>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-lg font-medium text-white-900">Examples</h3>
-                  <div className="mt-4 bg-gray-50 rounded-md p-4">
-                    <div className="font-mono text-sm">
-                      {/* Example would be formatted properly in a real app */}
-                      <p className="text-gray-950 mb-2">Input: nums = [2,7,11,15], target = 9</p>
-                      <p className="text-gray-950 mb-2">Output: [0,1]</p>
-                      <p className="text-gray-950">Explanation: Because nums[0] + nums[1] == 9, we return [0, 1].</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium text-white-900">Community Solutions</h3>
-                  <div className="mt-4 border border-gray-200 rounded-md p-4">
-                    <p className="text-white-600 text-center">Sign in to view community solutions</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full py-20">
-                <img 
-                  src="/api/placeholder/200/200"
-                  alt="Select a problem"
-                  className="w-32 h-32 text-gray-400"
+        {/* Problems Listing */}
+        <div className="lg:w-3/4 w-full">
+          <div className="space-y-4 mb-6">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-6">
+              {["all", "solved", "unsolved"].map((tab) => (
+                <Button
+                  key={tab}
+                  variant={activeTab === tab ? "default" : "outline"}
+                  onClick={() => setActiveTab(tab as FilterTab)}
+                  className={`text-sm py-2 px-4 w-full sm:w-auto transition-all duration-300 ${
+                    activeTab === tab
+                      ? "text-white border-0 shadow-md"
+                      : "border-gray-700 dark:border-gray-200 text-gray-300 dark:text-gray-700"
+                  }`}
+                  style={{
+                    background: activeTab === tab ? "oklch(0.544 0.143 262.88)" : "transparent",
+                    background: activeTab === tab ? "#3B82F6" : "transparent",
+                    background: activeTab === tab ? "linear-gradient(to right, #3B82F6, #3B82F6)" : "transparent",
+                    background: activeTab === tab ? "linear-gradient(to right, oklch(0.544 0.143 262.88), oklch(0.544 0.143 262.88))" : "transparent",
+                    "&:hover": {
+                      background: activeTab === tab ? "oklch(0.5 0.143 262.88)" : "transparent",
+                      borderColor: activeTab !== tab ? "oklch(0.544 0.143 262.88)" : "transparent",
+                    },
+                  }}
+                >
+                  {tab === "all" ? (
+                    <span className="flex items-center gap-2">
+                      <Code className="h-4 w-4" />
+                      All Problems
+                    </span>
+                  ) : tab === "solved" ? (
+                    <span className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4" />
+                      Solved
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Unsolved
+                    </span>
+                  )}
+                </Button>
+              ))}
+              <div className="relative w-full sm:w-64 group">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 transition-colors duration-200"
+                  style={{
+                    color: "group-focus-within:oklch(0.544 0.143 262.88)",
+                    color: "group-focus-within:#3B82F6",
+                  }}
                 />
-                <h3 className="mt-6 text-lg font-medium text-gray-900">Select a problem</h3>
-                <p className="mt-2 text-sm text-gray-500 max-w-md text-center">
-                  Choose a problem from the list to view its details, submit a solution, and track your progress.
-                </p>
+                <Input
+                  className="pl-10 w-full text-sm border-gray-200 dark:border-gray-700 transition-all duration-200 text-gray-300 dark:text-gray-700 bg-gray-900 dark:bg-white"
+                  style={{
+                    borderColor: "focus:oklch(0.544 0.143 262.88)",
+                    borderColor: "focus:#3B82F6",
+                  }}
+                  placeholder="Search problems..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-            )}
+            </div>
           </div>
+
+          {/* Problems Display */}
+          {isLoading ? (
+            <div className="flex justify-center items-center h-60">
+              <div className="flex flex-col items-center gap-4">
+                <div
+                  className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2"
+                  style={{
+                    borderTopColor: "#3B82F6",
+                    borderBottomColor: "#3B82F6",
+                    borderTopColor: "oklch(0.544 0.143 262.88)",
+                    borderBottomColor: "oklch(0.544 0.143 262.88)",
+                  }}
+                ></div>
+                <p className="text-gray-400 dark:text-gray-500">Loading problems...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {currentItems.length > 0 ? (
+                  currentItems.map((problem, index) => (
+                    <Card
+                      key={problem.id}
+                      className="border-1 cursor-pointer bg-gray-900 dark:bg-white overflow-hidden"
+                      onClick={() => openProblemLink(problem.problemUrl)}
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <CardContent>
+                        <div className="flex flex-col sm:flex-row justify-between gap-6">
+                          <div className="space-y-2.5 flex-1">
+                            <div className="flex items-center text-xs text-gray-400 dark:text-gray-500">
+                              <Calendar className="h-3 w-3 mr-1" /> {problem.date}
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-100 dark:text-gray-900">
+                              {problem.title}
+                            </h3>
+                            <p className="text-gray-300 dark:text-gray-600 text-sm line-clamp-1">
+                              {problem.description}
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {problem.categories.map((cat) => (
+                                <Badge
+                                  key={cat}
+                                  variant="secondary"
+                                  className="text-xs py-0.5 px-2 bg-gray-800 dark:bg-gray-200 text-gray-200 dark:text-gray-800"
+                                >
+                                  {cat}
+                                </Badge>
+                              ))}
+                            </div>
+                            <div className="flex flex-wrap gap-3 text-xs">
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${getDifficultyStyle(
+                                  problem.difficulty
+                                )}`}
+                              >
+                                {getDifficultyIcon(problem.difficulty)}
+                                {problem.difficulty}
+                              </span>
+                              <span className="flex items-center gap-1.5 bg-gray-800 dark:bg-gray-200 px-2 py-1 rounded-full text-gray-200 dark:text-gray-800">
+                                <Code
+                                  className="h-3 w-3"
+                                  style={{
+                                    color: "#3B82F6",
+                                    color: "oklch(0.544 0.143 262.88)",
+                                  }}
+                                />
+                                {problem.platform}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2 self-start sm:self-center min-w-[100px]">
+                            {problem.status === "Solved" ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-emerald-900/5 dark:bg-emerald-100 text-emerald-400 dark:text-emerald-800 text-xs py-1 px-2 w-full text-center flex items-center justify-center border-emerald-200 dark:border-emerald-800"
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" /> Solved
+                              </Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs py-1 px-2 w-full transition-colors duration-200 text-gray-300 dark:text-gray-700"
+                                style={{
+                                  borderColor: "oklch(0.544 0.143 262.88)",
+                                  borderColor: "#3B82F6",
+                                  "&:hover": {
+                                    backgroundColor: "oklch(0.544 0.143 262.88)/0.1",
+                                    color: "oklch(0.544 0.143 262.88)",
+                                  },
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markSolved(problem.id);
+                                }}
+                              >
+                                Mark Solved
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <Card className="shadow-lg border-0 bg-gray-900 dark:bg-white">
+                    <CardContent className="p-12 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <Search className="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                        <p className="text-gray-400 dark:text-gray-500 text-lg">No problems found</p>
+                        <p className="text-gray-400 dark:text-gray-500 text-sm">Try adjusting your filters</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="text-sm py-2 px-6 w-full sm:w-auto border-gray-200 dark:border-gray-700 disabled:opacity-50 text-gray-300 dark:text-gray-700"
+                    style={{
+                      "&:hover": {
+                        borderColor: "oklch(0.544 0.143 262.88)",
+                        borderColor: "#3B82F6",
+                      },
+                    }}
+                  >
+                    <ChevronUp className="h-4 w-4 rotate-90 mr-2" />
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-8 h-8 p-0 ${
+                          currentPage === page
+                            ? "text-white"
+                            : "border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-700"
+                        }`}
+                        style={{
+                          background: currentPage === page ? "oklch(0.544 0.143 262.88)" : "transparent",
+                          background: currentPage === page ? "#3B82F6" : "transparent",
+                        }}
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="text-sm py-2 px-6 w-full sm:w-auto border-gray-200 dark:border-gray-700 disabled:opacity-50 text-gray-300 dark:text-gray-700"
+                    style={{
+                      "&:hover": {
+                        borderColor: "oklch(0.544 0.143 262.88)",
+                        borderColor: "#3B82F6",
+                      },
+                    }}
+                  >
+                    Next
+                    <ChevronDown className="h-4 w-4 rotate-90 ml-2" />
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default Potd;
+export default Challenges;
