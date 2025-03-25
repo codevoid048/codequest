@@ -13,7 +13,7 @@ const generateToken = (id) => {
 
 export const registerUser = async (req, res) => {
     try {
-      const { name, email, password } = req.body;
+      const { name, email, password ,rank,streak,solveChallenges,points} = req.body;
 
     console.log(name);
       if (!name || !email || !password) {
@@ -25,25 +25,23 @@ export const registerUser = async (req, res) => {
   
       const hashedPassword = await bcrypt.hash(password, 10);
   
-      // Generate verification token
-      const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
       
-      // Optional, 1 -> hour expiry
-      const verificationTokenExpires = Date.now() + 60 * 60 * 1000; 
   
       const newUser = new User({
         name,
         email,
         password: hashedPassword,
-        verificationToken,
-        verificationTokenExpires,
+        rank,
+        streak,
+        points,
+        solveChallenges,
+        
       });
   
       await newUser.save();
   
       // Send verification email
-      await sendVerificationEmail(email, verificationToken);
-  
+      
       res.status(201).json({ message: "User registered. Check your email for verification." });
     } catch (error) {
       console.error(error);
