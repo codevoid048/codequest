@@ -20,7 +20,6 @@ const userSchema = new mongoose.Schema(
     gfg: { type: String },
     leetCode: { type: String },
     codeforces: { type: String },
-    hackerrank: { type: String },
     linkedin: { type: String },
 
     // Verification flag
@@ -31,7 +30,11 @@ const userSchema = new mongoose.Schema(
     // Progress/Stats
     points: { type: Number, default: 0 },
     rank: { type: Number, default: 0 },
+<<<<<<< HEAD
     streak: { type: Number, default: 0 },
+=======
+    streak: {type: Number, default: 0},
+>>>>>>> 62828ba4ee57a926d171bbdb4b727307abeac6e9
 
     // All challenges solved (non-POTD)
     solveChallenges: [
