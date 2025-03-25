@@ -221,7 +221,7 @@ const Challenges: React.FC = () => {
                 />
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 dark:text-gray-900">
-                Daily Challenge
+                Problem of the Day
               </h2>
             </div>
             <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-gray-800 dark:bg-gray-100 px-3 py-2 rounded-lg">
