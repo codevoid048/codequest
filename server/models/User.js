@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
     // Progress/Stats
     points: { type: Number, default: 0 },
     rank: { type: Number, default: 0 },
+    streak: {type: Number, default: 0},
 
     // All challenges solved (non-POTD)
     solveChallenges: [
