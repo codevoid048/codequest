@@ -4,7 +4,7 @@ import { getChallenges, getChallengeById, addChallenge } from "../controllers/ch
 
 const router = express.Router();
 
-router.get('/', protect, getChallenges);
+router.get('/',getChallenges);
 router.get('/:id', protect, getChallengeById);
 router.post('/challenge',addChallenge)
 export default router;

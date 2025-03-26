@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
+    username: { type: String, required: true, unique: true, trim: true, lowercase: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     password: { type: String }, // For email/password signups
     profilePicture: { type: String },
@@ -17,10 +18,12 @@ const userSchema = new mongoose.Schema(
     githubId: { type: String },
 
     // External Account Links (for verification)
-    gfg: { type: String },
-    leetCode: { type: String },
-    codeforces: { type: String },
-    linkedin: { type: String },
+    gfg: { username: { type: String }, solved: { type: Number },rank:{type:Number},rating:{type:Number,default:0} },
+    leetCode: { username: { type: String }, solved: { type: Number },rank:{type:Number} ,rating:{type:Number,default:0} },
+    codeforces: { username: { type: String }, solved: { type: Number },rank:{type:Number} ,rating:{type:Number,default:0}},
+    codechef: { username: { type: String }, solved: { type: Number },rank:{type:Number},rating:{type:Number,default:0} },
+    
+
 
     // Verification flag
     isVerified: { type: Boolean, default: false },
@@ -30,11 +33,8 @@ const userSchema = new mongoose.Schema(
     // Progress/Stats
     points: { type: Number, default: 0 },
     rank: { type: Number, default: 0 },
-<<<<<<< HEAD
     streak: { type: Number, default: 0 },
-=======
-    streak: {type: Number, default: 0},
->>>>>>> 62828ba4ee57a926d171bbdb4b727307abeac6e9
+
 
     // All challenges solved (non-POTD)
     solveChallenges: [

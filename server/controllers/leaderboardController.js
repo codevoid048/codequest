@@ -1,12 +1,9 @@
-<<<<<<< HEAD
-=======
+
 import { getLeaderBoard, } from "../utils/leaderBoardCache.js";
->>>>>>> 62828ba4ee57a926d171bbdb4b727307abeac6e9
 import { User } from "../models/User.js";
 
 export const setDummyData = async (req, res) => {
     try {
-<<<<<<< HEAD
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 8;
         const skip = (page - 1) * limit;
@@ -50,15 +47,6 @@ export const updateUserPoints = async (req, res) => {
         }
 
         res.status(200).json(updatedUser);
-=======
-        const dummyUsers = req.body;
-        const insertedUsers = await User.insertMany(dummyUsers);
-
-        res.status(201).json({
-        message: "Dummy users inserted successfully",
-        data: insertedUsers,
-        });
->>>>>>> 62828ba4ee57a926d171bbdb4b727307abeac6e9
     } catch (error) {
         console.error('Points update error:', error);
         res.status(500).json({ message: 'Server error updating points' });
