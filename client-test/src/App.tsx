@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Home from './components/Home'
 import Potd from './components/Challenges'
 import LoginPage from './components/Login'
+import LogoutPage from './components/Logout'
 import RegisterPage from './components/SignUp'
 import Footer from './components/footer'
 import AboutPage from './components/About'
@@ -22,6 +23,7 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path='/logout' element={<LogoutPage/>}/>
         </Routes>
           <Footer/>
       </div>
