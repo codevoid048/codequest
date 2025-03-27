@@ -1,18 +1,20 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { Link, useLocation } from "react-router-dom"
-import { motion } from "framer-motion"
-import { Code, Menu, Moon, Sun } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { useTheme } from "@/context/ThemeContext"
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useState, useEffect  } from "react";
+import { motion, useAnimation } from "framer-motion";
+import { Code, Menu, Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useTheme } from "../../context/ThemeContext";
+import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
 
 export function Navbar() {
+    const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
+    const [isScrolled, setIsScrolled] = useState<boolean>(false);
+    const [mounted, setMounted] = useState<boolean>(false);
+    const { theme, setTheme } = useTheme();
+    const isDarkMode = theme === "dark"; // Define the isDarkMode variable
     const location = useLocation()
-    const [isScrolled, setIsScrolled] = useState(false)
-    const { theme, setTheme } = useTheme()
-    const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
         setMounted(true)

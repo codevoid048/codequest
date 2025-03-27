@@ -4,20 +4,26 @@ import bcrypt from "bcryptjs";
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
+    username: { type: String, required: true, unique: true, trim: true, lowercase: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     password: { type: String }, // For email/password signups
     profilePicture: { type: String },
-
+    RegistrationNumber: { type: String},
+    branch: { type: String },
+    mobile: { type: String },
+    collegeName: { type: String },
+    isAffiliate: { type: Boolean, default: false },
     // OAuth fields
     googleId: { type: String },
     githubId: { type: String },
 
     // External Account Links (for verification)
-    gfg: { type: String },
-    leetCode: { type: String },
-    codeforces: { type: String },
-    hackerrank: { type: String },
-    linkedin: { type: String },
+    gfg: { username: { type: String }, solved: { type: Number },rank:{type:Number},rating:{type:Number,default:0} },
+    leetCode: { username: { type: String }, solved: { type: Number },rank:{type:Number} ,rating:{type:Number,default:0} },
+    codeforces: { username: { type: String }, solved: { type: Number },rank:{type:Number} ,rating:{type:Number,default:0}},
+    codechef: { username: { type: String }, solved: { type: Number },rank:{type:Number},rating:{type:Number,default:0} },
+    
+
 
     // Verification flag
     isVerified: { type: Boolean, default: false },
@@ -27,6 +33,8 @@ const userSchema = new mongoose.Schema(
     // Progress/Stats
     points: { type: Number, default: 0 },
     rank: { type: Number, default: 0 },
+    streak: { type: Number, default: 0 },
+
 
     // All challenges solved (non-POTD)
     solveChallenges: [
@@ -48,17 +56,9 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// // Hash password before saving if modified
-// userSchema.pre("save", async function (next) {
-//   if (!this.isModified("password")) return next();
-//   const salt = await bcrypt.genSalt(10);
-//   this.password = await bcrypt.hash(this.password, salt);
-//   next();
-// });
-
 // Compare entered password with stored password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-export const User = mongoose.model("User", userSchema);
+export const User = mongoose.model("User", userSchema);
