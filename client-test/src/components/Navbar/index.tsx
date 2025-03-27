@@ -1,37 +1,20 @@
-<<<<<<< HEAD
-import { useState, useEffect } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useState, useEffect  } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { Code, Menu, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTheme } from "../../context/ThemeContext";
-import { cn } from "@/lib/utils"; // Import the cn function
-import { Link } from "react-router-dom";
-=======
-"use client"
->>>>>>> dfdf4f25667d182921bd646bb40fdb1aa2edd671
-
-import { useState, useEffect } from "react"
-import { Link, useLocation } from "react-router-dom"
-import { motion } from "framer-motion"
-import { Code, Menu, Moon, Sun } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { useTheme } from "@/context/ThemeContext"
+import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
 
 export function Navbar() {
-<<<<<<< HEAD
     const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
     const [isScrolled, setIsScrolled] = useState<boolean>(false);
     const [mounted, setMounted] = useState<boolean>(false);
     const { theme, setTheme } = useTheme();
     const isDarkMode = theme === "dark"; // Define the isDarkMode variable
-=======
     const location = useLocation()
-    const [isScrolled, setIsScrolled] = useState(false)
-    const { theme, setTheme } = useTheme()
-    const [mounted, setMounted] = useState(false)
->>>>>>> dfdf4f25667d182921bd646bb40fdb1aa2edd671
 
     useEffect(() => {
         setMounted(true)
@@ -88,29 +71,6 @@ export function Navbar() {
                 </div>
 
                 <div className="flex items-center gap-2">
-<<<<<<< HEAD
-                {mounted && (
-  <Button
-    variant="ghost"
-    size="icon"
-    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-    className="mr-2 cursor-pointer group"
-  >
-    <div className="transition-transform duration-400 group-active:rotate-360">
-      {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-    </div>
-    <span className="sr-only">Toggle theme</span>
-  </Button>
-)}
-                     
-                    <div className="hidden md:flex gap-4">
-                        <Link to="/login">
-                            Log In
-                        </Link>
-                        <Link to="/register">
-                            Sign Up
-                        </Link>
-=======
                     {mounted && (
                         <Button
                             variant="ghost"
@@ -132,7 +92,6 @@ export function Navbar() {
                         <Button asChild>
                             <Link to="/register">Sign Up</Link>
                         </Button>
->>>>>>> dfdf4f25667d182921bd646bb40fdb1aa2edd671
                     </div>
 
                     <Sheet>
