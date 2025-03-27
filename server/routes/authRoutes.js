@@ -15,5 +15,4 @@ router.get("/github/callback", passport.authenticate("github", { session: false 
 
 router.post("/logout", logoutUser);
 
-
 export default router;
