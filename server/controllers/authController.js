@@ -1,8 +1,10 @@
 import jwt from "jsonwebtoken"
+import bcrypt from "bcryptjs";
 import { User } from "../models/User.js"
 import { Activity } from "../models/Activity.js"
-
-// Generate JWT token
+import { sendVerificationEmail } from "../utils/emailService.js"
+import { isEmailValid } from "../utils/isEmailValid.js";
+// Generate JWT token function
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '30d'
@@ -11,38 +13,42 @@ const generateToken = (id) => {
 
 export const registerUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+      const { name, email, password ,rank,streak,solveChallenges,points} = req.body;
 
-        // Check if user exists
-        const userExists = await User.findOne({ email });
+     console.log(name);
+      if (!name || !email || !password) {
+        return res.status(400).json({ error: "All fields are required" });
+      }
 
-        if (userExists) {
-            res.status(400).json({ message: 'User already exists' });
-            return;
-        }
+      const {valid, reason, validators} = await isEmailValid(email);
+      if(!valid) return res.status(400).send({ message: "Please provide a valid email address.", reason: validators[reason].reason })
 
-        // Create new user
-        const user = await User.create({
-            name,
-            email,
-            password
-        });
-
-        if (user) {
-            res.status(201).json({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                points: user.points,
-                rank: user.rank,
-                token: generateToken(user._id)
-            });
-        } else {
-            res.status(400).json({ message: 'Invalid user data' });
-        }
+      const user = await User.findOne({ email });
+      if (user) return res.status(400).json({ error: "Email already exists" });
+  
+      const hashedPassword = await bcrypt.hash(password, 10);
+  
+      
+  
+      const newUser = new User({
+        name,
+        email,
+        password: hashedPassword,
+        rank,
+        streak,
+        points,
+        solveChallenges,
+        
+      });
+  
+      await newUser.save();
+  
+      // Send verification email
+      
+      res.status(201).json({ message: "User registered. Check your email for verification." });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+      console.error(error);
+      res.status(500).json({ error: "Server error", details: error.message });
     }
 }
 
@@ -50,22 +56,85 @@ export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        const {valid, reason, validators} = await isEmailValid(email);
+        if(!valid) return res.status(400).send({ message: "Please provide a valid email address.", reason: validators[reason].reason })
+
         const user = await User.findOne({ email });
 
-        if(user && (await user.matchPassword(password))) {
-            res.status(200).json({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                points: user.points,
-                rank: user.rank,
-                token: generateToken(user._id)
-            })
-        } else {
-            res.status(400).json({ message: 'Invalid email or password' });
-        }
+        if (!user) return res.status(401).json({ error: "No user found" });
+        if (!user.isVerified) return res.status(400).json({ error: "Email not verified" });
+        //console.log(user.password);
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) return res.status(400).json({ error: "Wrong Password" });
+
+        jwt.sign({email: user.email, id: user._id, name: user.name}, process.env.JWT_SECRET, {}, (err, token) => {
+            if(err) throw err;
+            res.cookie('token', token).json(user)
+        })
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ error: "Server error" });
     }
 }
+
+export const verifyEmail = async (req, res) => {
+    try {
+      const { token } = req.params;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findOne({ email: decoded.email });
+      if (!user) return res.status(400).json({ error: "Invalid token" });
+      if (user.verificationTokenExpires && user.verificationTokenExpires < Date.now()) {
+        return res.status(400).json({ error: "Token expired. Request a new verification email." });
+      }
+  
+      user.isVerified = true;
+      user.verificationToken = undefined;
+      user.verificationTokenExpires = undefined;
+      await user.save();
+  
+      res.json({ message: "Email verified successfully! You can now log in." });
+    } catch (error) {
+      console.error("Verification error:", error);
+      res.status(400).json({ error: "Invalid or expired token" });
+    }
+  };
+  
+  export const googleAuthCallback = (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication failed" });
+    }
+  
+    const { user, token } = req.user;
+  
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  
+    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+  };
+
+  export const githubAuthCallback = (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication failed" });
+    }
+  
+    const { user, token } = req.user;
+  
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  
+    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+  };
+
+  
+  export const logoutUser = async (req, res) => {
+    res.clearCookie("jwt");
+    res.status(200).json({ message: "Logged out successfully" });
+  };

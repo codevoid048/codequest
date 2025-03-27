@@ -1,4 +1,6 @@
+//APp 
 import express from "express";
+import session from "express-session";
 import cors from "cors";
 import morgan from "morgan";
 import path from "path";
@@ -7,11 +9,15 @@ import profileRoutes from "./routes/profileRoutes.js";
 import challengeRoutes from "./routes/challengeRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import { updateRanks } from "./utils/leaderBoardCache.js";
+import passport from "passport";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
+app.use(passport.initialize());
 app.use(express.urlencoded({ extended: false }));
 app.use(morgan('dev'));
 
@@ -19,7 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
-
+app.use('/api/admin', challengeRoutes)
 updateRanks();
 
 // Schedule leaderboard update every hour

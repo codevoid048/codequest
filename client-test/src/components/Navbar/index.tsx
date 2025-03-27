@@ -1,18 +1,20 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { Link, useLocation } from "react-router-dom"
-import { motion } from "framer-motion"
-import { Code, Menu, Moon, Sun } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { useTheme } from "@/context/ThemeContext"
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useState, useEffect  } from "react";
+import { motion, useAnimation } from "framer-motion";
+import { Code, Menu, Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useTheme } from "../../context/ThemeContext";
+import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
 
 export function Navbar() {
+    const [currentPath, setCurrentPath] = useState<string>(window.location.pathname);
+    const [isScrolled, setIsScrolled] = useState<boolean>(false);
+    const [mounted, setMounted] = useState<boolean>(false);
+    const { theme, setTheme } = useTheme();
+    const isDarkMode = theme === "dark"; // Define the isDarkMode variable
     const location = useLocation()
-    const [isScrolled, setIsScrolled] = useState(false)
-    const { theme, setTheme } = useTheme()
-    const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
         setMounted(true)
@@ -33,7 +35,7 @@ export function Navbar() {
         { href: "/", label: "Home" },
         { href: "/challenges", label: "Challenges" },
         { href: "/leaderboard", label: "Leaderboard" },
-        { href: "/learn", label: "Learn" },
+        { href: "/about", label: "About" },
     ]
 
     return (
@@ -74,9 +76,11 @@ export function Navbar() {
                             variant="ghost"
                             size="icon"
                             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            className="mr-2"
+                            className="mr-2 cursor-pointer group" 
                         >
+                            <div className="transition-transform duration-400 group-active:rotate-360">
                             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                            </div>
                             <span className="sr-only">Toggle theme</span>
                         </Button>
                     )}

@@ -15,7 +15,6 @@ export const getUserProfile = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 }
-
 export const updateUserProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
@@ -27,11 +26,9 @@ export const updateUserProfile = async (req, res) => {
             user.leetcode = req.body.leetcode || user.leetcode;
             user.gfg = req.body.gfg || user.gfg;
             user.otherLinks = req.body.otherLinks || user.otherLinks;
-
             if (req.body.password) {
                 user.password = req.body.password;
             }
-
             if (req.file) {
                 user.profilePicture = req.file.filename;
             }

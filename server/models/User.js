@@ -1,40 +1,64 @@
-import mongoose from "mongoose"
-import bcrypt from "bcryptjs"
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema(
+  {
     name: { type: String, required: true, trim: true },
+    username: { type: String, required: true, unique: true, trim: true, lowercase: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-    password: { type: String, required: true },
+    password: { type: String }, // For email/password signups
     profilePicture: { type: String },
-    github: { type: String },
-    leetCode: { type: String },
-    gfg: { type: String },
-    otherLinks: [String],
+    RegistrationNumber: { type: String},
+    branch: { type: String },
+    mobile: { type: String },
+    collegeName: { type: String },
+    isAffiliate: { type: Boolean, default: false },
+    // OAuth fields
+    googleId: { type: String },
+    githubId: { type: String },
+
+    // External Account Links (for verification)
+    gfg: { username: { type: String }, solved: { type: Number },rank:{type:Number},rating:{type:Number,default:0} },
+    leetCode: { username: { type: String }, solved: { type: Number },rank:{type:Number} ,rating:{type:Number,default:0} },
+    codeforces: { username: { type: String }, solved: { type: Number },rank:{type:Number} ,rating:{type:Number,default:0}},
+    codechef: { username: { type: String }, solved: { type: Number },rank:{type:Number},rating:{type:Number,default:0} },
+    
+
+
+    // Verification flag
+    isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String },
+    verificationTokenExpires: { type: Date },
+
+    // Progress/Stats
     points: { type: Number, default: 0 },
     rank: { type: Number, default: 0 },
-    solveChallenges: [{
+    streak: { type: Number, default: 0 },
+
+
+    // All challenges solved (non-POTD)
+    solveChallenges: [
+    {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Challenge'
-    }],
-    createAt: {
-        type: Date,
-        default: Date.now
+        ref: "Challenge",
     },
-}, {
-    timestamps: true
-})
+    ],
 
-userSchema.pre('save', async (next) => {
-    if (!this.isModified('password')) {
-        next();
-    }
+    // POTD solved: store dates (unique per day)
+    potdSolved: [
+    {
+        type: Date, // or String if you prefer ISO strings
+    },
+    ],
 
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-})
+    otherLinks: [String],
+  },
+  { timestamps: true }
+);
 
-userSchema.methods.matchPassword = async (enteredPassword) => {
-    return await bcrypt.compare(enteredPassword, this.password);
-}
+// Compare entered password with stored password
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
-export const User = mongoose.model('User', userSchema);
+export const User = mongoose.model("User", userSchema);

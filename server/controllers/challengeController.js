@@ -3,7 +3,7 @@ import { Activity } from "../models/Activity.js";
 
 export const getChallenges = async (req, res) => {
     try {
-        const { category, difficulty, status } = status.query;
+        const { category, difficulty, status } = req.query;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const filter = {};
@@ -39,11 +39,11 @@ export const getChallengeById = async (req, res) => {
 
         if (challenge) {
             // Record challenge attempt activity
-            await Activity.create({
-                user: req.user._id,
-                type: 'challenge_attempt',
-                challenge: challenge._id
-            });
+            // await Activity.create({
+            //     user: req.user._id,
+            //     type: 'challenge_attempt',
+            //     challenge: challenge._id
+            // });
 
             res.status(200).json(challenge);
         } else {
@@ -52,5 +52,40 @@ export const getChallengeById = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const addChallenge = async (req, res) => {
+    try {
+        const { title, description, category, difficulty, points, problemLink } = req.body;
+
+        // Validate required fields
+        if (!title || !description || !category || !difficulty || !points || !problemLink) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
+        }
+
+        // Ensure category is an array of strings
+        const categoryArray = Array.isArray(category) ? category : [category];
+
+        const newChallenge = new Challenge({
+            title,
+            description,
+            category: categoryArray,
+            difficulty,
+            points,
+            problemLink
+        });
+
+        const result = await newChallenge.save();
+
+        return res.status(201).json({
+            success: true,
+            message: "Challenge added successfully",
+            challenge: result
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };
