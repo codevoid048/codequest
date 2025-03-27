@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +23,7 @@ import {
   Trophy,
   Twitter,
 } from "lucide-react";
+import { useState } from "react";
 
 export default function ProfilePage() {
   const user = {
@@ -340,7 +340,9 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#10B981"
                         strokeWidth="3"
-                        strokeDasharray={`${(problemsSolved.easy / 300) * 100}, 100`}
+                        strokeDasharray={`${
+                          (problemsSolved.easy / 300) * 100
+                        }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -371,7 +373,9 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#F59E0B"
                         strokeWidth="3"
-                        strokeDasharray={`${(problemsSolved.medium / 300) * 100}, 100`}
+                        strokeDasharray={`${
+                          (problemsSolved.medium / 300) * 100
+                        }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -402,7 +406,9 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#EF4444"
                         strokeWidth="3"
-                        strokeDasharray={`${(problemsSolved.hard / 100) * 100}, 100`}
+                        strokeDasharray={`${
+                          (problemsSolved.hard / 100) * 100
+                        }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -462,7 +468,8 @@ export default function ProfilePage() {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle className="flex items-center">
-                  <Calendar className="mr-2 h-5 w-5 text-green-500" /> Contributions
+                  <Calendar className="mr-2 h-5 w-5 text-green-500" />{" "}
+                  Contributions
                 </CardTitle>
                 {/* Year Filter */}
                 <select
@@ -484,7 +491,7 @@ export default function ProfilePage() {
             <CardContent>
               <div className="flex flex-col gap-4">
                 {/* Month Labels */}
-                <div className="flex gap-2 text-xs text-muted-foreground text-center">
+                <div className="flex gap-4 text-xs text-muted-foreground text-center">
                   {[
                     "January",
                     "February",
@@ -506,54 +513,98 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Contributions Grid */}
-                <div className="flex gap-2">
+                <div className="flex gap-4">
                   {contributionsByMonth.map((monthContribs, monthIndex) => {
-                    const daysInMonth = getDaysInMonth(monthIndex, selectedYear);
+                    const daysInMonth = getDaysInMonth(
+                      monthIndex,
+                      selectedYear
+                    );
+                    const firstDayOfMonth = new Date(
+                      selectedYear,
+                      monthIndex,
+                      1
+                    ).getDay();
+                    const offset = (firstDayOfMonth + 6) % 7; // Adjust for Monday start (0 = Monday, 6 = Sunday)
                     const totalContributions = monthContribs.reduce(
                       (sum, contrib) => sum + (contrib ? contrib.count : 0),
                       0
                     );
 
+                    // Calculate the number of weeks needed (including partial weeks)
+                    const totalCells = daysInMonth + offset;
+                    const numWeeks = Math.ceil(totalCells / 7);
+
                     return (
                       <div key={monthIndex} className="flex-1">
                         <div
-                          className={`grid gap-1`}
+                          className="grid gap-1"
                           style={{
-                            gridTemplateColumns: `repeat(${Math.ceil(daysInMonth / 7)}, 1fr)`,
-                            gridTemplateRows: "repeat(7, 1fr)",
+                            gridTemplateColumns: `repeat(${numWeeks}, 1fr)`, // Columns for each week
+                            gridTemplateRows: "repeat(7, 1fr)", // 7 rows for days of the week (Mon-Sun)
                           }}
                         >
-                          {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
-                            const date = new Date(selectedYear, monthIndex, dayIndex + 1);
-                            const contrib = monthContribs.find(
-                              (c) => c.date === date.toISOString().split("T")[0]
-                            );
-                            const count = contrib ? contrib.count : 0;
-                            const isToday =
-                              date.toISOString().split("T")[0] === "2025-03-27"; // Highlight March 27, 2025
-                            const inStreak = isPartOfStreak(monthIndex, dayIndex, monthContribs);
+                          {Array.from({ length: daysInMonth }).map(
+                            (_, dayIndex) => {
+                              const date = new Date(
+                                selectedYear,
+                                monthIndex,
+                                dayIndex + 1
+                              );
+                              const dayOfWeek = (date.getDay() + 6) % 7; // Adjust for Monday start (0 = Monday, 6 = Sunday)
+                              const weekIndex =
+                                Math.floor((dayIndex + offset) / 7) + 1; // Which week this day belongs to
 
-                            return (
-                              <motion.div
-                                key={dayIndex}
-                                className={`h-4 w-4 rounded-[2px] ${getColor(count)} ${
-                                  isToday ? "border-2 border-black" : ""
-                                } ${inStreak && count > 0 ? "[0_0_5px_2px_rgba(0,255,0,0.5)]" : ""}`}
-                                title={
-                                  isToday
-                                    ? `0 submission on ${date.toLocaleString("en-US", {
-                                        weekday: "long",
-                                        year: "numeric",
-                                        month: "long",
-                                        day: "numeric",
-                                      })}`
-                                    : `${date.toISOString().split("T")[0]}: ${count} contributions`
-                                }
-                                whileHover={{ scale: 1.2 }}
-                                transition={{ duration: 0.2 }}
-                              />
-                            );
-                          })}
+                              const contrib = monthContribs.find(
+                                (c) =>
+                                  c.date === date.toISOString().split("T")[0]
+                              );
+                              const count = contrib ? contrib.count : 0;
+                              const isToday =
+                                date.toISOString().split("T")[0] ===
+                                "2025-03-27"; // Highlight March 27, 2025
+                              const inStreak = isPartOfStreak(
+                                monthIndex,
+                                dayIndex,
+                                monthContribs
+                              );
+
+                              return (
+                                <motion.div
+                                  key={dayIndex}
+                                  className={`h-4 w-4 rounded-[2px] ${getColor(
+                                    count
+                                  )} ${
+                                    isToday ? "border-2 border-black" : ""
+                                  } ${
+                                    inStreak && count > 0
+                                      ? "[0_0_5px_2px_rgba(0,255,0,0.5)]"
+                                      : ""
+                                  }`}
+                                  style={{
+                                    gridRow: dayOfWeek + 1, // Place in the correct row (1-7 for Mon-Sun)
+                                    gridColumn: weekIndex, // Place in the correct week column
+                                  }}
+                                  title={
+                                    isToday
+                                      ? `0 submission on ${date.toLocaleString(
+                                          "en-US",
+                                          {
+                                            weekday: "long",
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                          }
+                                        )}`
+                                      : `${
+                                          date.toISOString().split("T")[0]
+                                        }: ${count} contributions`
+                                  }
+                                  whileHover={{ scale: 1.2 }}
+                                  transition={{ duration: 0.2 }}
+                                />
+                              );
+                            }
+                          )}
                         </div>
                         {/* Monthly Summary */}
                         <div className="text-xs text-muted-foreground text-center mt-1">
