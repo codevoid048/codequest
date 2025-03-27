@@ -3,8 +3,8 @@ import bcrypt from "bcryptjs";
 import { User } from "../models/User.js"
 import { Activity } from "../models/Activity.js"
 import { sendVerificationEmail } from "../utils/emailService.js"
-
-// Generate JWT token
+import { isEmailValid } from "../utils/isEmailValid.js";
+// Generate JWT token function
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '30d'
@@ -13,37 +13,38 @@ const generateToken = (id) => {
 
 export const registerUser = async (req, res) => {
     try {
-      const { name, email, password } = req.body;
+      const { name, email, password ,rank,streak,solveChallenges,points} = req.body;
 
-    console.log(name);
+     console.log(name);
       if (!name || !email || !password) {
         return res.status(400).json({ error: "All fields are required" });
       }
-  
+
+      const {valid, reason, validators} = await isEmailValid(email);
+      if(!valid) return res.status(400).send({ message: "Please provide a valid email address.", reason: validators[reason].reason })
+
       const user = await User.findOne({ email });
       if (user) return res.status(400).json({ error: "Email already exists" });
   
       const hashedPassword = await bcrypt.hash(password, 10);
   
-      // Generate verification token
-      const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
       
-      // Optional, 1 -> hour expiry
-      const verificationTokenExpires = Date.now() + 60 * 60 * 1000; 
   
       const newUser = new User({
         name,
         email,
         password: hashedPassword,
-        verificationToken,
-        verificationTokenExpires,
+        rank,
+        streak,
+        points,
+        solveChallenges,
+        
       });
   
       await newUser.save();
   
       // Send verification email
-      await sendVerificationEmail(email, verificationToken);
-  
+      
       res.status(201).json({ message: "User registered. Check your email for verification." });
     } catch (error) {
       console.error(error);
@@ -54,6 +55,10 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        const {valid, reason, validators} = await isEmailValid(email);
+        if(!valid) return res.status(400).send({ message: "Please provide a valid email address.", reason: validators[reason].reason })
+
         const user = await User.findOne({ email });
 
         if (!user) return res.status(401).json({ error: "No user found" });
@@ -92,4 +97,44 @@ export const verifyEmail = async (req, res) => {
       console.error("Verification error:", error);
       res.status(400).json({ error: "Invalid or expired token" });
     }
+  };
+  
+  export const googleAuthCallback = (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication failed" });
+    }
+  
+    const { user, token } = req.user;
+  
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  
+    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+  };
+
+  export const githubAuthCallback = (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication failed" });
+    }
+  
+    const { user, token } = req.user;
+  
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  
+    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+  };
+
+  
+  export const logoutUser = async (req, res) => {
+    res.clearCookie("jwt");
+    res.status(200).json({ message: "Logged out successfully" });
   };
