@@ -168,15 +168,18 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="px-4 py-5 space-y-8 min-h-screen">
+    <div className="px-2 sm:px-4 py-3 sm:py-5 space-y-4 sm:space-y-8 min-h-screen">
       <motion.div
-        className="grid grid-cols-1 lg:grid-cols-5 gap-8"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 lg:gap-8"
         variants={containerVariants}
       >
         {/* Sidebar - Profile Details */}
-        <motion.div className="lg:col-span-1" variants={cardVariants}>
-          <div className="flex flex-col items-center rounded-xl border p-3 shadow-lg">
-            <Avatar className="w-32 h-32 border-4 border-primary shadow-lg">
+        <motion.div
+          className="md:col-span-2 lg:col-span-1"
+          variants={cardVariants}
+        >
+          <div className="flex flex-col items-center rounded-xl border p-2 sm:p-3 shadow-lg">
+            <Avatar className="w-24 h-24 sm:w-32 sm:h-32 border-4 border-primary shadow-lg">
               <AvatarImage
                 src="/placeholder.svg?height=128&width=128"
                 alt={user.name}
@@ -214,7 +217,7 @@ export default function ProfilePage() {
                 </p>
               </div>
 
-              <div className="mt-4 flex gap-3">
+              <div className="mt-4 flex justify-center gap-2 sm:gap-3">
                 <Button variant="outline" size="icon" asChild>
                   <a
                     href={user.socialLinks.twitter}
@@ -257,7 +260,10 @@ export default function ProfilePage() {
         </motion.div>
 
         {/* Middle Section */}
-        <motion.div className="lg:col-span-3" variants={cardVariants}>
+        <motion.div
+          className="md:col-span-2 lg:col-span-3"
+          variants={cardVariants}
+        >
           {/* Top Row - Problems Solved, Points, Streak */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <motion.div variants={cardVariants}>
@@ -321,7 +327,7 @@ export default function ProfilePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <motion.div
                   variants={cardVariants}
                   whileHover={hoverVariants}
@@ -425,7 +431,10 @@ export default function ProfilePage() {
         </motion.div>
 
         {/* Right Section - Coding Platforms */}
-        <motion.div className="lg:col-span-1" variants={cardVariants}>
+        <motion.div
+          className="md:col-span-2 lg:col-span-1"
+          variants={cardVariants}
+        >
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -463,7 +472,7 @@ export default function ProfilePage() {
         </motion.div>
 
         {/* Contributions Map */}
-        <div className="lg:col-span-5">
+        <div className="md:col-span-4 lg:col-span-5">
           <Card className="mt-6 shadow-lg">
             <CardHeader>
               <div className="flex justify-between items-center">
@@ -474,7 +483,9 @@ export default function ProfilePage() {
                 {/* Year Filter */}
                 <select
                   value={selectedYear}
-                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  onChange={(e) =>
+                    setSelectedYear(Number.parseInt(e.target.value))
+                  }
                   className="border rounded-md p-1 text-sm"
                 >
                   {yearOptions.map((year) => (
@@ -489,130 +500,133 @@ export default function ProfilePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col gap-4">
-                {/* Month Labels */}
-                <div className="flex gap-4 text-xs text-muted-foreground text-center">
-                  {[
-                    "January",
-                    "February",
-                    "March",
-                    "April",
-                    "May",
-                    "June",
-                    "July",
-                    "August",
-                    "September",
-                    "October",
-                    "November",
-                    "December",
-                  ].map((month) => (
-                    <div key={month} className="flex-1 truncate">
-                      {month}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Contributions Grid */}
-                <div className="flex gap-4">
-                  {contributionsByMonth.map((monthContribs, monthIndex) => {
-                    const daysInMonth = getDaysInMonth(
-                      monthIndex,
-                      selectedYear
-                    );
-                    const firstDayOfMonth = new Date(
-                      selectedYear,
-                      monthIndex,
-                      1
-                    ).getDay();
-                    const offset = (firstDayOfMonth + 6) % 7; // Adjust for Monday start (0 = Monday, 6 = Sunday)
-                    const totalContributions = monthContribs.reduce(
-                      (sum, contrib) => sum + (contrib ? contrib.count : 0),
-                      0
-                    );
-
-                    // Calculate the number of weeks needed (including partial weeks)
-                    const totalCells = daysInMonth + offset;
-                    const numWeeks = Math.ceil(totalCells / 7);
-
-                    return (
-                      <div key={monthIndex} className="flex-1">
-                        <div
-                          className="grid gap-1"
-                          style={{
-                            gridTemplateColumns: `repeat(${numWeeks}, 1fr)`, // Columns for each week
-                            gridTemplateRows: "repeat(7, 1fr)", // 7 rows for days of the week (Mon-Sun)
-                          }}
-                        >
-                          {Array.from({ length: daysInMonth }).map(
-                            (_, dayIndex) => {
-                              const date = new Date(
-                                selectedYear,
-                                monthIndex,
-                                dayIndex + 1
-                              );
-                              const dayOfWeek = (date.getDay() + 6) % 7; // Adjust for Monday start (0 = Monday, 6 = Sunday)
-                              const weekIndex =
-                                Math.floor((dayIndex + offset) / 7) + 1; // Which week this day belongs to
-
-                              const contrib = monthContribs.find(
-                                (c) =>
-                                  c.date === date.toISOString().split("T")[0]
-                              );
-                              const count = contrib ? contrib.count : 0;
-                              const isToday =
-                                date.toISOString().split("T")[0] ===
-                                "2025-03-27"; // Highlight March 27, 2025
-                              const inStreak = isPartOfStreak(
-                                monthIndex,
-                                dayIndex,
-                                monthContribs
-                              );
-
-                              return (
-                                <motion.div
-                                  key={dayIndex}
-                                  className={`h-4 w-4 rounded-[2px] ${getColor(
-                                    count
-                                  )} ${
-                                    isToday ? "border-2 border-black" : ""
-                                  } ${
-                                    inStreak && count > 0
-                                      ? "[0_0_5px_2px_rgba(0,255,0,0.5)]"
-                                      : ""
-                                  }`}
-                                  style={{
-                                    gridRow: dayOfWeek + 1, // Place in the correct row (1-7 for Mon-Sun)
-                                    gridColumn: weekIndex, // Place in the correct week column
-                                  }}
-                                  title={
-                                    isToday
-                                      ? `0 submission on ${date.toLocaleString(
-                                          "en-US",
-                                          {
-                                            weekday: "long",
-                                            year: "numeric",
-                                            month: "long",
-                                            day: "numeric",
-                                          }
-                                        )}`
-                                      : `${
-                                          date.toISOString().split("T")[0]
-                                        }: ${count} contributions`
-                                  }
-                                  whileHover={{ scale: 1.2 }}
-                                  transition={{ duration: 0.2 }}
-                                />
-                              );
-                            }
-                          )}
-                        </div>
-                        {/* Monthly Summary */}
-                        <div className="text-xs text-muted-foreground text-center mt-1">
-                          {totalContributions} contributions
-                        </div>
+              {/* Contributions Grid */}
+              <div className="overflow-x-auto pb-2">
+                <div className=" pb-2">
+                  <div className="flex gap-4 text-xs text-muted-foreground text-center ">
+                    {[
+                      "January",
+                      "February",
+                      "March",
+                      "April",
+                      "May",
+                      "June",
+                      "July",
+                      "August",
+                      "September",
+                      "October",
+                      "November",
+                      "December",
+                    ].map((month) => (
+                      <div
+                        key={month}
+                        className="flex-1 truncate min-w-[102px]"
+                      >
+                        {month}
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+                  <div className="flex gap-4 min-w-[900px] mt-2">
+                    {contributionsByMonth.map((monthContribs, monthIndex) => {
+                      const daysInMonth = getDaysInMonth(
+                        monthIndex,
+                        selectedYear
+                      );
+                      const firstDayOfMonth = new Date(
+                        selectedYear,
+                        monthIndex,
+                        1
+                      ).getDay();
+                      const offset = (firstDayOfMonth + 6) % 7; // Adjust for Monday start (0 = Monday, 6 = Sunday)
+                      const totalContributions = monthContribs.reduce(
+                        (sum, contrib) => sum + (contrib ? contrib.count : 0),
+                        0
+                      );
+
+                      // Calculate the number of weeks needed (including partial weeks)
+                      const totalCells = daysInMonth + offset;
+                      const numWeeks = Math.ceil(totalCells / 7);
+
+                      return (
+                        <div key={monthIndex} className="flex-1">
+                          <div
+                            className="grid gap-1"
+                            style={{
+                              gridTemplateColumns: `repeat(${numWeeks}, 1fr)`, // Columns for each week
+                              gridTemplateRows: "repeat(7, 1fr)", // 7 rows for days of the week (Mon-Sun)
+                            }}
+                          >
+                            {Array.from({ length: daysInMonth }).map(
+                              (_, dayIndex) => {
+                                const date = new Date(
+                                  selectedYear,
+                                  monthIndex,
+                                  dayIndex + 1
+                                );
+                                const dayOfWeek = (date.getDay() + 6) % 7; // Adjust for Monday start (0 = Monday, 6 = Sunday)
+                                const weekIndex =
+                                  Math.floor((dayIndex + offset) / 7) + 1; // Which week this day belongs to
+
+                                const contrib = monthContribs.find(
+                                  (c) =>
+                                    c.date === date.toISOString().split("T")[0]
+                                );
+                                const count = contrib ? contrib.count : 0;
+                                const isToday =
+                                  date.toISOString().split("T")[0] ===
+                                  "2025-03-27"; // Highlight March 27, 2025
+                                const inStreak = isPartOfStreak(
+                                  monthIndex,
+                                  dayIndex,
+                                  monthContribs
+                                );
+
+                                return (
+                                  <motion.div
+                                    key={dayIndex}
+                                    className={`h-4 w-4 rounded-[2px] ${getColor(
+                                      count
+                                    )} ${
+                                      isToday ? "border-2 border-black" : ""
+                                    } ${
+                                      inStreak && count > 0
+                                        ? "[0_0_5px_2px_rgba(0,255,0,0.5)]"
+                                        : ""
+                                    }`}
+                                    style={{
+                                      gridRow: dayOfWeek + 1, // Place in the correct row (1-7 for Mon-Sun)
+                                      gridColumn: weekIndex, // Place in the correct week column
+                                    }}
+                                    title={
+                                      isToday
+                                        ? `0 submission on ${date.toLocaleString(
+                                            "en-US",
+                                            {
+                                              weekday: "long",
+                                              year: "numeric",
+                                              month: "long",
+                                              day: "numeric",
+                                            }
+                                          )}`
+                                        : `${
+                                            date.toISOString().split("T")[0]
+                                          }: ${count} contributions`
+                                    }
+                                    whileHover={{ scale: 1.2 }}
+                                    transition={{ duration: 0.2 }}
+                                  />
+                                );
+                              }
+                            )}
+                          </div>
+                          {/* Monthly Summary */}
+                          <div className="text-xs text-muted-foreground text-center mt-1">
+                            {totalContributions} contributions
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Legend */}
