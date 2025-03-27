@@ -4,7 +4,6 @@ import { User } from "../models/User.js"
 import { Activity } from "../models/Activity.js"
 import { sendVerificationEmail } from "../utils/emailService.js"
 import { isEmailValid } from "../utils/isEmailValid.js";
-
 // Generate JWT token function
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -14,7 +13,7 @@ const generateToken = (id) => {
 
 export const registerUser = async (req, res) => {
     try {
-      const { name, email, password } = req.body;
+      const { name, username, email, password ,rank,streak,solveChallenges,points} = req.body;
 
      console.log(name);
       if (!name || !email || !password) {
@@ -28,26 +27,29 @@ export const registerUser = async (req, res) => {
       if (user) return res.status(400).json({ error: "Email already exists" });
   
       const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Generate verification token
+
       const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
-      
+       
       // Optional, 1 -> hour expiry
-      const verificationTokenExpires = Date.now() + 60 * 60 * 1000; 
+      //const verificationTokenExpires = Date.now() + 60 * 60 * 1000; 
   
       const newUser = new User({
         name,
+        username,
         email,
         password: hashedPassword,
-        verificationToken,
-        verificationTokenExpires,
+        rank,
+        streak,
+        points,
+        solveChallenges,
+        
       });
   
       await newUser.save();
   
       // Send verification email
       await sendVerificationEmail(email, verificationToken);
-  
+      
       res.status(201).json({ message: "User registered. Check your email for verification." });
     } catch (error) {
       console.error(error);
@@ -138,6 +140,13 @@ export const verifyEmail = async (req, res) => {
 
   
   export const logoutUser = async (req, res) => {
-    res.clearCookie("jwt");
+    console.log("Logout API hit"); // Add this to check if API is being called
+
+    res.clearCookie("jwt", {
+        httpOnly: true,
+        secure: false,
+        sameSite: "Lax",
+    });
+
     res.status(200).json({ message: "Logged out successfully" });
-  };
+};

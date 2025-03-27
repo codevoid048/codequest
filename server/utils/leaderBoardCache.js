@@ -6,9 +6,8 @@ const leaderBoardCache = new NodeCache({ stdTTL: 600 });
 export const updateRanks = async () => {
     try {
         console.log('Updating leaderboard ranks.....');
-
         const users = await User.find()
-                                .select('_id points')
+                                .select('_id points streak solveChallenges name')
                                 .sort({ points: -1 })
                                 .lean();
         

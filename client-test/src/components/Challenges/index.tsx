@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+// import {axiosInstance }from "@/lib/axios"
+import axios from "axios";
 import {
   Award,
   Calendar,
@@ -20,7 +22,7 @@ import {
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 
-interface Problem {
+interface challenge {
   id: number;
   date: string;
   title: string;
@@ -40,7 +42,7 @@ const Challenges: React.FC = () => {
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" });
-  const [problemsList, setProblemsList] = useState<Problem[]>([]);
+  const [problemsList, setProblemsList] = useState<challenge[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("date");
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,59 +51,37 @@ const Challenges: React.FC = () => {
   const itemsPerPage = 5;
 
   useEffect(() => {
-    const loadProblems = async () => {
-      setIsLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setProblemsList([
-        {
-          id: 1,
-          date: "2025-03-22",
-          title: "Stickler Thief II",
-          categories: ["Dynamic Programming", "Arrays", "Algorithms"],
-          difficulty: "Medium",
-          platform: "GFG",
-          status: "Unsolved",
-          description: "Find the maximum possible stolen value from houses...",
-          problemUrl: "https://www.geeksforgeeks.org/stickler-thief/",
-        },
-        {
-          id: 2,
-          date: "2025-03-21",
-          title: "Two Sum",
-          categories: ["Arrays", "Hash Table"],
-          difficulty: "Easy",
-          platform: "LeetCode",
-          status: "Solved",
-          description: "Find two numbers that sum up to target...",
-          problemUrl: "https://leetcode.com/problems/two-sum/",
-        },
-        {
-          id: 3,
-          date: "2025-03-20",
-          title: "Merge K Sorted Lists",
-          categories: ["Linked List", "Heap", "Divide and Conquer"],
-          difficulty: "Hard",
-          platform: "LeetCode",
-          status: "Unsolved",
-          description: "Merge k sorted linked lists into one sorted list...",
-          problemUrl: "https://leetcode.com/problems/merge-k-sorted-lists/",
-        },
-        {
-          id: 4,
-          date: "2025-03-19",
-          title: "Maximum Subarray",
-          categories: ["Arrays", "Dynamic Programming"],
-          difficulty: "Medium",
-          platform: "CodeChef",
-          status: "Solved",
-          description: "Find the contiguous subarray with the largest sum...",
-          problemUrl: "https://www.codechef.com/problems/MAXSUB",
-        },
-      ]);
-      setIsLoading(false);
-    };
-    loadProblems();
-  }, []);
+    const fetchProblems = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/challenges');
+        console.log(res.data);
+        if (res.data && Array.isArray(res.data.challenges)) {
+          const data = res.data.challenges.map((challenge: any) => ({
+            id: challenge._id,
+            date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }),
+            title: challenge.title,
+            categories: challenge.category,
+            difficulty: challenge.difficulty,
+            platform: "LeetCode", 
+            status: "Unsolved", 
+            description: challenge.description,
+            problemUrl: challenge.problemLink,
+          }));
+          setProblemsList(data);
+          setIsLoading(false);
+        }
+            } catch (error) {
+        console.error("Failed to fetch problems", error);
+            }
+          };
+          fetchProblems();
+        }, []);
+
+
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -201,78 +181,52 @@ const Challenges: React.FC = () => {
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Problem of the Day Section */}
-      <Card className="border-0 shadow-xl bg-gray-900 dark:bg-white rounded-xl overflow-hidden">
-        <div
-          style={{
-            background: "#3B82F6", // Fallback
-            backgroundColor: "oklch(0.544 0.143 262.88)", // OKLCH color
-          }}
-        ></div>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+      <Card className="border-1 shadow-xl bg-card rounded-xl overflow-hidden relative">
+        <CardContent className="p-1 sm:p-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center">
-              <div className="mr-3 bg-[#3B82F6]/10 dark:bg-[#3B82F6]/20 p-2 rounded-lg">
-                <Flame
-                  className="h-6 w-6"
-                  style={{
-                    color: "#3B82F6",
-                    color: "oklch(0.544 0.143 262.88)",
-                  }}
-                />
+              <div className="mr-3 bg-primary/10 dark:bg-primary/20 p-2 rounded-lg">
+                <Flame className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-100 dark:text-gray-900">
-                Problem of the Day
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+                Daily Challenge
               </h2>
             </div>
-            <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-gray-800 dark:bg-gray-100 px-3 py-2 rounded-lg">
-              <Clock
-                className="h-5 w-5 mr-2"
-                style={{
-                  color: "#3B82F6",
-                  color: "oklch(0.544 0.143 262.88)",
-                }}
-              />
-              <span className="bg-gray-900 dark:bg-white text-gray-100 dark:text-gray-900 px-3 py-1 rounded shadow-sm">
+            <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
+              <Clock className="h-5 w-5 mr-2 text-primary" />
+              <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
                 {countdown.hours}
               </span>
-              <span className="text-gray-400 dark:text-gray-500 px-1">:</span>
-              <span className="bg-gray-900 dark:bg-white text-gray-100 dark:text-gray-900 px-3 py-1 rounded shadow-sm">
+              <span className="text-muted-foreground px-1">:</span>
+              <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
                 {countdown.minutes}
               </span>
-              <span className="text-gray-400 dark:text-gray-500 px-1">:</span>
-              <span className="bg-gray-900 dark:bg-white text-gray-100 dark:text-gray-900 px-3 py-1 rounded shadow-sm">
+              <span className="text-muted-foreground px-1">:</span>
+              <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
                 {countdown.seconds}
               </span>
             </div>
           </div>
           {isLoading ? (
             <div className="flex justify-center items-center h-40">
-              <div
-                className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2"
-                style={{
-                  borderTopColor: "#3B82F6",
-                  borderBottomColor: "#3B82F6",
-                  borderTopColor: "oklch(0.544 0.143 262.88)",
-                  borderBottomColor: "oklch(0.544 0.143 262.88)",
-                }}
-              ></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
             </div>
           ) : (
             <Card
-              className="border-1 cursor-pointer  bg-gray-900 dark:bg-white rounded-xl overflow-hidden mt-4"
+              className="border-1 cursor-pointer hover:shadow-lg bg-card rounded-xl overflow-hidden mt-4"
               onClick={() => openProblemLink(dailyProblem?.problemUrl)}
             >
               <CardContent>
                 <div className="flex flex-col sm:flex-row justify-between gap-6">
                   <div className="space-y-2 flex-1">
-                    <div className="flex items-center text-sm text-gray-400 dark:text-gray-500">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4 mr-2" />
                       {new Date().toISOString().split("T")[0]}
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-gray-100 dark:text-gray-900">
+                    <h3 className="text-xl sm:text-2xl font-bold text-foreground">
                       {dailyProblem?.title}
                     </h3>
-                    <p className="text-gray-300 dark:text-gray-600 text-sm line-clamp-2">
+                    <p className="text-muted-foreground text-sm line-clamp-2">
                       {dailyProblem?.description}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -280,7 +234,7 @@ const Challenges: React.FC = () => {
                         <Badge
                           key={cat}
                           variant="secondary"
-                          className="text-xs py-1 px-2 bg-gray-800 dark:bg-gray-200 text-gray-200 dark:text-gray-800"
+                          className="text-xs py-1 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
                         >
                           {cat}
                         </Badge>
@@ -288,23 +242,12 @@ const Challenges: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex flex-col gap-4 justify-center">
-                    <Button
-                      className="text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6"
-                      style={{
-                        background: "#3B82F6",
-                        backgroundColor: "oklch(0.544 0.143 262.88)",
-                        background: "linear-gradient(to right, #3B82F6, #3B82F6)", // Fallback gradient (same color)
-                        background: "linear-gradient(to right, oklch(0.544 0.143 262.88), oklch(0.544 0.143 262.88))",
-                        "&:hover": {
-                          background: "oklch(0.5 0.143 262.88)", // Slightly darker for hover
-                        },
-                      }}
-                    >
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
                       Solve Now
                     </Button>
                   </div>
                 </div>
-                <div className="mt-6 pt-4 border-t border-gray-700 dark:border-gray-200 flex flex-wrap gap-4 text-sm">
+                <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-4 text-sm">
                   <span
                     className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${getDifficultyStyle(
                       dailyProblem?.difficulty
@@ -313,14 +256,8 @@ const Challenges: React.FC = () => {
                     {getDifficultyIcon(dailyProblem?.difficulty)}
                     {dailyProblem?.difficulty}
                   </span>
-                  <span className="flex items-center gap-2 bg-gray-800 dark:bg-gray-200 px-3 py-1 rounded-full text-gray-200 dark:text-gray-800">
-                    <Code
-                      className="h-4 w-4"
-                      style={{
-                        color: "#3B82F6",
-                        color: "oklch(0.544 0.143 262.88)",
-                      }}
-                    />
+                  <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-3 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
+                    <Code className="h-4 w-4 text-primary" />
                     {dailyProblem?.platform}
                   </span>
                 </div>
@@ -337,7 +274,7 @@ const Challenges: React.FC = () => {
           <div className="lg:hidden mb-4">
             <Button
               variant="outline"
-              className="w-full flex justify-between items-center text-sm py-2 px-4 border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-700"
+              className="w-full flex justify-between items-center text-sm py-2 px-4 border-border text-foreground"
               onClick={() => setIsFilterOpen(!isFilterOpen)}
             >
               <span className="flex items-center">
@@ -347,11 +284,11 @@ const Challenges: React.FC = () => {
             </Button>
           </div>
           <Card
-            className={`shadow-lg border-0 bg-gray-900 dark:bg-white ${isFilterOpen ? "block" : "hidden lg:block"}`}
+            className={`shadow-lg border-0 bg-card ${isFilterOpen ? "block" : "hidden lg:block"}`}
           >
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-6 space-y-6 ">
               <div>
-                <h3 className="text-lg font-medium mb-4 flex items-center text-gray-100 dark:text-gray-900">
+                <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
                   <Flame className="h-5 w-5 mr-2 text-amber-400 dark:text-amber-900" /> Difficulty
                 </h3>
                 <div className="flex flex-col gap-3">
@@ -359,15 +296,10 @@ const Challenges: React.FC = () => {
                     <div key={level} className="flex items-center gap-3">
                       <button
                         onClick={() => toggleDifficulty(level)}
-                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
-                          selectedDifficulties.includes(level)
-                            ? "border-none"
-                            : "border-gray-300 dark:border-gray-600"
-                        }`}
-                        style={{
-                          backgroundColor: selectedDifficulties.includes(level) ? "oklch(0.544 0.143 262.88)" : "transparent",
-                          backgroundColor: selectedDifficulties.includes(level) ? "#3B82F6" : "transparent",
-                        }}
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedDifficulties.includes(level)
+                            ? "bg-primary border-primary"
+                            : "border-border"
+                          }`}
                       >
                         {selectedDifficulties.includes(level) && (
                           <svg
@@ -378,7 +310,7 @@ const Challenges: React.FC = () => {
                             strokeWidth="3"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            className="h-3 w-3 text-white"
+                            className="h-3 w-3 text-primary-foreground"
                           >
                             <polyline points="20 6 9 17 4 12"></polyline>
                           </svg>
@@ -386,7 +318,7 @@ const Challenges: React.FC = () => {
                       </button>
                       <label
                         htmlFor={level}
-                        className="text-sm font-medium flex items-center gap-2 cursor-pointer text-gray-300 dark:text-gray-700"
+                        className="text-sm font-medium flex items-center gap-2 cursor-pointer text-foreground"
                         onClick={() => toggleDifficulty(level)}
                       >
                         {getDifficultyIcon(level)}
@@ -396,31 +328,19 @@ const Challenges: React.FC = () => {
                   ))}
                 </div>
               </div>
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                <h3 className="text-lg font-medium mb-4 flex items-center text-gray-100 dark:text-gray-900">
-                  <Tag
-                    className="h-5 w-5 mr-2"
-                    style={{
-                      color: "#3B82F6",
-                      color: "oklch(0.544 0.143 262.88)",
-                    }}
-                  />
-                  Categories
+              <div className="border-t border-border pt-6">
+                <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
+                  <Tag className="h-5 w-5 mr-2 text-primary" /> Categories
                 </h3>
                 <div className="flex flex-col gap-3">
                   {uniqueCategories.map((cat) => (
                     <div key={cat} className="flex items-center gap-3">
                       <button
                         onClick={() => toggleCategory(cat)}
-                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
-                          selectedCategories.includes(cat)
-                            ? "border-none"
-                            : "border-gray-300 dark:border-gray-600"
-                        }`}
-                        style={{
-                          backgroundColor: selectedCategories.includes(cat) ? "oklch(0.544 0.143 262.88)" : "transparent",
-                          backgroundColor: selectedCategories.includes(cat) ? "#3B82F6" : "transparent",
-                        }}
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedCategories.includes(cat)
+                            ? "bg-primary border-primary"
+                            : "border-border"
+                          }`}
                       >
                         {selectedCategories.includes(cat) && (
                           <svg
@@ -431,7 +351,7 @@ const Challenges: React.FC = () => {
                             strokeWidth="3"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            className="h-3 w-3 text-white"
+                            className="h-3 w-3 text-primary-foreground"
                           >
                             <polyline points="20 6 9 17 4 12"></polyline>
                           </svg>
@@ -439,7 +359,7 @@ const Challenges: React.FC = () => {
                       </button>
                       <label
                         htmlFor={cat}
-                        className="text-sm font-medium cursor-pointer text-gray-300 dark:text-gray-700"
+                        className="text-sm font-medium cursor-pointer text-foreground"
                         onClick={() => toggleCategory(cat)}
                       >
                         {cat}
@@ -461,21 +381,10 @@ const Challenges: React.FC = () => {
                   key={tab}
                   variant={activeTab === tab ? "default" : "outline"}
                   onClick={() => setActiveTab(tab as FilterTab)}
-                  className={`text-sm py-2 px-4 w-full sm:w-auto transition-all duration-300 ${
-                    activeTab === tab
-                      ? "text-white border-0 shadow-md"
-                      : "border-gray-700 dark:border-gray-200 text-gray-300 dark:text-gray-700"
-                  }`}
-                  style={{
-                    background: activeTab === tab ? "oklch(0.544 0.143 262.88)" : "transparent",
-                    background: activeTab === tab ? "#3B82F6" : "transparent",
-                    background: activeTab === tab ? "linear-gradient(to right, #3B82F6, #3B82F6)" : "transparent",
-                    background: activeTab === tab ? "linear-gradient(to right, oklch(0.544 0.143 262.88), oklch(0.544 0.143 262.88))" : "transparent",
-                    "&:hover": {
-                      background: activeTab === tab ? "oklch(0.5 0.143 262.88)" : "transparent",
-                      borderColor: activeTab !== tab ? "oklch(0.544 0.143 262.88)" : "transparent",
-                    },
-                  }}
+                  className={`text-sm py-2 px-4 w-full sm:w-auto transition-all duration-300 ${activeTab === tab
+                      ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md"
+                      : "border-border hover:border-primary text-foreground"
+                    }`}
                 >
                   {tab === "all" ? (
                     <span className="flex items-center gap-2">
@@ -496,19 +405,9 @@ const Challenges: React.FC = () => {
                 </Button>
               ))}
               <div className="relative w-full sm:w-64 group">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 transition-colors duration-200"
-                  style={{
-                    color: "group-focus-within:oklch(0.544 0.143 262.88)",
-                    color: "group-focus-within:#3B82F6",
-                  }}
-                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors duration-200" />
                 <Input
-                  className="pl-10 w-full text-sm border-gray-200 dark:border-gray-700 transition-all duration-200 text-gray-300 dark:text-gray-700 bg-gray-900 dark:bg-white"
-                  style={{
-                    borderColor: "focus:oklch(0.544 0.143 262.88)",
-                    borderColor: "focus:#3B82F6",
-                  }}
+                  className="pl-10 w-full text-sm border-border focus:border-primary transition-all duration-200 text-foreground bg-card"
                   placeholder="Search problems..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -521,16 +420,8 @@ const Challenges: React.FC = () => {
           {isLoading ? (
             <div className="flex justify-center items-center h-60">
               <div className="flex flex-col items-center gap-4">
-                <div
-                  className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2"
-                  style={{
-                    borderTopColor: "#3B82F6",
-                    borderBottomColor: "#3B82F6",
-                    borderTopColor: "oklch(0.544 0.143 262.88)",
-                    borderBottomColor: "oklch(0.544 0.143 262.88)",
-                  }}
-                ></div>
-                <p className="text-gray-400 dark:text-gray-500">Loading problems...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground">Loading problems...</p>
               </div>
             </div>
           ) : (
@@ -540,20 +431,20 @@ const Challenges: React.FC = () => {
                   currentItems.map((problem, index) => (
                     <Card
                       key={problem.id}
-                      className="border-1 cursor-pointer bg-gray-900 dark:bg-white overflow-hidden"
+                      className="border-1 cursor-pointer bg-card overflow-hidden"
                       onClick={() => openProblemLink(problem.problemUrl)}
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <CardContent>
                         <div className="flex flex-col sm:flex-row justify-between gap-6">
-                          <div className="space-y-2.5 flex-1">
-                            <div className="flex items-center text-xs text-gray-400 dark:text-gray-500">
+                          <div className="space-y-2 flex-1">
+                            <div className="flex items-center text-xs text-muted-foreground">
                               <Calendar className="h-3 w-3 mr-1" /> {problem.date}
                             </div>
-                            <h3 className="text-lg font-bold text-gray-100 dark:text-gray-900">
+                            <h3 className="text-lg font-bold text-foreground">
                               {problem.title}
                             </h3>
-                            <p className="text-gray-300 dark:text-gray-600 text-sm line-clamp-1">
+                            <p className="text-muted-foreground text-sm line-clamp-1">
                               {problem.description}
                             </p>
                             <div className="flex flex-wrap gap-1.5">
@@ -561,7 +452,7 @@ const Challenges: React.FC = () => {
                                 <Badge
                                   key={cat}
                                   variant="secondary"
-                                  className="text-xs py-0.5 px-2 bg-gray-800 dark:bg-gray-200 text-gray-200 dark:text-gray-800"
+                                  className="text-xs py-0.5 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
                                 >
                                   {cat}
                                 </Badge>
@@ -576,14 +467,8 @@ const Challenges: React.FC = () => {
                                 {getDifficultyIcon(problem.difficulty)}
                                 {problem.difficulty}
                               </span>
-                              <span className="flex items-center gap-1.5 bg-gray-800 dark:bg-gray-200 px-2 py-1 rounded-full text-gray-200 dark:text-gray-800">
-                                <Code
-                                  className="h-3 w-3"
-                                  style={{
-                                    color: "#3B82F6",
-                                    color: "oklch(0.544 0.143 262.88)",
-                                  }}
-                                />
+                              <span className="flex items-center gap-1.5 bg-secondary dark:bg-muted px-2 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
+                                <Code className="h-3 w-3 text-primary" />
                                 {problem.platform}
                               </span>
                             </div>
@@ -600,15 +485,7 @@ const Challenges: React.FC = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-xs py-1 px-2 w-full transition-colors duration-200 text-gray-300 dark:text-gray-700"
-                                style={{
-                                  borderColor: "oklch(0.544 0.143 262.88)",
-                                  borderColor: "#3B82F6",
-                                  "&:hover": {
-                                    backgroundColor: "oklch(0.544 0.143 262.88)/0.1",
-                                    color: "oklch(0.544 0.143 262.88)",
-                                  },
-                                }}
+                                className="text-xs py-1 px-2 w-full border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   markSolved(problem.id);
@@ -623,12 +500,12 @@ const Challenges: React.FC = () => {
                     </Card>
                   ))
                 ) : (
-                  <Card className="shadow-lg border-0 bg-gray-900 dark:bg-white">
+                  <Card className="shadow-lg border-0 bg-card">
                     <CardContent className="p-12 text-center">
                       <div className="flex flex-col items-center gap-4">
-                        <Search className="h-12 w-12 text-gray-300 dark:text-gray-600" />
-                        <p className="text-gray-400 dark:text-gray-500 text-lg">No problems found</p>
-                        <p className="text-gray-400 dark:text-gray-500 text-sm">Try adjusting your filters</p>
+                        <Search className="h-12 w-12 text-muted-foreground" />
+                        <p className="text-muted-foreground text-lg">No problems found</p>
+                        <p className="text-muted-foreground text-sm">Try adjusting your filters</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -642,13 +519,7 @@ const Challenges: React.FC = () => {
                     variant="outline"
                     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="text-sm py-2 px-6 w-full sm:w-auto border-gray-200 dark:border-gray-700 disabled:opacity-50 text-gray-300 dark:text-gray-700"
-                    style={{
-                      "&:hover": {
-                        borderColor: "oklch(0.544 0.143 262.88)",
-                        borderColor: "#3B82F6",
-                      },
-                    }}
+                    className="text-sm py-2 px-6 w-full sm:w-auto border-border hover:border-primary disabled:opacity-50 text-foreground"
                   >
                     <ChevronUp className="h-4 w-4 rotate-90 mr-2" />
                     Previous
@@ -659,15 +530,10 @@ const Challenges: React.FC = () => {
                         key={page}
                         variant={currentPage === page ? "default" : "outline"}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 p-0 ${
-                          currentPage === page
-                            ? "text-white"
-                            : "border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-700"
-                        }`}
-                        style={{
-                          background: currentPage === page ? "oklch(0.544 0.143 262.88)" : "transparent",
-                          background: currentPage === page ? "#3B82F6" : "transparent",
-                        }}
+                        className={`w-8 h-8 p-0 ${currentPage === page
+                            ? "bg-primary text-primary-foreground"
+                            : "border-border text-foreground"
+                          }`}
                       >
                         {page}
                       </Button>
@@ -677,13 +543,7 @@ const Challenges: React.FC = () => {
                     variant="outline"
                     onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="text-sm py-2 px-6 w-full sm:w-auto border-gray-200 dark:border-gray-700 disabled:opacity-50 text-gray-300 dark:text-gray-700"
-                    style={{
-                      "&:hover": {
-                        borderColor: "oklch(0.544 0.143 262.88)",
-                        borderColor: "#3B82F6",
-                      },
-                    }}
+                    className="text-sm py-2 px-6 w-full sm:w-auto border-border hover:border-primary disabled:opacity-50 text-foreground"
                   >
                     Next
                     <ChevronDown className="h-4 w-4 rotate-90 ml-2" />

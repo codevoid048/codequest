@@ -1,3 +1,4 @@
+//APp 
 import express from "express";
 import session from "express-session";
 import cors from "cors";
@@ -13,7 +14,8 @@ import cookieParser from "cookie-parser";
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: "http://localhost:5173", credentials: true, }));
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
@@ -24,7 +26,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/admin',challengeRoutes)
+app.use('/api/admin', challengeRoutes)
 updateRanks();
 
 // Schedule leaderboard update every hour
