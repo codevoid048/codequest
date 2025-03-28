@@ -4,6 +4,7 @@ import { User } from "../models/User.js"
 import { Activity } from "../models/Activity.js"
 import { sendVerificationEmail } from "../utils/emailService.js"
 import { isEmailValid } from "../utils/isEmailValid.js";
+import { sendEmail } from "../utils/sendEmail.js"
 // Generate JWT token function
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -150,3 +151,58 @@ export const verifyEmail = async (req, res) => {
 
     res.status(200).json({ message: "Logged out successfully" });
 };
+
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Generate Reset Token (JWT)
+      const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.RESET_TOKEN_EXPIRY });
+
+      // Save Token & Expiry in DB
+      user.resetPasswordToken = resetToken;
+      user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 min expiry
+      await user.save();
+
+      // Send Reset Link via Email
+      const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+      await sendEmail(user.email, "Password Reset Request", `Click the link to reset password: ${resetLink}`);
+
+      res.status(200).json({ message: "Reset link sent to email" });
+  } catch (error) {
+      res.status(500).json({ message: "Server Error1", error });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+    console.log(token);
+
+    try {
+        // Verify JWT Token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
+
+        if (!user || user.resetPasswordToken !== token || user.resetPasswordExpires < Date.now()) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+        // Hash New Password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update Password in DB
+        user.password = hashedPassword;
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+        await user.save();
+
+        res.status(200).json({ message: "Password reset successful" });
+    } catch (error) {
+        res.status(400).json({ message: "Invalid or expired token1", error });
+    }
+};
+
