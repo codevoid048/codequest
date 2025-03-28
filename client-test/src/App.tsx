@@ -9,8 +9,9 @@ import LogoutPage from './components/Logout'
 import RegisterPage from './components/SignUp'
 import Footer from './components/footer'
 import AboutPage from './components/About'
-import Leaderboard from './components/Leaderboard'
+import Leaderboard from './components/leaderboard'
 import ProfilePage from "./components/ProfilePage";
+import ChallengeForm from "./components/Admin/NewChallenge";
 function App() {
   return (
     <Router>
@@ -25,6 +26,7 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path='/logout' element={<LogoutPage/>}/>
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/admin/form" element={<ChallengeForm />} />
         </Routes>
         <Footer />
       </div>
