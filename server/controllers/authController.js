@@ -14,7 +14,7 @@ const generateToken = (id) => {
 
 export const registerUser = async (req, res) => {
     try {
-      const { name, email, password ,rank,streak,solveChallenges,points} = req.body;
+      const { name, username, email, password ,rank,streak,solveChallenges,points} = req.body;
 
      console.log(name);
       if (!name || !email || !password) {
@@ -28,11 +28,15 @@ export const registerUser = async (req, res) => {
       if (user) return res.status(400).json({ error: "Email already exists" });
   
       const hashedPassword = await bcrypt.hash(password, 10);
-  
-      
+
+      const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+       
+      // Optional, 1 -> hour expiry
+      //const verificationTokenExpires = Date.now() + 60 * 60 * 1000; 
   
       const newUser = new User({
         name,
+        username,
         email,
         password: hashedPassword,
         rank,
@@ -45,6 +49,7 @@ export const registerUser = async (req, res) => {
       await newUser.save();
   
       // Send verification email
+      await sendVerificationEmail(email, verificationToken);
       
       res.status(201).json({ message: "User registered. Check your email for verification." });
     } catch (error) {
@@ -137,8 +142,19 @@ export const verifyEmail = async (req, res) => {
 
   
   export const logoutUser = async (req, res) => {
-    res.clearCookie("jwt");
+    console.log("Logout API hit"); // Add this to check if API is being called
+
+    res.clearCookie("jwt", {
+        httpOnly: true,
+        secure: false,
+        sameSite: "Lax",
+    });
+
     res.status(200).json({ message: "Logged out successfully" });
+<<<<<<< HEAD
   };
 
   
+=======
+};
+>>>>>>> 227c78f431d7560f5846689cc6034b40975dae40

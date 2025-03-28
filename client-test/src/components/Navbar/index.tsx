@@ -92,6 +92,9 @@ export function Navbar() {
                         <Button asChild>
                             <Link to="/register">Sign Up</Link>
                         </Button>
+                        <Button asChild>
+                            <Link to="/logout">Logout</Link>
+                        </Button>
                     </div>
 
                     <Sheet>
@@ -127,6 +130,9 @@ export function Navbar() {
                                     </Button>
                                     <Button asChild className="w-full">
                                         <Link to="/register">Sign Up</Link>
+                                    </Button>
+                                    <Button asChild className="w-full">
+                                        <Link to="/logout">Logout</Link>
                                     </Button>
                                 </div>
                             </div>
