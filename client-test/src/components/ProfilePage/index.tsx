@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
 import {
   Card,
   CardContent,
@@ -23,30 +24,75 @@ import {
   Trophy,
   Twitter,
 } from "lucide-react";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 
 export default function ProfilePage() {
-  const user = {
-    username: "codemaster42",
-    name: "Alex Johnson",
-    college: "Stanford University",
-    branch: "Computer Science",
-    rankPosition: 423,
-    location: "San Francisco, CA",
-    points: 12450,
-    streak: { current: 32 },
+  interface User {
+    name: string;
+    username: string;
+    rankPosition: number;
+    college: string;
+    branch: string;
+    location: string;
     socialLinks: {
-      twitter: "https://twitter.com/codemaster42",
-      linkedin: "https://linkedin.com/in/alexjohnson",
-      github: "https://github.com/codemaster42",
-    },
-  };
+      twitter: string;
+      linkedin: string;
+      github: string;
+    };
+    points: number;
+    streak: {
+      current: number;
+    };
+  }
+
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const problemsSolved = {
-    total: 487,
-    easy: 204,
-    medium: 231,
-    hard: 52,
+    total: 0,
+    easy: 0,
+    medium: 0,
+    hard: 0,
+  };
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  const [error, setError] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        const userRes = await axios.get('http://localhost:5000/api/profile/me'); // Replace with your actual backend API URL
+        console.log(userRes.data);
+        // const problemsRes = await axios.get("/api/user/problems-solved");
+        // const platformsRes = await axios.get("/api/user/platforms");
+        // const contributionsRes = await axios.get(`/api/user/contributions?year=${selectedYear}`);
+
+        setUser(userRes.data);
+        // setProblemsSolved(problemsRes.data);
+        // setPlatforms(platformsRes.data);
+        // setContributions(contributionsRes.data);
+      } catch (err) {
+        setError("Failed to fetch data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [selectedYear]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+
+  // Function to determine color based on contribution count
+  const getColor = (count:number) => {
+    if (count === 0) return "bg-gray-300";
+    if (count <= 3) return "bg-green-200";
+    if (count <= 6) return "bg-green-400";
+    return "bg-green-500";
   };
 
   const platforms = [
@@ -62,15 +108,15 @@ export default function ProfilePage() {
   ];
 
   // State for year filter
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  // const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   // Function to get the number of days in a month
-  const getDaysInMonth = (month, year) => {
+  const getDaysInMonth = (month: number, year: number) :number=> {
     return new Date(year, month + 1, 0).getDate();
   };
 
   // Generate contributions for a specific year
-  const generateContributions = (year) => {
+  const generateContributions = (year: number) => {
     const contributions = [];
     const startDate = new Date(year, 0, 1); // January 1st of the selected year
     const endDate = new Date(year, 11, 31); // December 31st of the selected year
@@ -113,15 +159,18 @@ export default function ProfilePage() {
   ];
 
   // Function to determine color based on contribution count
-  const getColor = (count) => {
-    if (count === 0) return "bg-gray-300";
-    if (count <= 3) return "bg-green-200";
-    if (count <= 6) return "bg-green-400";
-    return "bg-green-500";
-  };
+  // const getColor = (count:number) => {
+  //   if (count === 0) return "bg-gray-300";
+  //   if (count <= 3) return "bg-green-200";
+  //   if (count <= 6) return "bg-green-400";
+  //   return "bg-green-500";
+  // };
 
   // Function to check if a day is part of a streak
-  const isPartOfStreak = (monthIndex, dayIndex, monthContribs) => {
+  const isPartOfStreak = (monthIndex:number, dayIndex:number, monthContribs:{
+    date: string;
+    count: number
+  }[]):boolean => {
     const currentDate = new Date(selectedYear, monthIndex, dayIndex + 1);
     const currentContrib = monthContribs.find(
       (c) => c.date === currentDate.toISOString().split("T")[0]
@@ -182,45 +231,45 @@ export default function ProfilePage() {
             <Avatar className="w-24 h-24 sm:w-32 sm:h-32 border-4 border-primary shadow-lg">
               <AvatarImage
                 src="/placeholder.svg?height=128&width=128"
-                alt={user.name}
+                alt={user?.name || "User"}
               />
               <AvatarFallback className="text-4xl font-bold">
-                {user.name.charAt(0)}
+                {user ? user.name.charAt(0) : ""}
               </AvatarFallback>
             </Avatar>
 
             <div className="mt-4 text-center lg:text-left">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-teal-500 bg-clip-text text-transparent">
-                {user.name}
+                {user ? user.name : "Loading..."}
               </h1>
-              <p className="text-lg text-muted-foreground">@{user.username}</p>
+              <p className="text-lg text-muted-foreground">@{user?user.username:""}</p>
 
               <div className="mt-2">
                 <p className="text-sm mt-1 flex items-center justify-center lg:justify-start text-muted-foreground">
                   <ChevronUp className="h-4 w-4 text-green-500" />
-                  Position #{user.rankPosition}
+                  Position #{user? user.rankPosition:0}
                 </p>
               </div>
 
               <div className="mt-5 space-y-2">
                 <p className="text-sm flex items-center gap-1.5">
                   <School className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user.college}
+                  {user? user.college:""}
                 </p>
                 <p className="text-sm flex items-center gap-1.5">
                   <Code2 className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user.branch}
+                  {user? user.branch:""}
                 </p>
                 <p className="text-sm flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user.location}
+                  {user? user.location:""}
                 </p>
               </div>
 
               <div className="mt-4 flex justify-center gap-2 sm:gap-3">
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user.socialLinks.twitter}
+                    href={user?user.socialLinks.twitter:""}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -229,7 +278,7 @@ export default function ProfilePage() {
                 </Button>
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user.socialLinks.linkedin}
+                    href={user?user.socialLinks.linkedin:""}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -238,7 +287,7 @@ export default function ProfilePage() {
                 </Button>
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user.socialLinks.github}
+                    href={user?user.socialLinks.github:""}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -292,7 +341,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">
-                    {user.points}
+                    {user?user.points:0}
                   </div>
                 </CardContent>
               </Card>
@@ -308,7 +357,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-                    {user.streak.current}
+                    {user?user.streak.current:0}
                   </div>
                 </CardContent>
               </Card>

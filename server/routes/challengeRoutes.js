@@ -6,5 +6,5 @@ const router = express.Router();
 
 router.get('/',getChallenges);
 router.get('/:id', protect, getChallengeById);
-router.post('/challenge',addChallenge)
+router.post('/challenge',protect,addChallenge)
 export default router;
