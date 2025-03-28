@@ -12,6 +12,7 @@ import AboutPage from './components/About'
 import Leaderboard from './components/leaderboard'
 import ProfilePage from "./components/ProfilePage";
 import ChallengeForm from "./components/Admin/NewChallenge";
+import CodingClubForm from "./components/ProfilePage/form";
 function App() {
   return (
     <Router>
@@ -27,8 +28,9 @@ function App() {
           <Route path='/logout' element={<LogoutPage/>}/>
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin/form" element={<ChallengeForm />} />
+          <Route path="/profile/form" element={<CodingClubForm />} />
         </Routes>
-        <Footer />
+        <Footer />    
       </div>
     </Router>
   );
