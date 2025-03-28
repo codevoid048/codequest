@@ -2,7 +2,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
 import {
   Card,
   CardContent,
@@ -11,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   Calendar,
   ChevronUp,
@@ -24,75 +24,31 @@ import {
   Trophy,
   Twitter,
 } from "lucide-react";
-import { useState,useEffect } from "react";
+import { useState } from "react";
 
 export default function ProfilePage() {
-  interface User {
-    name: string;
-    username: string;
-    rankPosition: number;
-    college: string;
-    branch: string;
-    location: string;
+  const navigate = useNavigate();
+  const user = {
+    username: "codemaster42",
+    name: "Alex Johnson",
+    college: "Stanford University",
+    branch: "Computer Science",
+    rankPosition: 423,
+    location: "San Francisco, CA",
+    points: 12450,
+    streak: { current: 32 },
     socialLinks: {
-      twitter: string;
-      linkedin: string;
-      github: string;
-    };
-    points: number;
-    streak: {
-      current: number;
-    };
-  }
-
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+      twitter: "https://twitter.com/codemaster42",
+      linkedin: "https://linkedin.com/in/alexjohnson",
+      github: "https://github.com/codemaster42",
+    },
+  };
 
   const problemsSolved = {
-    total: 0,
-    easy: 0,
-    medium: 0,
-    hard: 0,
-  };
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-
-  const [error, setError] = useState<string | null>(null);
-
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        const userRes = await axios.get('http://localhost:5000/api/profile/me'); // Replace with your actual backend API URL
-        console.log(userRes.data);
-        // const problemsRes = await axios.get("/api/user/problems-solved");
-        // const platformsRes = await axios.get("/api/user/platforms");
-        // const contributionsRes = await axios.get(`/api/user/contributions?year=${selectedYear}`);
-
-        setUser(userRes.data);
-        // setProblemsSolved(problemsRes.data);
-        // setPlatforms(platformsRes.data);
-        // setContributions(contributionsRes.data);
-      } catch (err) {
-        setError("Failed to fetch data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [selectedYear]);
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
-
-  // Function to determine color based on contribution count
-  const getColor = (count:number) => {
-    if (count === 0) return "bg-gray-300";
-    if (count <= 3) return "bg-green-200";
-    if (count <= 6) return "bg-green-400";
-    return "bg-green-500";
+    total: 487,
+    easy: 204,
+    medium: 231,
+    hard: 52,
   };
 
   const platforms = [
@@ -108,10 +64,10 @@ export default function ProfilePage() {
   ];
 
   // State for year filter
-  // const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   // Function to get the number of days in a month
-  const getDaysInMonth = (month: number, year: number) :number=> {
+  const getDaysInMonth = (month: number, year: number) => {
     return new Date(year, month + 1, 0).getDate();
   };
 
@@ -159,18 +115,18 @@ export default function ProfilePage() {
   ];
 
   // Function to determine color based on contribution count
-  // const getColor = (count:number) => {
-  //   if (count === 0) return "bg-gray-300";
-  //   if (count <= 3) return "bg-green-200";
-  //   if (count <= 6) return "bg-green-400";
-  //   return "bg-green-500";
-  // };
+  const getColor = (count: number) => {
+    if (count === 0) return "bg-gray-300";
+    if (count <= 3) return "bg-green-200";
+    if (count <= 6) return "bg-green-400";
+    return "bg-green-500";
+  };
 
   // Function to check if a day is part of a streak
-  const isPartOfStreak = (monthIndex:number, dayIndex:number, monthContribs:{
+  const isPartOfStreak = (monthIndex: number, dayIndex: number, monthContribs: {
     date: string;
     count: number
-  }[]):boolean => {
+  }[]): boolean => {
     const currentDate = new Date(selectedYear, monthIndex, dayIndex + 1);
     const currentContrib = monthContribs.find(
       (c) => c.date === currentDate.toISOString().split("T")[0]
@@ -231,45 +187,45 @@ export default function ProfilePage() {
             <Avatar className="w-24 h-24 sm:w-32 sm:h-32 border-4 border-primary shadow-lg">
               <AvatarImage
                 src="/placeholder.svg?height=128&width=128"
-                alt={user?.name || "User"}
+                alt={user.name}
               />
               <AvatarFallback className="text-4xl font-bold">
-                {user ? user.name.charAt(0) : ""}
+                {user.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
 
             <div className="mt-4 text-center lg:text-left">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-teal-500 bg-clip-text text-transparent">
-                {user ? user.name : "Loading..."}
+                {user.name}
               </h1>
-              <p className="text-lg text-muted-foreground">@{user?user.username:""}</p>
+              <p className="text-lg text-muted-foreground">@{user.username}</p>
 
               <div className="mt-2">
                 <p className="text-sm mt-1 flex items-center justify-center lg:justify-start text-muted-foreground">
                   <ChevronUp className="h-4 w-4 text-green-500" />
-                  Position #{user? user.rankPosition:0}
+                  Position #{user.rankPosition}
                 </p>
               </div>
 
               <div className="mt-5 space-y-2">
                 <p className="text-sm flex items-center gap-1.5">
                   <School className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user? user.college:""}
+                  {user.college}
                 </p>
                 <p className="text-sm flex items-center gap-1.5">
                   <Code2 className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user? user.branch:""}
+                  {user.branch}
                 </p>
                 <p className="text-sm flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user? user.location:""}
+                  {user.location}
                 </p>
               </div>
 
               <div className="mt-4 flex justify-center gap-2 sm:gap-3">
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user?user.socialLinks.twitter:""}
+                    href={user.socialLinks.twitter}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -278,7 +234,7 @@ export default function ProfilePage() {
                 </Button>
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user?user.socialLinks.linkedin:""}
+                    href={user.socialLinks.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -287,7 +243,7 @@ export default function ProfilePage() {
                 </Button>
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user?user.socialLinks.github:""}
+                    href={user.socialLinks.github}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -300,9 +256,11 @@ export default function ProfilePage() {
                 <Button
                   size="sm"
                   className="bg-gradient-to-r from-blue-500 to-teal-500"
-                >
+                  onClick={() => navigate("/edit-profile")}
+                  >
                   Edit Profile
                 </Button>
+
               </div>
             </div>
           </div>
@@ -341,7 +299,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">
-                    {user?user.points:0}
+                    {user.points}
                   </div>
                 </CardContent>
               </Card>
@@ -357,7 +315,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-                    {user?user.streak.current:0}
+                    {user.streak.current}
                   </div>
                 </CardContent>
               </Card>
@@ -395,9 +353,8 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#10B981"
                         strokeWidth="3"
-                        strokeDasharray={`${
-                          (problemsSolved.easy / 300) * 100
-                        }, 100`}
+                        strokeDasharray={`${(problemsSolved.easy / 300) * 100
+                          }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -428,9 +385,8 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#F59E0B"
                         strokeWidth="3"
-                        strokeDasharray={`${
-                          (problemsSolved.medium / 300) * 100
-                        }, 100`}
+                        strokeDasharray={`${(problemsSolved.medium / 300) * 100
+                          }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -461,9 +417,8 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#EF4444"
                         strokeWidth="3"
-                        strokeDasharray={`${
-                          (problemsSolved.hard / 100) * 100
-                        }, 100`}
+                        strokeDasharray={`${(problemsSolved.hard / 100) * 100
+                          }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -635,13 +590,11 @@ export default function ProfilePage() {
                                     key={dayIndex}
                                     className={`h-4 w-4 rounded-[2px] ${getColor(
                                       count
-                                    )} ${
-                                      isToday ? "border-2 border-black" : ""
-                                    } ${
-                                      inStreak && count > 0
+                                    )} ${isToday ? "border-2 border-black" : ""
+                                      } ${inStreak && count > 0
                                         ? "[0_0_5px_2px_rgba(0,255,0,0.5)]"
                                         : ""
-                                    }`}
+                                      }`}
                                     style={{
                                       gridRow: dayOfWeek + 1, // Place in the correct row (1-7 for Mon-Sun)
                                       gridColumn: weekIndex, // Place in the correct week column
@@ -649,17 +602,16 @@ export default function ProfilePage() {
                                     title={
                                       isToday
                                         ? `0 submission on ${date.toLocaleString(
-                                            "en-US",
-                                            {
-                                              weekday: "long",
-                                              year: "numeric",
-                                              month: "long",
-                                              day: "numeric",
-                                            }
-                                          )}`
-                                        : `${
-                                            date.toISOString().split("T")[0]
-                                          }: ${count} contributions`
+                                          "en-US",
+                                          {
+                                            weekday: "long",
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                          }
+                                        )}`
+                                        : `${date.toISOString().split("T")[0]
+                                        }: ${count} contributions`
                                     }
                                     whileHover={{ scale: 1.2 }}
                                     transition={{ duration: 0.2 }}
