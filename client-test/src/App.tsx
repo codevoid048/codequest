@@ -13,6 +13,8 @@ import Leaderboard from './components/leaderboard'
 import ProfilePage from "./components/ProfilePage";
 import ChallengeForm from "./components/Admin/NewChallenge";
 import CodingClubForm from "./components/ProfilePage/form";
+import ResetPassword from './components/ResetPassword.tsx'
+import ForgotPassword from './components/ForgotPassword/index.tsx'
 function App() {
   return (
     <Router>
@@ -29,6 +31,8 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin/form" element={<ChallengeForm />} />
           <Route path="/profile/form" element={<CodingClubForm />} />
+          <Route path="/reset-password/:token" element={<ResetPassword/>} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
         <Footer />    
       </div>
