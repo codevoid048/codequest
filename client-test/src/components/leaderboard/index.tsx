@@ -140,7 +140,7 @@ export default function Leaderboard() {
 
   return (
     <div className={cn("min-h-screen transition-all duration-500 bg-background text-foreground", isDarkMode ? "dark" : "", "bg-grid-pattern")}>
-      <div className="container mx-auto py-12 px-4 relative">
+      <div className="container mx-auto py-12 px-20 relative">
         {/* Background decorative elements */}
         <div className="absolute top-20 right-20 opacity-5">
           <motion.div
@@ -182,7 +182,7 @@ export default function Leaderboard() {
         {/* Leaderboard Card */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <Card
-            className={cn("overflow-hidden border-none shadow-xl transition-all duration-300", isDarkMode ? "bg-card/80 backdrop-blur-sm border-border/30" : "bg-card/90 backdrop-blur-sm")}
+            className={cn("overflow-hidden px-10 border-none transition-all duration-300", isDarkMode ? "bg-card/80 backdrop-blur-sm border-border/30" : "bg-card/90 backdrop-blur-sm")}
           >
             {/* Table Header */}
             <div className={cn("grid grid-cols-15 p-4 font-medium border-b rounded-t-md", isDarkMode ? "text-primary border-border bg-muted/30" : "text-primary border-border bg-muted/50")}>
@@ -376,7 +376,7 @@ export default function Leaderboard() {
             {/* Pagination Footer */}
             <div className={cn("p-4 border-t flex justify-between items-center", isDarkMode ? "border-border/20" : "border-border")}>
               <div className="text-sm text-muted-foreground ml-8">
-                page {currentPage} of {totalPages}
+                Page {currentPage} of {totalPages}
               </div>
               <div className="flex items-center space-x-1">
                 <motion.button
@@ -404,7 +404,7 @@ export default function Leaderboard() {
                       onClick={() => typeof page === "number" && goToPage(page)}
                       disabled={page === "..."}
                       className={cn(
-                        "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 text-sm font-medium",
+                        "flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200 text-sm font-medium",
                         page === currentPage
                           ? isDarkMode
                           ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"

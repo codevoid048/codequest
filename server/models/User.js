@@ -37,12 +37,10 @@ const userSchema = new mongoose.Schema(
 
 
     // All challenges solved (non-POTD)
-    solveChallenges: [
-    {
+    solveChallenges: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Challenge",
-    },
-    ],
+    }],
 
     // POTD solved: store dates (unique per day)
     potdSolved: [
