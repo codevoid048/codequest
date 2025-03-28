@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   Calendar,
   ChevronUp,
@@ -26,6 +27,7 @@ import {
 import { useState } from "react";
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const user = {
     username: "codemaster42",
     name: "Alex Johnson",
@@ -65,12 +67,12 @@ export default function ProfilePage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   // Function to get the number of days in a month
-  const getDaysInMonth = (month, year) => {
+  const getDaysInMonth = (month: number, year: number) => {
     return new Date(year, month + 1, 0).getDate();
   };
 
   // Generate contributions for a specific year
-  const generateContributions = (year) => {
+  const generateContributions = (year: number) => {
     const contributions = [];
     const startDate = new Date(year, 0, 1); // January 1st of the selected year
     const endDate = new Date(year, 11, 31); // December 31st of the selected year
@@ -113,7 +115,7 @@ export default function ProfilePage() {
   ];
 
   // Function to determine color based on contribution count
-  const getColor = (count) => {
+  const getColor = (count: number) => {
     if (count === 0) return "bg-gray-300";
     if (count <= 3) return "bg-green-200";
     if (count <= 6) return "bg-green-400";
@@ -121,7 +123,10 @@ export default function ProfilePage() {
   };
 
   // Function to check if a day is part of a streak
-  const isPartOfStreak = (monthIndex, dayIndex, monthContribs) => {
+  const isPartOfStreak = (monthIndex: number, dayIndex: number, monthContribs: {
+    date: string;
+    count: number
+  }[]): boolean => {
     const currentDate = new Date(selectedYear, monthIndex, dayIndex + 1);
     const currentContrib = monthContribs.find(
       (c) => c.date === currentDate.toISOString().split("T")[0]
@@ -251,9 +256,11 @@ export default function ProfilePage() {
                 <Button
                   size="sm"
                   className="bg-gradient-to-r from-blue-500 to-teal-500"
-                >
+                  onClick={() => navigate("/edit-profile")}
+                  >
                   Edit Profile
                 </Button>
+
               </div>
             </div>
           </div>
@@ -346,9 +353,8 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#10B981"
                         strokeWidth="3"
-                        strokeDasharray={`${
-                          (problemsSolved.easy / 300) * 100
-                        }, 100`}
+                        strokeDasharray={`${(problemsSolved.easy / 300) * 100
+                          }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -379,9 +385,8 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#F59E0B"
                         strokeWidth="3"
-                        strokeDasharray={`${
-                          (problemsSolved.medium / 300) * 100
-                        }, 100`}
+                        strokeDasharray={`${(problemsSolved.medium / 300) * 100
+                          }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -412,9 +417,8 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#EF4444"
                         strokeWidth="3"
-                        strokeDasharray={`${
-                          (problemsSolved.hard / 100) * 100
-                        }, 100`}
+                        strokeDasharray={`${(problemsSolved.hard / 100) * 100
+                          }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -586,13 +590,11 @@ export default function ProfilePage() {
                                     key={dayIndex}
                                     className={`h-4 w-4 rounded-[2px] ${getColor(
                                       count
-                                    )} ${
-                                      isToday ? "border-2 border-black" : ""
-                                    } ${
-                                      inStreak && count > 0
+                                    )} ${isToday ? "border-2 border-black" : ""
+                                      } ${inStreak && count > 0
                                         ? "[0_0_5px_2px_rgba(0,255,0,0.5)]"
                                         : ""
-                                    }`}
+                                      }`}
                                     style={{
                                       gridRow: dayOfWeek + 1, // Place in the correct row (1-7 for Mon-Sun)
                                       gridColumn: weekIndex, // Place in the correct week column
@@ -600,17 +602,16 @@ export default function ProfilePage() {
                                     title={
                                       isToday
                                         ? `0 submission on ${date.toLocaleString(
-                                            "en-US",
-                                            {
-                                              weekday: "long",
-                                              year: "numeric",
-                                              month: "long",
-                                              day: "numeric",
-                                            }
-                                          )}`
-                                        : `${
-                                            date.toISOString().split("T")[0]
-                                          }: ${count} contributions`
+                                          "en-US",
+                                          {
+                                            weekday: "long",
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                          }
+                                        )}`
+                                        : `${date.toISOString().split("T")[0]
+                                        }: ${count} contributions`
                                     }
                                     whileHover={{ scale: 1.2 }}
                                     transition={{ duration: 0.2 }}
