@@ -1,18 +1,19 @@
 //App component
-import './App.css'
-import { Navbar } from '../../client-test/src/components/Navbar'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Home from './components/Home'
-import Potd from './components/Challenges'
-import LoginPage from './components/Login'
-import LogoutPage from './components/Logout'
-import RegisterPage from './components/SignUp'
-import Footer from './components/footer'
-import AboutPage from './components/About'
-import Leaderboard from './components/Leaderboard'
+import "./App.css";
+import { Navbar } from "../../client-test/src/components/Navbar";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./components/Home";
+import Potd from "./components/Challenges";
+import LoginPage from "./components/Login";
+import LogoutPage from "./components/Logout";
+import RegisterPage from "./components/SignUp";
+import Footer from "./components/footer";
+import AboutPage from "./components/About";
+import Leaderboard from "./components/leaderboard";
 import ProfilePage from "./components/ProfilePage";
-import ResetPassword from './components/ResetPassword.tsx'
-import ForgotPassword from './components/ForgotPassword/index.tsx'
+import ResetPassword from "./components/ResetPassword.tsx";
+import ForgotPassword from "./components/ForgotPassword/index.tsx";
+import Admin from "./components/Admin/index.tsx";
 function App() {
   return (
     <Router>
@@ -25,10 +26,11 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path='/logout' element={<LogoutPage/>}/>
+          <Route path="/logout" element={<LogoutPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/reset-password/:token" element={<ResetPassword/>} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
         <Footer />
       </div>
