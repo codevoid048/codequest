@@ -5,6 +5,7 @@ import { Activity } from "../models/Activity.js"
 import { sendVerificationEmail } from "../utils/emailService.js"
 import { isEmailValid } from "../utils/isEmailValid.js";
 import { sendEmail } from "../utils/sendEmail.js"
+
 // Generate JWT token function
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -77,6 +78,7 @@ export const loginUser = async (req, res) => {
             if(err) throw err;
             res.cookie('token', token).json(user)
         })
+        res.status(200).json({ message: "Login successful" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Server error" });
@@ -150,7 +152,7 @@ export const verifyEmail = async (req, res) => {
     });
 
     res.status(200).json({ message: "Logged out successfully" });
-};
+  };
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
