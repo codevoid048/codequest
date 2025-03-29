@@ -4,6 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import ProblemStatus from '@/lib/solutionStatus'
+// import {axiosInstance }from "@/lib/axios"
+import axios from "axios";
 import {
   Award,
   Calendar,
@@ -20,7 +23,7 @@ import {
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 
-interface Problem {
+interface challenge {
   id: number;
   date: string;
   title: string;
@@ -32,6 +35,16 @@ interface Problem {
   problemUrl?: string;
 }
 
+interface ProblemStatusProps {
+  problem: {
+    id: string;
+    status: string;
+    createdAt: Date;
+  };
+  markSolved: (id: string) => void;
+  viewSolution: (id: string) => void;
+}
+
 type FilterTab = "all" | "solved" | "unsolved";
 type SortOption = "date" | "difficulty" | "status";
 
@@ -40,7 +53,7 @@ const Challenges: React.FC = () => {
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" });
-  const [problemsList, setProblemsList] = useState<Problem[]>([]);
+  const [problemsList, setProblemsList] = useState<challenge[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("date");
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,59 +62,38 @@ const Challenges: React.FC = () => {
   const itemsPerPage = 5;
 
   useEffect(() => {
-    const loadProblems = async () => {
-      setIsLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setProblemsList([
-        {
-          id: 1,
-          date: "2025-03-22",
-          title: "Stickler Thief II",
-          categories: ["Dynamic Programming", "Arrays", "Algorithms"],
-          difficulty: "Medium",
-          platform: "GFG",
-          status: "Unsolved",
-          description: "Find the maximum possible stolen value from houses...",
-          problemUrl: "https://www.geeksforgeeks.org/stickler-thief/",
-        },
-        {
-          id: 2,
-          date: "2025-03-21",
-          title: "Two Sum",
-          categories: ["Arrays", "Hash Table"],
-          difficulty: "Easy",
-          platform: "LeetCode",
-          status: "Solved",
-          description: "Find two numbers that sum up to target...",
-          problemUrl: "https://leetcode.com/problems/two-sum/",
-        },
-        {
-          id: 3,
-          date: "2025-03-20",
-          title: "Merge K Sorted Lists",
-          categories: ["Linked List", "Heap", "Divide and Conquer"],
-          difficulty: "Hard",
-          platform: "LeetCode",
-          status: "Unsolved",
-          description: "Merge k sorted linked lists into one sorted list...",
-          problemUrl: "https://leetcode.com/problems/merge-k-sorted-lists/",
-        },
-        {
-          id: 4,
-          date: "2025-03-19",
-          title: "Maximum Subarray",
-          categories: ["Arrays", "Dynamic Programming"],
-          difficulty: "Medium",
-          platform: "CodeChef",
-          status: "Solved",
-          description: "Find the contiguous subarray with the largest sum...",
-          problemUrl: "https://www.codechef.com/problems/MAXSUB",
-        },
-      ]);
-      setIsLoading(false);
+    const fetchProblems = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/challenges');
+        console.log(res.data);
+        if (res.data && Array.isArray(res.data.challenges)) {
+          const data = res.data.challenges.map((challenge: any) => ({
+            id: challenge._id,
+            date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }),
+            title: challenge.title,
+            categories: challenge.category,
+            difficulty: challenge.difficulty,
+            platform: challenge.platform,
+            status: "Unsolved",
+            description: challenge.description,
+            problemUrl: challenge.problemLink,
+          }));
+          setProblemsList(data);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Failed to fetch problems", error);
+      }
     };
-    loadProblems();
+    fetchProblems();
+
   }, []);
+
+
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -123,15 +115,34 @@ const Challenges: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const dailyProblem = useMemo(
-    () => problemsList[new Date().getDate() % (problemsList.length || 1)] || problemsList[0],
-    [problemsList]
-  );
+  // const dailyProblem = useMemo(
+  //   () => problemsList[new Date().getDate() % (problemsList.length || 1)] || problemsList[0],
+  //   [problemsList]
+  // );
+  const dailyProblem = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize time to midnight
+  
+    const todayProblem = problemsList.find((problem) => {
+      const problemDate = new Date(problem.date);
+      problemDate.setHours(0, 0, 0, 0); // Normalize problem date
+      return problemDate.getTime() === today.getTime();
+    });
+  
+    return todayProblem || problemsList[0]; // Default to first problem if no match found
+  }, [problemsList]);
+
   const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList]);
   const difficultyLevels = ["Easy", "Medium", "Hard"];
 
   const filteredProblems = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const result = problemsList.filter((problem) => {
+      const problemDate = new Date(problem.date);
+      problemDate.setHours(0, 0, 0, 0); // Normalize time
+
+      const isPastOrToday = problemDate <= today;
       const matchesTab = activeTab === "all" || problem.status.toLowerCase() === activeTab;
       const matchesDifficulty = selectedDifficulties.length === 0 || selectedDifficulties.includes(problem.difficulty);
       const matchesCategory =
@@ -140,7 +151,7 @@ const Challenges: React.FC = () => {
         !searchTerm ||
         problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         problem.description.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesTab && matchesDifficulty && matchesCategory && matchesSearch;
+      return isPastOrToday && matchesTab && matchesDifficulty && matchesCategory && matchesSearch;
     });
 
     result.sort((a, b) => {
@@ -241,7 +252,7 @@ const Challenges: React.FC = () => {
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4 mr-2" />
-                      {new Date().toISOString().split("T")[0]}
+                      {dailyProblem?.date}  
                     </div>
                     <h3 className="text-xl sm:text-2xl font-bold text-foreground">
                       {dailyProblem?.title}
@@ -316,11 +327,10 @@ const Challenges: React.FC = () => {
                     <div key={level} className="flex items-center gap-3">
                       <button
                         onClick={() => toggleDifficulty(level)}
-                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
-                          selectedDifficulties.includes(level)
-                            ? "bg-primary border-primary"
-                            : "border-border"
-                        }`}
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedDifficulties.includes(level)
+                          ? "bg-primary border-primary"
+                          : "border-border"
+                          }`}
                       >
                         {selectedDifficulties.includes(level) && (
                           <svg
@@ -358,11 +368,10 @@ const Challenges: React.FC = () => {
                     <div key={cat} className="flex items-center gap-3">
                       <button
                         onClick={() => toggleCategory(cat)}
-                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
-                          selectedCategories.includes(cat)
-                            ? "bg-primary border-primary"
-                            : "border-border"
-                        }`}
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedCategories.includes(cat)
+                          ? "bg-primary border-primary"
+                          : "border-border"
+                          }`}
                       >
                         {selectedCategories.includes(cat) && (
                           <svg
@@ -403,11 +412,10 @@ const Challenges: React.FC = () => {
                   key={tab}
                   variant={activeTab === tab ? "default" : "outline"}
                   onClick={() => setActiveTab(tab as FilterTab)}
-                  className={`text-sm py-2 px-4 w-full sm:w-auto transition-all duration-300 ${
-                    activeTab === tab
-                      ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md"
-                      : "border-border hover:border-primary text-foreground"
-                  }`}
+                  className={`text-sm py-2 px-4 w-full sm:w-auto transition-all duration-300 ${activeTab === tab
+                    ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md"
+                    : "border-border hover:border-primary text-foreground"
+                    }`}
                 >
                   {tab === "all" ? (
                     <span className="flex items-center gap-2">
@@ -496,7 +504,22 @@ const Challenges: React.FC = () => {
                               </span>
                             </div>
                           </div>
-                          <div className="flex flex-col gap-2 self-start sm:self-center min-w-[100px]">
+
+
+                          <ProblemStatus
+                            problem={{
+                              id: problem.id,
+                              status: problem.status as "Solved" | "Unsolved",
+                              createdAt: new Date(problem.date)
+                            }}
+                            markSolved={markSolved}
+                            viewSolution={(id) => {
+                              // Implement your view solution logic
+                              console.log(`Viewing solution for problem ${id}`);
+                            }}
+                          />
+
+                          {/* <div className="flex flex-col gap-2 self-start sm:self-center min-w-[100px]">
                             {problem.status === "Solved" ? (
                               <Badge
                                 variant="outline"
@@ -517,7 +540,7 @@ const Challenges: React.FC = () => {
                                 Mark Solved
                               </Button>
                             )}
-                          </div>
+                          </div> */}
                         </div>
                       </CardContent>
                     </Card>
@@ -553,11 +576,10 @@ const Challenges: React.FC = () => {
                         key={page}
                         variant={currentPage === page ? "default" : "outline"}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 p-0 ${
-                          currentPage === page
-                            ? "bg-primary text-primary-foreground"
-                            : "border-border text-foreground"
-                        }`}
+                        className={`w-8 h-8 p-0 ${currentPage === page
+                          ? "bg-primary text-primary-foreground"
+                          : "border-border text-foreground"
+                          }`}
                       >
                         {page}
                       </Button>
