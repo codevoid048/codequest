@@ -3,7 +3,8 @@ import { Challenge } from "../models/Challenge.js";
 
 export const getUsers = async(req, res) => {
     try{
-        const users = await User.find({ isVerified: true });
+        const users = await User.find({}).select("-password");
+        console.log(users)
         res.json(users);
     }catch(err){
         console.error(err);
@@ -13,7 +14,7 @@ export const getUsers = async(req, res) => {
 
 export const addChallenge = async (req, res) => {
     try {
-        const { title, description, category, difficulty, points, problemLink ,platform} = req.body;
+        const { title, description, category, difficulty, points,createdAt, problemLink ,platform} = req.body;
 
         // Validate required fields
         if (!title || !description || !category || !difficulty || !points || !problemLink || !platform) {
@@ -32,6 +33,7 @@ export const addChallenge = async (req, res) => {
             difficulty,
             points,
             problemLink,
+            createdAt: new Date(createdAt),
             platform
         });
 
