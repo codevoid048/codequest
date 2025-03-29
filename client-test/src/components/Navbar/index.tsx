@@ -12,8 +12,7 @@ export function Navbar() {
   const [mounted, setMounted] = useState<boolean>(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  const { token, login, logout } = useAuth(); // Use context to get token, login, and logout
-
+  const { user, isAuthenticated, logout } = useAuth();
   // Scroll detection
   useEffect(() => {
     const handleScroll = () => {
@@ -21,12 +20,10 @@ export function Navbar() {
     };
 
     window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Mounted check to avoid hydration errors (useEffect running only on the client)
+  // Mounted check to avoid hydration errors
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -45,6 +42,7 @@ export function Navbar() {
       }`}
     >
       <div className="container flex h-16 items-center justify-between">
+        {/* Logo & Desktop Navigation */}
         <div className="flex items-center gap-6 md:gap-8 lg:gap-10">
           <Link to="/" className="flex items-center space-x-2">
             <motion.div
@@ -72,7 +70,8 @@ export function Navbar() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Desktop Auth & Theme Toggle */}
+        <div className="hidden md:flex items-center gap-2">
           {mounted && (
             <Button
               variant="ghost"
@@ -87,146 +86,104 @@ export function Navbar() {
             </Button>
           )}
 
-          {!token ? (
-            <div className="hidden md:flex gap-2">
+          {!isAuthenticated ? (
+            <>
               <Button variant="outline" asChild>
                 <Link to="/login">Log In</Link>
               </Button>
               <Button asChild>
                 <Link to="/register">Sign Up</Link>
               </Button>
-                <div className="flex items-center gap-2">
-                    {mounted && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            className="mr-2 cursor-pointer group" 
-                        >
-                            <div className="transition-transform duration-400 group-active:rotate-360">
-                            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                            </div>
-                            <span className="sr-only">Toggle theme</span>
-                        </Button>
-                    )}
-
-                    <div className="hidden md:flex gap-2">
-                        <Button variant="outline" asChild>
-                            <Link to="/login">Log In</Link>
-                        </Button>
-                        <Button asChild>
-                            <Link to="/register">Sign Up</Link>
-                        </Button>
-                        <Button asChild>
-                            <Link to="/logout">Logout</Link>
-                        </Button>
-                    </div>
-
-                    <Sheet>
-                        <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="md:hidden">
-                                <Menu className="h-5 w-5" />
-                                <span className="sr-only">Toggle menu</span>
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="right">
-                            <div className="flex flex-col gap-6 pt-6">
-                                <Link to="/" className="flex items-center space-x-2">
-                                    <Code className="h-6 w-6 text-primary" />
-                                    <span className="font-bold text-xl">CodeQuest</span>
-                                </Link>
-
-                                <nav className="flex flex-col gap-4">
-                                    {navItems.map((item) => (
-                                        <Link
-                                            key={item.href}
-                                            to={item.href}
-                                            className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === item.href ? "text-primary" : "text-muted-foreground"
-                                                }`}
-                                        >
-                                            {item.label}
-                                        </Link>
-                                    ))}
-                                </nav>
-
-                                <div className="flex flex-col gap-2 mt-4">
-                                    <Button variant="outline" asChild className="w-full">
-                                        <Link to="/login">Log In</Link>
-                                    </Button>
-                                    <Button asChild className="w-full">
-                                        <Link to="/register">Sign Up</Link>
-                                    </Button>
-                                    <Button asChild className="w-full">
-                                        <Link to="/logout">Logout</Link>
-                                    </Button>
-                                </div>
-                            </div>
-                        </SheetContent>
-                    </Sheet>
-                </div>
-            </div>
+            </>
           ) : (
-            <div className="flex items-center gap-2">
+            <>
               <Button onClick={logout} variant="outline">
                 Logout
               </Button>
               <Link to="/profile">
-                <img src="/default-profile.png" alt="Profile" className="w-8 h-8 rounded-full" />
+                <img
+                  src="/default-profile.png"
+                  alt="Profile"
+                  className="w-8 h-8 rounded-full"
+                />
               </Link>
-            </div>
+            </>
           )}
+        </div>
 
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right">
-              <div className="flex flex-col gap-6 pt-6">
-                <Link to="/" className="flex items-center space-x-2">
-                  <Code className="h-6 w-6 text-primary" />
-                  <span className="font-bold text-xl">CodeQuest</span>
-                </Link>
+        {/* Mobile Controls */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right">
+            <div className="flex flex-col gap-6 pt-6">
+              <Link to="/" className="flex items-center space-x-2">
+                <Code className="h-6 w-6 text-primary" />
+                <span className="font-bold text-xl">CodeQuest</span>
+              </Link>
 
-                <nav className="flex flex-col gap-4">
-                  {navItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      className={`text-sm font-medium transition-colors hover:text-primary ${
-                        location.pathname === item.href ? "text-primary" : "text-muted-foreground"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
+              <nav className="flex flex-col gap-4">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={`text-sm font-medium transition-colors hover:text-primary ${
+                      location.pathname === item.href ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
 
-                {!token ? (
-                  <div className="flex flex-col gap-2 mt-4">
+              {/* Mobile Auth */}
+              <div className="flex flex-col gap-2 mt-4">
+                {!isAuthenticated ? (
+                  <>
                     <Button variant="outline" asChild className="w-full">
                       <Link to="/login">Log In</Link>
                     </Button>
                     <Button asChild className="w-full">
                       <Link to="/register">Sign Up</Link>
                     </Button>
-                  </div>
+                  </>
                 ) : (
-                  <div className="flex items-center gap-2 mt-4">
+                  <>
                     <Button onClick={logout} variant="outline" className="w-full">
                       Logout
                     </Button>
                     <Link to="/profile">
-                      <img src="/default-profile.png" alt="Profile" className="w-8 h-8 rounded-full" />
+                      <img
+                        src="/default-profile.png"
+                        alt="Profile"
+                        className="w-8 h-8 rounded-full"
+                      />
                     </Link>
-                  </div>
+                  </>
                 )}
               </div>
-            </SheetContent>
-          </Sheet>
-        </div>
+
+              {/* Mobile Theme Toggle */}
+              {mounted && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="mt-4 cursor-pointer group"
+                >
+                  <div className="transition-transform duration-400 group-active:rotate-360">
+                    {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  </div>
+                  <span className="sr-only">Toggle theme</span>
+                </Button>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   );

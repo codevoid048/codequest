@@ -16,11 +16,14 @@ import ResetPassword from './components/ResetPassword.tsx'
 import ForgotPassword from './components/ForgotPassword/index.tsx'
 import EditProfile from './components/ProfilePage/profileEdit.tsx'
 import AddChallenge from "./components/Admin/addChallenges.tsx";
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   return (
     <Router>
       <div className="flex flex-col min-h-screen">
         <Navbar />
+        <Toaster position='bottom-right' toastOptions={{duration: 2000}} />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/challenges" element={<Potd />} />

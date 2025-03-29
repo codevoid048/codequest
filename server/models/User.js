@@ -4,9 +4,9 @@ import bcrypt from "bcryptjs";
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    username: { type: String, required: false, unique: true, trim: true, lowercase: true },
+    username: { type: String, required: true, unique: true, trim: true, lowercase: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-    password: { type: String }, // For email/password signups
+    password: { type: String },
     profilePicture: { type: String },
     RegistrationNumber: { type: String},
     branch: { type: String },
@@ -24,12 +24,12 @@ const userSchema = new mongoose.Schema(
     codechef: { username: { type: String }, solved: { type: Number },rank:{type:Number},rating:{type:Number,default:0} },
 
     
-    //reset password tokens 
+    //reset password tokens
     resetPasswordToken: { type: String, default: null },
     resetPasswordExpires: { type: Date, default: null },
 
     // Verification flag
-    isVerified: { type: Boolean, default: true },
+    isVerified: { type: Boolean, default: false },
     verificationToken: { type: String },
     verificationTokenExpires: { type: Date },
 
