@@ -3,7 +3,8 @@ import { Challenge } from "../models/Challenge.js";
 
 export const getUsers = async(req, res) => {
     try{
-        const users = await User.find({ isVerified: true });
+        const users = await User.find({}).select("-password");
+        console.log(users)
         res.json(users);
     }catch(err){
         console.error(err);
