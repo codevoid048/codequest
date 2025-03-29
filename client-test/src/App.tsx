@@ -9,7 +9,7 @@ import LogoutPage from './components/Logout'
 import RegisterPage from './components/SignUp'
 import Footer from './components/footer'
 import AboutPage from './components/About'
-import Leaderboard from './components/leaderboard/index.tsx'
+import Leaderboard from './components/Leaderboard'
 import ProfilePage from "./components/ProfilePage"
 import ResetPassword from './components/ResetPassword.tsx'
 import ForgotPassword from './components/ForgotPassword/index.tsx'

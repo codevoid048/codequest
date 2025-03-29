@@ -33,7 +33,7 @@ export const registerUser = async (req, res) => {
       const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
        
       // Optional, 1 -> hour expiry
-      //const verificationTokenExpires = Date.now() + 60 * 60 * 1000; 
+      //const verificationTokenExpires = Date.now() + 60 * 60 * 1000;
   
       const newUser = new User({
         name,
@@ -121,7 +121,7 @@ export const verifyEmail = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+    res.redirect(`${process.env.CLIENT_URL}/challenges`);
   };
 
   export const githubAuthCallback = (req, res) => {
@@ -138,7 +138,7 @@ export const verifyEmail = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   
-    res.redirect(`${process.env.CLIENT_URL}/dashboard`);
+    res.redirect(`${process.env.CLIENT_URL}/challenges`);
   };
 
   
