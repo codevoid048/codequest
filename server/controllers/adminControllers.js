@@ -14,7 +14,7 @@ export const getUsers = async(req, res) => {
 
 export const addChallenge = async (req, res) => {
     try {
-        const { title, description, category, difficulty, points, problemLink ,platform} = req.body;
+        const { title, description, category, difficulty, points,createdAt, problemLink ,platform} = req.body;
 
         // Validate required fields
         if (!title || !description || !category || !difficulty || !points || !problemLink || !platform) {
@@ -33,6 +33,7 @@ export const addChallenge = async (req, res) => {
             difficulty,
             points,
             problemLink,
+            createdAt: new Date(createdAt),
             platform
         });
 
