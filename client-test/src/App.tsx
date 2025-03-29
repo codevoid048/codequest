@@ -8,7 +8,11 @@ import LoginPage from './components/Login'
 import RegisterPage from './components/SignUp'
 import Footer from './components/footer'
 import AboutPage from './components/About'
+
 import Leaderboard from './components/leaderboard'
+import ProfilePage from './components/ProfilePage'
+import ProfileEditForm from './components/ProfilePage/profileEdit'
+
 function App() {
 
   return (
@@ -22,6 +26,8 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path='/profile' element={<ProfilePage/>}/>
+          <Route path='/edit-profile' element={<ProfileEditForm/>}/>
         </Routes>
           <Footer/>
       </div>

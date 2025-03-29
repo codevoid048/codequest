@@ -17,14 +17,14 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/admin',challengeRoutes)
+app.use('/api/admin', challengeRoutes)
 updateRanks();
 
 // Schedule leaderboard update every hour
