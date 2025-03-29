@@ -1,113 +1,122 @@
-import { Link } from "react-router-dom"
-import { Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ParticlesBackground } from "@/components/particles-background"
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ParticlesBackground } from "@/components/particles-background";
+import { useState } from "react";
+import axios from "axios";
+
+interface FormData {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+}
 
 export default function RegisterPage() {
+    const [formData, setFormData] = useState<FormData>({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+    });
+
+    const [error, setError] = useState<string>("");
+    const navigate = useNavigate();
+
+    // Handle input changes
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    // Handle form submission
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setError("");
+
+        if (!formData.name || !formData.email || !formData.password) {
+            setError("All fields are required");
+            return;
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+            setError("Passwords do not match");
+            return;
+        }
+
+        try {
+            console.log("Sending registration data:", formData);
+
+            const response = await axios.post(
+                "http://localhost:5000/api/auth/register",
+                {
+                    name: formData.name.trim(),
+                    email: formData.email.trim().toLowerCase(),
+                    password: formData.password,
+                },
+                {
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
+
+            console.log("Registration successful:", response.data);
+            navigate("/"); // Redirect on success
+        } catch (err: any) {
+            console.error("Registration error:", err);
+
+            if (err.response) {
+                console.log("Backend Response:", err.response.data);
+                setError(err.response.data.error || "Something went wrong. Please try again.");
+            } else if (err.request) {
+                setError("No response from server. Check if backend is running.");
+            } else {
+                setError("Network error: " + err.message);
+            }
+        }
+    };
+
     return (
         <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">
             <ParticlesBackground />
-
             <Card className="w-full max-w-md mx-4 shadow-lg">
                 <CardHeader className="space-y-1">
                     <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
                     <CardDescription>Enter your information to get started with CodeQuest</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="first-name">Your name</Label>
-                        <Input id="name" placeholder="John" />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="m@example.com" />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input id="password" type="password" />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="confirm-password">Confirm password</Label>
-                        <Input id="confirm-password" type="password" />
-                    </div>
-
-                    <div className="space-y-4">
-                        <div className="flex items-start space-x-2">
-                            <div className="mt-0.5 border rounded h-4 w-4 flex items-center justify-center">
-                                <Check className="h-3 w-3 text-primary" />
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                                By creating an account, you agree to our{" "}
-                                <Link to="/terms" className="text-primary hover:underline">
-                                    Terms of Service
-                                </Link>{" "}
-                                and{" "}
-                                <Link to="/privacy" className="text-primary hover:underline">
-                                    Privacy Policy
-                                </Link>
-                                .
-                            </div>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Your name</Label>
+                            <Input name="name" id="name" placeholder="John Doe" value={formData.name} onChange={handleChange} required />
                         </div>
-                    </div>
 
-                    <Button className="w-full">Create Account</Button>
-
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input name="email" id="email" type="email" placeholder="m@example.com" value={formData.email} onChange={handleChange} required />
                         </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                        </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <Button variant="outline" className="w-full">
-                            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                                <path
-                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                                    fill="#4285F4"
-                                />
-                                <path
-                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                                    fill="#34A853"
-                                />
-                                <path
-                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                                    fill="#FBBC05"
-                                />
-                                <path
-                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                                    fill="#EA4335"
-                                />
-                                <path d="M1 1h22v22H1z" fill="none" />
-                            </svg>
-                            Google
-                        </Button>
-                        <Button variant="outline" className="w-full">
-                            <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.49.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.603-3.369-1.34-3.369-1.34-.454-1.154-1.109-1.461-1.109-1.461-.906-.62.069-.607.069-.607 1.002.07 1.53 1.03 1.53 1.03.89 1.525 2.34 1.085 2.91.829.091-.645.348-1.085.634-1.335-2.22-.253-4.555-1.11-4.555-4.945 0-1.091.39-1.984 1.03-2.683-.103-.254-.447-1.275.098-2.656 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.505.338 1.909-1.294 2.748-1.025 2.748-1.025.547 1.381.203 2.402.1 2.656.64.699 1.028 1.592 1.028 2.683 0 3.845-2.337 4.69-4.563 4.938.357.308.678.919.678 1.852 0 1.337-.012 2.418-.012 2.745 0 .268.18.58.688.481A10.002 10.002 0 0 0 22 12c0-5.523-4.477-10-10-10z" />
-                            </svg>
-                            GitHub
-                        </Button>
-                    </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+                            <Input name="password" id="password" type="password" value={formData.password} onChange={handleChange} required />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm password</Label>
+                            <Input name="confirmPassword" id="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} required />
+                        </div>
+
+                        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+                        <Button type="submit" className="w-full">Create Account</Button>
+                    </form>
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-4">
                     <div className="text-sm text-center text-muted-foreground">
-                        Already have an account?{" "}
-                        <Link to="/login" className="text-primary hover:underline">
-                            Sign in
-                        </Link>
+                        Already have an account? <Link to="/login" className="text-primary hover:underline">Sign in</Link>
                     </div>
                 </CardFooter>
             </Card>
         </div>
-    )
+    );
 }
-

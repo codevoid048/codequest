@@ -36,7 +36,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/admin/add-challenge" element={<AddChallenge />} />
         </Routes>
-        <Footer />    
+        <Footer />
       </div>
     </Router>
   );
