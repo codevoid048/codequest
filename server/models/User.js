@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema(
     codeforces: { username: { type: String }, solved: { type: Number },rank:{type:Number} ,rating:{type:Number,default:0}},
     codechef: { username: { type: String }, solved: { type: Number },rank:{type:Number},rating:{type:Number,default:0} },
 
+    
+    //reset password tokens 
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null },
 
     // Verification flag
     isVerified: { type: Boolean, default: true },
@@ -67,4 +71,3 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 
 export const User = mongoose.model("User", userSchema);
-

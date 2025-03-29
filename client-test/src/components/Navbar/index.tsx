@@ -95,6 +95,75 @@ export function Navbar() {
               <Button asChild>
                 <Link to="/register">Sign Up</Link>
               </Button>
+                <div className="flex items-center gap-2">
+                    {mounted && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            className="mr-2 cursor-pointer group" 
+                        >
+                            <div className="transition-transform duration-400 group-active:rotate-360">
+                            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                            </div>
+                            <span className="sr-only">Toggle theme</span>
+                        </Button>
+                    )}
+
+                    <div className="hidden md:flex gap-2">
+                        <Button variant="outline" asChild>
+                            <Link to="/login">Log In</Link>
+                        </Button>
+                        <Button asChild>
+                            <Link to="/register">Sign Up</Link>
+                        </Button>
+                        <Button asChild>
+                            <Link to="/logout">Logout</Link>
+                        </Button>
+                    </div>
+
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon" className="md:hidden">
+                                <Menu className="h-5 w-5" />
+                                <span className="sr-only">Toggle menu</span>
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="right">
+                            <div className="flex flex-col gap-6 pt-6">
+                                <Link to="/" className="flex items-center space-x-2">
+                                    <Code className="h-6 w-6 text-primary" />
+                                    <span className="font-bold text-xl">CodeQuest</span>
+                                </Link>
+
+                                <nav className="flex flex-col gap-4">
+                                    {navItems.map((item) => (
+                                        <Link
+                                            key={item.href}
+                                            to={item.href}
+                                            className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === item.href ? "text-primary" : "text-muted-foreground"
+                                                }`}
+                                        >
+                                            {item.label}
+                                        </Link>
+                                    ))}
+                                </nav>
+
+                                <div className="flex flex-col gap-2 mt-4">
+                                    <Button variant="outline" asChild className="w-full">
+                                        <Link to="/login">Log In</Link>
+                                    </Button>
+                                    <Button asChild className="w-full">
+                                        <Link to="/register">Sign Up</Link>
+                                    </Button>
+                                    <Button asChild className="w-full">
+                                        <Link to="/logout">Logout</Link>
+                                    </Button>
+                                </div>
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+                </div>
             </div>
           ) : (
             <div className="flex items-center gap-2">

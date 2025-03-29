@@ -6,6 +6,7 @@ const challengeSchema = new mongoose.Schema({
     difficulty: { type: String, required: true, enum: ['Easy', 'Medium', 'Hard'] },
     points: { type: Number, required: true },
     problemLink: { type: String, required: true },
+    platform: { type: String, required: true },
     createdAt: { type: Date, default: Date.now }
 });
 
