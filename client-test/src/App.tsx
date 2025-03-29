@@ -9,6 +9,7 @@ import LogoutPage from './components/Logout'
 import RegisterPage from './components/SignUp'
 import Footer from './components/footer'
 import AboutPage from './components/About'
+import UserDashboard from './components/Admin/Users.tsx'
 import Leaderboard from './components/Leaderboard'
 import ProfilePage from "./components/ProfilePage"
 import ResetPassword from './components/ResetPassword.tsx'
@@ -29,12 +30,13 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/logout" element={<LogoutPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/form" element={<UserDashboard />} />
           <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/reset-password/:token" element={<ResetPassword/>} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/admin/add-challenge" element={<AddChallenge />} />
         </Routes>
-        <Footer />
+        <Footer />    
       </div>
     </Router>
   );
