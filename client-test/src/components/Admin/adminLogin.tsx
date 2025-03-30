@@ -44,8 +44,8 @@ export default function LoginPage() {
 
       if (err.response) {
         console.error("Error response data:", err.response.data); // More detailed error logging
-        toast.error(err.response.data.error || "Login failed. Please try again.");
-        setError(err.response.data.error || "Login failed. Please try again.");
+        const errorData = err.response.data as { error?: string };
+        setError(errorData.error || "Login failed. Please try again.");
       } else {
         setError("Unable to connect to the server. Please try again later.");
       }
