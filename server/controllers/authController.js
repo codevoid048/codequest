@@ -60,29 +60,33 @@ export const registerUser = async (req, res) => {
 }
 
 export const loginUser = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
+    console.log(email);
+    console.log(password);
+    const { valid } = await isEmailValid(email);
+    if (!valid) return res.status(400).send({ message: "Please provide a valid email address." });
 
-        const {valid, reason, validators} = await isEmailValid(email);
-        if(!valid) return res.status(400).send({ message: "Please provide a valid email address.", reason: validators[reason].reason })
+    const user = await User.findOne({ email });
 
-        const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ error: "No user found" });
+    console.log("done");
+    console.log("User Data:", user);  // Check isVerified status in logs
 
-        if (!user) return res.status(401).json({ error: "No user found" });
-        if (!user.isVerified) return res.status(400).json({ error: "Email not verified" });
-        //console.log(user.password);
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) return res.status(400).json({ error: "Wrong Password" });
+    if (!user.isVerified) return res.status(400).json({ error: "Email not verified" });
 
-        jwt.sign({email: user.email, id: user._id, name: user.name}, process.env.JWT_SECRET, {}, (err, token) => {
-            if(err) throw err;
-            res.cookie('token', token).json(user)
-        })
-        res.status(200).json({ message: "Login successful" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Server error" });
-    }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(400).json({ error: "Wrong Password" });
+
+    jwt.sign({ email: user.email, id: user._id, name: user.name }, process.env.JWT_SECRET, {}, (err, token) => {
+      if (err) throw err;
+      console.log("login done");
+      res.cookie('token', token).json({ token, user });
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
 }
 
 export const verifyEmail = async (req, res) => {

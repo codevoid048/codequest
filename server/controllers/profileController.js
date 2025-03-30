@@ -17,45 +17,63 @@ export const getUserProfile = async (req, res) => {
 }
 export const updateUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
 
+        const user = await User.findById(req.user._id);
+        
         if (user) {
+            // Personal Information
             user.name = req.body.name || user.name;
-            user.email = req.body.email || user.email;
-            user.github = req.body.github || user.github;
+            user.username =user.username;
+            user.email =  user.email;
+            
+            // Academic Information
+            user.registerNumber = req.body.registerNumber || user.registerNumber;
+            user.branch = req.body.branch || user.branch;
+            user.collegeName = req.body.college || user.collegeName;
+            
+            // Coding Profiles
             user.leetcode = req.body.leetcode || user.leetcode;
-            user.gfg = req.body.gfg || user.gfg;
-            user.otherLinks = req.body.otherLinks || user.otherLinks;
-            if (req.body.password) {
-                user.password = req.body.password;
-            }
+            user.codeforces = req.body.codeforces || user.codeforces;
+            user.geeksforgeeks = req.body.geeksforgeeks || user.geeksforgeeks;
+            user.codechef = req.body.codechef || user.codechef;
+            
+            // Affiliate Status
+            user.isAffiliate = req.body.isAffiliate || false;
+            
+            // Profile Picture
             if (req.file) {
                 user.profilePicture = req.file.filename;
             }
-
+            
+            
+            
             const updatedUser = await user.save();
-
+            
+            // Generate response excluding sensitive information
             res.status(200).json({
                 _id: updatedUser._id,
                 name: updatedUser.name,
+                username: updatedUser.username,
                 email: updatedUser.email,
-                github: updatedUser.github,
+                registerNumber: updatedUser.registerNumber,
+                branch: updatedUser.branch,
+                collegeName: updatedUser.collegeName,
                 leetcode: updatedUser.leetcode,
-                gfg: updatedUser.gfg,
-                otherLinks: updatedUser.otherLinks,
-                points: updatedUser.points,
-                rank: updatedUser.rank,
-                token: generateToken(updatedUser._id)
+                codeforces: updatedUser.codeforces,
+                geeksforgeeks: updatedUser.geeksforgeeks,
+                codechef: updatedUser.codechef,
+                isAffiliate: updatedUser.isAffiliate,
+                profilePicture: updatedUser.profilePicture,
+              
             });
         } else {
             res.status(404).json({ message: 'User not found' });
         }
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
-
 export const getUserActivity = async (req, res) => {
     try {
         const activities = await Activity.aggregate([

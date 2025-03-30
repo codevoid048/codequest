@@ -5,7 +5,6 @@ import { getUserProfile, updateUserProfile, getUserActivity } from "../controlle
 const router = express.Router();
 
 router.get('/me', protect, getUserProfile);
-router.put('/me', protect, updateUserProfile);
-router.get('/activity', protect, getUserActivity)
-
+router.put('/update-profile', protect,updateUserProfile);
+router.get('/activity', protect, getUserActivity);
 export default router;

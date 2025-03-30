@@ -15,6 +15,7 @@ export function Navbar() {
     const { theme, setTheme } = useTheme();
     const isDarkMode = theme === "dark"; // Define the isDarkMode variable
     const location = useLocation()
+    const [token,setToken] = useState<string | null>("csdvsvds")
 
     useEffect(() => {
         setMounted(true)
@@ -85,17 +86,25 @@ export function Navbar() {
                         </Button>
                     )}
 
-                    <div className="hidden md:flex gap-2">
-                        <Button variant="outline" asChild>
-                            <Link to="/login">Log In</Link>
-                        </Button>
-                        <Button asChild>
-                            <Link to="/register">Sign Up</Link>
-                        </Button>
-                        <Button asChild>
-                            <Link to="/logout">Logout</Link>
-                        </Button>
-                    </div>
+{!token ? (
+            <div className="hidden md:flex gap-2">
+              <Button variant="outline" asChild>
+                <Link to="/login">Log In</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/register">Sign Up</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button onClick={} variant="outline">
+                Logout
+              </Button>
+              <Link to="/profile">
+                <img src="/default-profile.png" alt="Profile" className="w-8 h-8 rounded-full" />
+              </Link>
+            </div>
+          )}
 
                     <Sheet>
                         <SheetTrigger asChild>

@@ -24,7 +24,7 @@ import {
   Twitter,
 } from "lucide-react";
 import { useState } from "react";
-
+import updateProfile from "./updateProfile"
 export default function ProfilePage() {
   const user = {
     username: "codemaster42",
@@ -65,12 +65,12 @@ export default function ProfilePage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   // Function to get the number of days in a month
-  const getDaysInMonth = (month, year) => {
+  const getDaysInMonth = (month:number, year:number) => {
     return new Date(year, month + 1, 0).getDate();
   };
 
   // Generate contributions for a specific year
-  const generateContributions = (year) => {
+  const generateContributions = (year:number) => {
     const contributions = [];
     const startDate = new Date(year, 0, 1); // January 1st of the selected year
     const endDate = new Date(year, 11, 31); // December 31st of the selected year
@@ -113,7 +113,7 @@ export default function ProfilePage() {
   ];
 
   // Function to determine color based on contribution count
-  const getColor = (count) => {
+  const getColor = (count:number) => {
     if (count === 0) return "bg-gray-300";
     if (count <= 3) return "bg-green-200";
     if (count <= 6) return "bg-green-400";
@@ -121,7 +121,10 @@ export default function ProfilePage() {
   };
 
   // Function to check if a day is part of a streak
-  const isPartOfStreak = (monthIndex, dayIndex, monthContribs) => {
+  const isPartOfStreak = (monthIndex:number, dayIndex:number, monthContribs:{
+    date: string;
+    count: number
+  }[]):boolean => {
     const currentDate = new Date(selectedYear, monthIndex, dayIndex + 1);
     const currentContrib = monthContribs.find(
       (c) => c.date === currentDate.toISOString().split("T")[0]
