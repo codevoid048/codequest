@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     username: { type: String, required: true, unique: true, trim: true, lowercase: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-    password: { type: String }, // For email/password signups
+    password: { type: String },
     profilePicture: { type: String },
     RegistrationNumber: { type: String},
     branch: { type: String },
@@ -22,8 +22,9 @@ const userSchema = new mongoose.Schema(
     leetCode: { username: { type: String }, solved: { type: Number },rank:{type:Number} ,rating:{type:Number,default:0} },
     codeforces: { username: { type: String }, solved: { type: Number },rank:{type:Number} ,rating:{type:Number,default:0}},
     codechef: { username: { type: String }, solved: { type: Number },rank:{type:Number},rating:{type:Number,default:0} },
+
     
-    //reset password tokens 
+    //reset password tokens
     resetPasswordToken: { type: String, default: null },
     resetPasswordExpires: { type: Date, default: null },
 
@@ -53,7 +54,12 @@ const userSchema = new mongoose.Schema(
     },
     ],
 
-    otherLinks: [String],
+    otherLinks: [
+  {
+    platform: String,  // The name of the social platform, e.g., 'twitter', 'linkedin', 'github'
+    url: String        // The URL of the user's profile on that platform
+  }
+],
   },
   { timestamps: true }
 );
@@ -63,4 +69,5 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-export const User = mongoose.model("User", userSchema);
+
+export const User = mongoose.model("User", userSchema);
