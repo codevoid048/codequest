@@ -31,7 +31,7 @@ app.use('/api/challenges', challengeRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/admin', adminAuthRoutes);
 app.use('/admin/add-challenge', adminRoutes);
-app.use('/admin', adminRoutes);
+// app.use('/admin', adminRoutes);
 updateRanks();
 
 // Schedule leaderboard update every hour

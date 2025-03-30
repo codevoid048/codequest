@@ -21,7 +21,7 @@ export const updateUserPoints= async (req, res) => {
 try {
     const users = await User.find({ isVerified: true })
     .sort({ points: -1 })
-    .select("name points solveChallenges streak");
+    .select("username points solveChallenges streak");
 
     res.json(users);
 } catch (error) {
@@ -48,7 +48,7 @@ export const getLeaderboardData = async (req, res) => {
 try {
     const users = await User.find({ isVerified: true })
     .sort({ points: -1 })
-    .select("name points solveChallenges streak");
+    .select("username points solveChallenges streak");
 
     res.json(users);
 } catch (error) {

@@ -26,9 +26,18 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+interface user {
+  _id: string // Changed from number to string to match MongoDB IDs
+  username: string
+  collegeName: string
+  branch: string
+  name: string
+  avatar: string
+}
 
 export default function ProfilePage() {
   const { user }=useAuth();
+  console.log("user data",user);
   const navigate=useNavigate();
 
   const problemsSolved = {
@@ -171,7 +180,7 @@ export default function ProfilePage() {
             <Avatar className="w-24 h-24 sm:w-32 sm:h-32 border-4 border-primary shadow-lg">
               <AvatarImage
                 src="/placeholder.svg?height=128&width=128"
-                alt={user.name}
+                alt={user?.name || "User"}
               />
               <AvatarFallback className="text-4xl font-bold">
                 {user.name.charAt(0)}
@@ -182,7 +191,9 @@ export default function ProfilePage() {
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-teal-500 bg-clip-text text-transparent">
                 {user.name}
               </h1>
-              <p className="text-lg text-muted-foreground">@{user.username}</p>
+              <p className="text-lg text-muted-foreground">
+                @{user?.username || "Unknown"}
+              </p>
 
               <div className="mt-2">
                 <p className="text-sm mt-1 flex items-center justify-center lg:justify-start text-muted-foreground">
@@ -202,7 +213,7 @@ export default function ProfilePage() {
                 </p>
                 <p className="text-sm flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user.location}
+                  {user.RegistrationNumber}
                 </p>
               </div>
 
@@ -240,7 +251,7 @@ export default function ProfilePage() {
                 <Button
                   size="sm"
                   className="bg-gradient-to-r from-blue-500 to-teal-500"
-                  onClick={() => navigate("/edit-profile")}
+                  onClick={() => navigate("/profile/edit-profile")}
                 >
                   Edit Profile
                 </Button>

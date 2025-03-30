@@ -372,7 +372,7 @@ export default function Leaderboard() {
                               : "0 0 8px rgba(59, 130, 246, 0.5)",
                           }}
                         >
-                          {user.name}
+                          {user.username}
                         </motion.span>
                       </div>
 
@@ -423,7 +423,7 @@ export default function Leaderboard() {
                               : "" // Change text to blue when row is hovered
                           )}
                         >
-                          {user.solveChallenges.length}
+                          {user.solveChallenges? user.solveChallenges.length : 0}
                         </div>
                       </div>
 
