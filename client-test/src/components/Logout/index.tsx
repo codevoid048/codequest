@@ -3,22 +3,27 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "../../context/AuthContext";
+import toast from "react-hot-toast";
+
 
 export default function LogoutPage() {
     const navigate = useNavigate();
+    const { logout } = useAuth();
 
     useEffect(() => {
         const logoutUser = async () => {
             try {
                 const response = await axios.post("http://localhost:5000/api/auth/logout", {}, { withCredentials: true });
-                console.log("Logout response:", response.data); 
+                toast.success(response.data.message);
+                logout();
                 navigate("/login");
             } catch (error) {
                 console.error("Logout failed:", error.response ? error.response.data : error);
             }
         };
         logoutUser();
-    }, [navigate]);
+    }, [navigate, logout]);
 
     return (
         <div className="flex min-h-screen items-center justify-center">

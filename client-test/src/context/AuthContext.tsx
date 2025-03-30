@@ -1,51 +1,56 @@
 import React, { createContext, useState, useEffect, ReactNode } from "react";
+import axios from "axios";
 
-
-
-// Define the context and its types
+// Define the context type
 interface AuthContextType {
-  token: string | null;
   user: any | null;
   isAuthenticated: boolean;
-  login: (token: string, user: any) => void;
-  logout: () => void;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Provider Component
 const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
-  const [user, setUser] = useState<any | null>(JSON.parse(localStorage.getItem("user") || "null"));
+  const [user, setUser] = useState<any | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  // Function to fetch user data from the backend
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/auth/me", { withCredentials: true });
+      console.log(res.data.user);
+      setUser(res.data.user);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error("Authentication check failed:", error);
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  };
 
   useEffect(() => {
-    if (token) {
-      localStorage.setItem("token", token); // Persist the token in localStorage
-    } else {
-      localStorage.removeItem("token");
-    }
+    fetchUser();
+  }, []);
 
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user)); // Persist the user data in localStorage
-    } else {
-      localStorage.removeItem("user");
-    }
-  }, [token, user]);
-
-  const login = (newToken: string, userData: any) => {
-    setToken(newToken);
-    setUser(userData); // Set the user data when the user logs in
-    console.log("user",userData);
+  const login = async () => {
+    await fetchUser();
   };
- 
-  const logout = () => {
-    setToken(null);
-    setUser(null); // Clear user data on logout
-    window.location.href = "/";
+
+  const logout = async () => {
+    try {
+      await axios.post("http://localhost:5000/api/auth/logout", {}, { withCredentials: true });
+      setUser(null);
+      setIsAuthenticated(false);
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, isAuthenticated: !!token, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
