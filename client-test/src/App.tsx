@@ -1,4 +1,4 @@
-//App component
+//App components
 import './App.css'
 import { Navbar } from '../../client-test/src/components/Navbar'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
