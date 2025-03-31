@@ -1,14 +1,88 @@
-import { useState } from "react"
+import { useState,useMemo,useEffect } from "react"
 import { motion } from "framer-motion"
 import { ArrowRight, CheckCircle, Clock, Code2, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Link } from "react-router-dom"
-
+import { Award, Flame } from "lucide-react"
+import axios from "axios"
 export function DailyChallengeCard() {
+    interface challenge {
+        id: number;
+        date: string;
+        title: string;
+        categories: string[];
+        difficulty: "Easy" | "Medium" | "Hard";
+        platform: "LeetCode" | "GFG" | "CodeChef";
+        status: "Solved" | "Unsolved";
+        description: string;
+        problemUrl?: string;
+        points: number;
+      }
+      
+    const [problemsList, setProblemsList] = useState<challenge[]>([]);
+     const [isLoading, setIsLoading] = useState(true);
+    useEffect(() => {
+        const fetchProblems = async () => {
+          try {
+            const res = await axios.get('http://localhost:5000/api/challenges');
+            console.log(res.data);
+            if (res.data && Array.isArray(res.data.challenges)) {
+              const data = res.data.challenges.map((challenge: any) => ({
+                id: challenge._id,
+                date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }),
+                title: challenge.title,
+                categories: challenge.category,
+                difficulty: challenge.difficulty,
+                platform: challenge.platform,
+                status: "Unsolved",
+                description: challenge.description,
+                problemUrl: challenge.problemLink,
+                points: challenge.points,
+              }));
+              setProblemsList(data);
+              setIsLoading(false);
+            }
+          } catch (error) {
+            console.error("Failed to fetch problems", error);
+          }
+        };
+        fetchProblems();
+    
+      }, []);
+      const dailyProblem = useMemo(() => {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); // Normalize time to midnight
+        
+          const todayProblem = problemsList.find((problem) => {
+            const problemDate = new Date(problem.date);
+            problemDate.setHours(0, 0, 0, 0); // Normalize problem date
+            return problemDate.getTime() === today.getTime();
+          });
+        
+          return todayProblem || problemsList[0]; // Default to first problem if no match found
+        }, [problemsList]);
+        const getDifficultyStyle = (difficulty: string) => {
+            return {
+              Easy: "text-emerald-400 bg-emerald-900/50 dark:text-emerald-600 dark:bg-emerald-100",
+              Medium: "text-amber-400 bg-amber-900/50 dark:text-amber-600 dark:bg-amber-100",
+              Hard: "text-rose-400 bg-rose-900/50 dark:text-rose-600 dark:bg-rose-100",
+            }[difficulty] || "";
+          };
+  const getDifficultyIcon = (difficulty: string) => {
+     return {
+       Easy: <Award className="h-4 w-4 text-emerald-400 dark:text-emerald-600" />,
+       Medium: <Flame className="h-4 w-4 text-amber-400 dark:text-amber-600" />,
+       Hard: <Award className="h-4 w-4 text-rose-400 dark:text-rose-600" />,
+     }[difficulty] || null;
+   };
+   const openProblemLink = (url?: string) => url && window.open(url, "_blank");
     const [isHovered, setIsHovered] = useState(false)
-
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -18,68 +92,59 @@ export function DailyChallengeCard() {
             onHoverStart={() => setIsHovered(true)}
             onHoverEnd={() => setIsHovered(false)}
             className="max-w-3xl mx-auto"
-        >
-            <Card className="overflow-hidden border-2 transition-all duration-300 hover:border-primary/50 hover:shadow-lg">
-                <CardHeader className="bg-muted/50 pb-4">
+        > {isLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          ) :(
+            
+            <Card className="overflow-hidden border-2 transition-all w-130  mx-auto  duration-300 hover:border-primary/50 hover:shadow-lg">
+                <CardHeader className="bg-muted/50 pb-4 mt-0">
                     <div className="flex items-center justify-between">
                         <Badge variant="outline" className="bg-primary/10 text-primary">
                             <Clock className="mr-1 h-3 w-3" /> Daily Challenge
                         </Badge>
-                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500">
-                            <Zap className="mr-1 h-3 w-3" /> Medium
-                        </Badge>
+                        <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 mt-3 ${getDifficultyStyle(
+                      dailyProblem?.difficulty
+                    )}`}
+                  >
+                    {getDifficultyIcon(dailyProblem?.difficulty)}
+                    {dailyProblem?.difficulty}
+                  </span>
                     </div>
-                    <CardTitle className="text-2xl mt-2">Array Manipulation: Two Sum</CardTitle>
-                    <CardDescription>March 17, 2025</CardDescription>
+                    <CardTitle className="text-2xl mt-1">{dailyProblem?.title}</CardTitle>
+                    <CardDescription>{dailyProblem?.date}</CardDescription>
                 </CardHeader>
-                <CardContent className="pt-6">
+                <CardContent className="pt-0">
                     <div className="space-y-4">
-                        <p>
-                            Given an array of integers <code className="bg-muted px-1 py-0.5 rounded">nums</code> and an integer{" "}
-                            <code className="bg-muted px-1 py-0.5 rounded">target</code>, return the indices of the two numbers such
-                            that they add up to <code className="bg-muted px-1 py-0.5 rounded">target</code>.
-                        </p>
-                        <p>
-                            You may assume that each input would have exactly one solution, and you may not use the same element
-                            twice.
-                        </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {dailyProblem?.categories.map((cat) => (
+                                        <Badge
+                                            key={cat}
+                                            variant="secondary"
+                                            className="text-xs py-1 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
+                                        >
+                                            {cat}
+                                        </Badge>
+                                    ))}
+                                </div>
 
-                        <div className="bg-muted p-4 rounded-md">
-                            <p className="font-medium mb-2">Example:</p>
-                            <p className="font-mono text-sm">
-                                Input: nums = [2, 7, 11, 15], target = 9<br />
-                                Output: [0, 1]
-                                <br />
-                                Explanation: Because nums[0] + nums[1] == 9, we return [0, 1]
-                            </p>
-                        </div>
-
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center">
-                                <Code2 className="mr-1 h-4 w-4" />
-                                <span>JavaScript, Python, Java</span>
-                            </div>
-                            <div className="flex items-center">
-                                <CheckCircle className="mr-1 h-4 w-4" />
-                                <span>2,145 submissions</span>
-                            </div>
-                        </div>
+                        
                     </div>
                 </CardContent>
                 <CardFooter className="bg-muted/30 flex justify-between items-center">
                     <div>
-                        <p className="text-sm text-muted-foreground">Solve this challenge to earn 50 points</p>
+                        <p className="text-sm text-muted-foreground">Solve this challenge to earn {dailyProblem?.points} points</p>
                     </div>
-                    <Button asChild className="group">
-                        <Link to="/challenges/two-sum">
-                            Solve Challenge
-                            <motion.div animate={{ x: isHovered ? 4 : 0 }} transition={{ duration: 0.2 }}>
-                                <ArrowRight className="ml-2 h-4 w-4" />
-                            </motion.div>
-                        </Link>
-                    </Button>
+                            <Button asChild className="group">
+                                <a href={dailyProblem?.problemUrl} target="_blank" rel="noopener noreferrer">
+                                    Solve Challenge
+                                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
+                                </a>
+                            </Button>
                 </CardFooter>
-            </Card>
+            </Card>)}
         </motion.div>
     )
 }

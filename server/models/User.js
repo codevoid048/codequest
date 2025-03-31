@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     username: { type: String, required: false, unique: true, trim: true, lowercase: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-    password: { type: String }, // For email/password signups
+    password: { type: String },
     profilePicture: { type: String },
     RegistrationNumber: { type: String},
     branch: { type: String },
@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema(
     codeforces: { username: { type: String }, solved: { type: Number },rank:{type:Number} ,rating:{type:Number,default:0}},
     codechef: { username: { type: String }, solved: { type: Number },rank:{type:Number},rating:{type:Number,default:0} },
 
+    
+    //reset password tokens
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null },
 
     // Verification flag
     isVerified: { type: Boolean, default: true },
@@ -36,7 +40,7 @@ const userSchema = new mongoose.Schema(
     location:{ type: String },
 
     // All challenges solved (non-POTD)
-    problemsSolved: [
+    solveChallenges: [
     {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Challenge",

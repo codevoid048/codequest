@@ -309,7 +309,7 @@ export default function Leaderboard() {
                       {/* Problems Solved */}
                       <div className="col-span-3 text-center">
                         <div className={cn("flex items-center justify-center gap-2 transition-all duration-300", (isUsernameHovered || isHovered) ? "text-blue-500" : "")}>
-                          {user.solveChallenges.length}
+                          {user.solveChallenges}
                         </div>
                       </div>
 

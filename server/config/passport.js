@@ -28,25 +28,30 @@ passport.use(
             return done(null, false, { message: "Google account has no email associated." });
         }
 
-        let user = await User.findOne({ email: profile.emails[0].value });
+        const user = await User.findOne({ email: profile.emails[0].value });
+        const email = profile.emails[0].value;
+        const username = email.split("@")[0];
+
         if(user){
           if(!user.googleId){
             user.googleId = profile.id;
             user.isVerified = true;
+            if(!user.username) user.username = username;
             await user.save();
           }
-          const token = generateToken(user);  
+          const token = generateToken(user);
           return done(null, { user, token });
-        } 
+        }
         else{
-          const dummyPassword = Math.random().toString(36).slice(-8); 
+          const dummyPassword = Math.random().toString(36).slice(-8);
           const hashedPassword = await bcrypt.hash(dummyPassword, 10);
           const newUser = await User.create({
             name: profile.displayName,
-            email: profile.emails[0].value,
+            email,
             password: hashedPassword,
             googleId: profile.id,
             isVerified: true,
+            username,
           });
           const token = generateToken(newUser);
         return done(null, { user:newUser, token });
@@ -72,6 +77,7 @@ passport.use(
       try {
         console.log("GitHub profile:", profile);
         const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : undefined;
+        const username = email ? email.split("@")[0] : profile.username;
 
         let user;
         if(email){
@@ -79,6 +85,7 @@ passport.use(
           if(user && !user.githubId){
             user.githubId = profile.id;
             user.isVerified = true;
+            if (!user.username) user.username = username;
             await user.save();
           }
         }
@@ -94,7 +101,7 @@ passport.use(
         if(!user){ user = await User.findOne({ githubId: profile.id });}
 
         if(!user){
-          const dummyPassword = Math.random().toString(36).slice(-8); 
+          const dummyPassword = Math.random().toString(36).slice(-8);
           const hashedPassword = await bcrypt.hash(dummyPassword, 10);
           user = await User.create({
             name: profile.displayName || profile.username,
@@ -102,6 +109,7 @@ passport.use(
             password: hashedPassword,
             githubId: profile.id,
             isVerified: true,
+            username,
           });
         }
 
