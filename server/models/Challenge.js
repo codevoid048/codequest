@@ -10,4 +10,5 @@ const challengeSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+
 export const Challenge = mongoose.model('Challenge', challengeSchema);

@@ -1,24 +1,25 @@
-import type React from "react";
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { ChevronDown, Plus, X } from "lucide-react";
+"use client"
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
-import axios from "axios";
+import type React from "react"
+import { useState } from "react"
+import { motion } from "framer-motion"
+import { ChevronDown, Plus, X } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"
 
-const difficultyOptions = ["Easy", "Medium", "Hard"];
+const difficultyOptions = ["Easy", "Medium", "Hard"]
 const categoryOptions = [
   "Arrays",
   "Strings",
@@ -33,11 +34,11 @@ const categoryOptions = [
   "Greedy",
   "Math",
   "Bit Manipulation",
-];
-const platformOptions = ["LeetCode", "GeeksforGeeks", "CodeChef", "Codeforces"];
+]
+const platformOptions = ["LeetCode", "GeeksforGeeks", "CodeChef", "Codeforces"]
 
-export default function Admin() {
-  const currentDate = new Date();
+export default function ChallengeForm() {
+  const currentDate = new Date()
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -47,116 +48,95 @@ export default function Admin() {
     problemLink: "",
     createdAt: currentDate,
     platform: "" as string,
-  });
-  const [newCategory, setNewCategory] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showCategories, setShowCategories] = useState(false);
+  })
+  const [newCategory, setNewCategory] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showCategories, setShowCategories] = useState(false)
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
 
   const handleDifficultyChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, difficulty: value }));
-  };
+    setFormData((prev) => ({ ...prev, difficulty: value }))
+  }
 
   const handlePlatformChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, platform: value }));
-  };
+    setFormData((prev) => ({ ...prev, platform: value }))
+  }
 
   const addCategory = (category: string) => {
     if (!formData.category.includes(category)) {
       setFormData((prev) => ({
         ...prev,
         category: [...prev.category, category],
-      }));
+      }))
     }
-    setShowCategories(false);
-  };
+    setShowCategories(false)
+  }
 
   const addCustomCategory = () => {
     if (newCategory && !formData.category.includes(newCategory)) {
       setFormData((prev) => ({
         ...prev,
         category: [...prev.category, newCategory],
-      }));
-      setNewCategory("");
+      }))
+      setNewCategory("")
     }
-  };
+  }
 
   const removeCategory = (category: string) => {
     setFormData((prev) => ({
       ...prev,
       category: prev.category.filter((c) => c !== category),
-    }));
-  };
+    }))
+  }
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const date = new Date(e.target.value);
+    const date = new Date(e.target.value)
     if (!isNaN(date.getTime())) {
-      setFormData((prev) => ({ ...prev, createdAt: date }));
+      setFormData((prev) => ({ ...prev, createdAt: date }))
     }
-  };
+  }
 
   const formatDateForInput = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const day = String(date.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+    e.preventDefault()
+    setIsSubmitting(true)
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      const response = await axios.post(
-        "http://localhost:5000/admin/add-challenges",
-        {
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          difficulty: formData.difficulty,
-          points: formData.points,
-          problemLink: formData.problemLink,
-          createdAt: formData.createdAt.toISOString(),
-          platform: formData.platform,
-        },
-        {
-            headers: { "Content-Type": "application/json" },
-        }
-    );
-    console.log("Registration successful:", response.data);
-    // navigate("/");
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      console.log("Form submitted:", {
+        ...formData,
+        createdAt: formData.createdAt.toISOString(),
+      })
       alert(
-        `Challenge created! Successfully created "${
-          formData.title
-        }" on ${formData.createdAt.toLocaleDateString()} from ${
-          formData.platform
-        }`
-      );
+        `Challenge created! Successfully created "${formData.title}" on ${formData.createdAt.toLocaleDateString()} from ${formData.platform}`
+      )
 
-      // setFormData({
-      //   title: "",
-      //   description: "",
-      //   category: [],
-      //   difficulty: "Easy",
-      //   points: 100,
-      //   problemLink: "",
-      //   createdAt: new Date(),
-      //   platform: "",
-      // });
+      setFormData({
+        title: "",
+        description: "",
+        category: [],
+        difficulty: "Easy",
+        points: 100,
+        problemLink: "",
+        createdAt: new Date(),
+        platform: "",
+      })
     } catch (error) {
-      alert("Error: Failed to create challenge. Please try again.");
+      alert("Error: Failed to create challenge. Please try again.")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -166,7 +146,7 @@ export default function Admin() {
         staggerChildren: 0.1,
       },
     },
-  };
+  }
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -178,7 +158,7 @@ export default function Admin() {
         stiffness: 100,
       },
     },
-  };
+  }
 
   return (
     <motion.div initial="hidden" animate="visible" variants={containerVariants}>
@@ -186,10 +166,7 @@ export default function Admin() {
         <CardContent className="p-0">
           <form onSubmit={handleSubmit} className="space-y-6 p-6">
             <motion.div variants={itemVariants} className="space-y-2">
-              <Label
-                htmlFor="title"
-                className="text-lg font-medium text-foreground"
-              >
+              <Label htmlFor="title" className="text-lg font-medium text-foreground">
                 Challenge Title
               </Label>
               <Input
@@ -204,10 +181,7 @@ export default function Admin() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="space-y-2">
-              <Label
-                htmlFor="description"
-                className="text-lg font-medium text-foreground"
-              >
+              <Label htmlFor="description" className="text-lg font-medium text-foreground">
                 Description
               </Label>
               <Textarea
@@ -222,9 +196,7 @@ export default function Admin() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="space-y-2">
-              <Label className="text-lg font-medium text-foreground">
-                Categories
-              </Label>
+              <Label className="text-lg font-medium text-foreground">Categories</Label>
               <div className="flex flex-wrap gap-2">
                 {formData.category.map((cat) => (
                   <motion.div
@@ -255,11 +227,7 @@ export default function Admin() {
                     className="flex w-full items-center justify-between border-gray-600 bg-card text-foreground hover:bg-muted hover:text-foreground"
                   >
                     Select Categories
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform ${
-                        showCategories ? "rotate-180" : ""
-                      }`}
-                    />
+                    <ChevronDown className={`h-4 w-4 transition-transform ${showCategories ? "rotate-180" : ""}`} />
                   </Button>
                 </div>
 
@@ -310,14 +278,8 @@ export default function Admin() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="space-y-2">
-              <Label className="text-lg font-medium text-foreground">
-                Difficulty
-              </Label>
-              <RadioGroup
-                value={formData.difficulty}
-                onValueChange={handleDifficultyChange}
-                className="flex gap-4"
-              >
+              <Label className="text-lg font-medium text-foreground">Difficulty</Label>
+              <RadioGroup value={formData.difficulty} onValueChange={handleDifficultyChange} className="flex gap-4">
                 {difficultyOptions.map((difficulty) => (
                   <div key={difficulty} className="flex items-center space-x-2">
                     <RadioGroupItem
@@ -327,8 +289,8 @@ export default function Admin() {
                         difficulty === "Easy"
                           ? "border-[var(--chart-2)] text-[var(--chart-2)]"
                           : difficulty === "Medium"
-                          ? "border-[var(--chart-1)] text-[var(--chart-1)]"
-                          : "border-destructive text-destructive"
+                            ? "border-[var(--chart-1)] text-[var(--chart-1)]"
+                            : "border-destructive text-destructive"
                       }`}
                     />
                     <Label
@@ -337,8 +299,8 @@ export default function Admin() {
                         difficulty === "Easy"
                           ? "text-[var(--chart-2)]"
                           : difficulty === "Medium"
-                          ? "text-[var(--chart-1)]"
-                          : "text-destructive"
+                            ? "text-[var(--chart-1)]"
+                            : "text-destructive"
                       }`}
                     >
                       {difficulty}
@@ -349,10 +311,7 @@ export default function Admin() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="space-y-2">
-              <Label
-                htmlFor="points"
-                className="text-lg font-medium text-foreground"
-              >
+              <Label htmlFor="points" className="text-lg font-medium text-foreground">
                 Points
               </Label>
               <Input
@@ -368,10 +327,7 @@ export default function Admin() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="space-y-2">
-              <Label
-                htmlFor="createdAt"
-                className="text-lg font-medium text-foreground"
-              >
+              <Label htmlFor="createdAt" className="text-lg font-medium text-foreground">
                 Creation Date
               </Label>
               <div className="relative">
@@ -392,27 +348,16 @@ export default function Admin() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="space-y-2">
-              <Label
-                htmlFor="platform"
-                className="text-lg font-medium text-foreground"
-              >
+              <Label htmlFor="platform" className="text-lg font-medium text-foreground">
                 Platform
               </Label>
-              <Select
-                onValueChange={handlePlatformChange}
-                value={formData.platform}
-                required
-              >
+              <Select onValueChange={handlePlatformChange} value={formData.platform} required>
                 <SelectTrigger className="border-gray-600 bg-card text-foreground focus:border-ring focus:ring-ring">
                   <SelectValue placeholder="Select a platform" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-gray-600">
                   {platformOptions.map((platform) => (
-                    <SelectItem
-                      key={platform}
-                      value={platform}
-                      className="text-foreground hover:bg-muted"
-                    >
+                    <SelectItem key={platform} value={platform} className="text-foreground hover:bg-muted">
                       {platform}
                     </SelectItem>
                   ))}
@@ -421,10 +366,7 @@ export default function Admin() {
             </motion.div>
 
             <motion.div variants={itemVariants} className="space-y-2">
-              <Label
-                htmlFor="problemLink"
-                className="text-lg font-medium text-foreground"
-              >
+              <Label htmlFor="problemLink" className="text-lg font-medium text-foreground">
                 Problem Link
               </Label>
               <Input
@@ -453,8 +395,7 @@ export default function Admin() {
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"></div>
-                    <span></span>
-                    {/* <Button type="submit" className="w-full"><span>Creating Challenge...</span></Button> */}
+                    <span>Creating Challenge...</span>
                   </div>
                 ) : (
                   "Create Challenge"
@@ -465,5 +406,5 @@ export default function Admin() {
         </CardContent>
       </Card>
     </motion.div>
-  );
+  )
 }

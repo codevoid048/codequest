@@ -28,7 +28,7 @@ export default function LoginPage() {
     console.log("Email:", email, "Password:", password); // Debugging
 
     try {
-      const response = await axios.post("http://localhost:5000/admin/login", 
+      const response = await axios.post("http://localhost:5000/auth/admin/login", 
         { email, password }, 
         { withCredentials: true }
       );

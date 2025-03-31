@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import axios from "axios";
 import {
   Select,
   SelectContent,
@@ -114,25 +113,10 @@ export default function Admin() {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      const response = await axios.post(
-        "http://localhost:5000/admin/add-challenges",
-        {
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          difficulty: formData.difficulty,
-          points: formData.points,
-          problemLink: formData.problemLink,
-          createdAt: formData.createdAt.toISOString(),
-          platform: formData.platform,
-        },
-        {
-            headers: { "Content-Type": "application/json" },
-        }
-    );
-    console.log("Registration successful:", response.data);
-    // navigate("/");
+      console.log("Form submitted:", {
+        ...formData,
+        createdAt: formData.createdAt.toISOString(),
+      });
       alert(
         `Challenge created! Successfully created "${
           formData.title
@@ -141,16 +125,16 @@ export default function Admin() {
         }`
       );
 
-      // setFormData({
-      //   title: "",
-      //   description: "",
-      //   category: [],
-      //   difficulty: "Easy",
-      //   points: 100,
-      //   problemLink: "",
-      //   createdAt: new Date(),
-      //   platform: "",
-      // });
+      setFormData({
+        title: "",
+        description: "",
+        category: [],
+        difficulty: "Easy",
+        points: 100,
+        problemLink: "",
+        createdAt: new Date(),
+        platform: "",
+      });
     } catch (error) {
       alert("Error: Failed to create challenge. Please try again.");
     } finally {
@@ -453,8 +437,7 @@ export default function Admin() {
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"></div>
-                    <span></span>
-                    {/* <Button type="submit" className="w-full"><span>Creating Challenge...</span></Button> */}
+                    <span>Creating Challenge...</span>
                   </div>
                 ) : (
                   "Create Challenge"

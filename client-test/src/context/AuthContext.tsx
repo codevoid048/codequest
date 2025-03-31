@@ -34,7 +34,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
-
+const [loading, setLoading] = useState<boolean>(true);
   // Function to fetch user data from the backend
   const fetchUser = async () => {
     try {
