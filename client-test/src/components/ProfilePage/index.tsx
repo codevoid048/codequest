@@ -1,5 +1,5 @@
 "use client";
-
+import { useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,9 +27,21 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function ProfilePage() {
-  const { user }=useAuth();
+export default function ProfilePage() {  
+  const { user,token }=useAuth();
+  console.log("user data",user);
+  console.log("user token",token);
   const navigate=useNavigate();
+  interface user {
+  _id: string // Changed from number to string to match MongoDB IDs
+  username: string
+  collegeName: string
+  branch: string
+  name: string
+  RegistrationNumber: string
+  rank: number
+  avatar: string
+  points: number}
 
   const problemsSolved = {
     total: 487,
@@ -171,45 +183,47 @@ export default function ProfilePage() {
             <Avatar className="w-24 h-24 sm:w-32 sm:h-32 border-4 border-primary shadow-lg">
               <AvatarImage
                 src="/placeholder.svg?height=128&width=128"
-                alt={user.name}
+                alt={user?.name || "User"}
               />
               <AvatarFallback className="text-4xl font-bold">
-                {user.name.charAt(0)}
+                {user?.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
 
             <div className="mt-4 text-center lg:text-left">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-teal-500 bg-clip-text text-transparent">
-                {user.name}
+                {user?.name}
               </h1>
-              <p className="text-lg text-muted-foreground">@{user.username}</p>
+              <p className="text-lg text-muted-foreground">
+                @{user?.username || "Unknown"}
+              </p>
 
               <div className="mt-2">
                 <p className="text-sm mt-1 flex items-center justify-center lg:justify-start text-muted-foreground">
                   <ChevronUp className="h-4 w-4 text-green-500" />
-                  Position #{user.rank}
+                  Position #{user?.rank}
                 </p>
               </div>
 
               <div className="mt-5 space-y-2">
                 <p className="text-sm flex items-center gap-1.5">
                   <School className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user.collegeName}
+                  {user?.collegeName}
                 </p>
                 <p className="text-sm flex items-center gap-1.5">
                   <Code2 className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user.branch}
+                  {user?.branch}
                 </p>
                 <p className="text-sm flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user.location}
+                  {user?.RegistrationNumber}
                 </p>
               </div>
 
               <div className="mt-4 flex justify-center gap-2 sm:gap-3">
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user.otherLinks.twitter}
+                    href={user?.otherLinks.twitter}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -218,7 +232,7 @@ export default function ProfilePage() {
                 </Button>
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user.otherLinks.linkedin}
+                    href={user?.otherLinks.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -227,7 +241,7 @@ export default function ProfilePage() {
                 </Button>
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user.otherLinks.github}
+                    href={user?.otherLinks.github}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -240,7 +254,7 @@ export default function ProfilePage() {
                 <Button
                   size="sm"
                   className="bg-gradient-to-r from-blue-500 to-teal-500"
-                  onClick={() => navigate("/edit-profile")}
+                  onClick={() => navigate("/profile/edit-profile")}
                 >
                   Edit Profile
                 </Button>
@@ -282,7 +296,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">
-                    {user.points}
+                    {user?.points}
                   </div>
                 </CardContent>
               </Card>
@@ -298,7 +312,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-                    {user.streak}
+                    {user?.streak}
                   </div>
                 </CardContent>
               </Card>
