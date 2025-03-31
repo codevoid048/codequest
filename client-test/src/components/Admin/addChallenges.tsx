@@ -116,7 +116,7 @@ export default function Admin() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const response = await axios.post(
-        "http://localhost:5000/admin/add-challenge",
+        "http://localhost:5000/admin/add-challenges",
         {
           title: formData.title,
           description: formData.description,
@@ -454,7 +454,7 @@ export default function Admin() {
                   <div className="flex items-center gap-2">
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"></div>
                     <span></span>
-                    <Button type="submit" className="w-full"><span>Creating Challenge...</span></Button>
+                    {/* <Button type="submit" className="w-full"><span>Creating Challenge...</span></Button> */}
                   </div>
                 ) : (
                   "Create Challenge"

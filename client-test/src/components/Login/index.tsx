@@ -35,7 +35,8 @@ export default function LoginPage() {
       console.error("Login error:", err);
 
       if (err.response) {
-        toast.error(err.response.data.error);
+        const errorMessage = (err.response.data as { error?: string })?.error;
+        toast.error(errorMessage || "An unexpected error occurred.");
         setError((err.response.data as { error?: string })?.error || "Login failed. Please try again.");
       } else {
         setError("Unable to connect to the server. Please try again later.");

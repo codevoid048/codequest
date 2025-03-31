@@ -19,20 +19,20 @@ export function DailyChallengeCard() {
             onHoverEnd={() => setIsHovered(false)}
             className="max-w-3xl mx-auto"
         >
-            <Card className="overflow-hidden border-2 transition-all duration-300 hover:border-primary/50 hover:shadow-lg">
+            <Card className="overflow-hidden border-2 transition-all duration-300 hover:border-primary/50 hover:shadow-lg w-lg content-center">
                 <CardHeader className="bg-muted/50 pb-4">
                     <div className="flex items-center justify-between">
                         <Badge variant="outline" className="bg-primary/10 text-primary">
-                            <Clock className="mr-1 h-3 w-3" /> Daily Challenge
+                            <Clock className="mr-1 h-15 w-8" /> Daily Challenge
                         </Badge>
                         <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500">
-                            <Zap className="mr-1 h-3 w-3" /> Medium
+                            <Zap className="mr-1 h-10 w-6" /> Medium
                         </Badge>
                     </div>
                     <CardTitle className="text-2xl mt-2">Array Manipulation: Two Sum</CardTitle>
                     <CardDescription>March 17, 2025</CardDescription>
                 </CardHeader>
-                <CardContent className="pt-6">
+                {/* <CardContent className="pt-6">
                     <div className="space-y-4">
                         <p>
                             Given an array of integers <code className="bg-muted px-1 py-0.5 rounded">nums</code> and an integer{" "}
@@ -65,7 +65,7 @@ export function DailyChallengeCard() {
                             </div>
                         </div>
                     </div>
-                </CardContent>
+                </CardContent> */}
                 <CardFooter className="bg-muted/30 flex justify-between items-center">
                     <div>
                         <p className="text-sm text-muted-foreground">Solve this challenge to earn 50 points</p>
