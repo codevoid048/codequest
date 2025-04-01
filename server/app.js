@@ -14,6 +14,8 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import adminAuthRoutes from "./routes/adminAuthRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import platformRoute from "./routes/platformsRoute.js";
+import axios from "axios";
 dotenv.config();
 const app = express();
 
@@ -32,6 +34,20 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/admin', adminAuthRoutes);
 app.use('/admin/add-challenge', adminRoutes);
 app.use('/admin', adminRoutes);
+app.use('/platforms', platformRoute);
+
+app.get("/geeksforgeeks-profile/:handle", async (req, res) => {
+    try {
+      const handle = req.params.handle;
+      const response = await axios.get(
+        `https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${handle}`
+      );
+      return res.json(response.data);
+    } catch (error) {
+      return res.status(error.response?.status || 500).json({ error: "Error fetching data" });
+    }
+  });
+
 updateRanks();
 
 // Schedule leaderboard update every hour
