@@ -82,6 +82,7 @@ const Challenges: React.FC = () => {
             description: challenge.description,
             problemUrl: challenge.problemLink,
           }));
+          console.log(data);
           setProblemsList(data);
           setIsLoading(false);
         }

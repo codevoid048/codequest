@@ -238,9 +238,27 @@ export const resetPassword = async (req, res) => {
     }
 };
 
-export const getCurrentUser = (req, res) => {
-  const userCookie = req.cookies.user;
-  if (!userCookie) return res.status(401).json({ message: "Unauthorized" });
+export const getCurrentUser = async(req, res) => {
+  try {
+    const token = req.cookies.jwt;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-  res.json({ user: JSON.parse(userCookie) });
+    // Decode the JWT to get the user ID
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id; 
+
+    // Fetch full user data from database
+    const user = await User.findById(userId).select("-password"); // Exclude password
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ user, token });
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 };
