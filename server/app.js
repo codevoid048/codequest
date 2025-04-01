@@ -31,8 +31,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/admin', adminAuthRoutes);
-app.use('/admin/add-challenge', adminRoutes);
+app.use('/auth/admin', adminAuthRoutes);
 app.use('/admin', adminRoutes);
 app.use('/platforms', platformRoute);
 
@@ -53,7 +52,7 @@ updateRanks();
 // Schedule leaderboard update every hour
 setInterval(() => {
     updateRanks();
-}, 3600000);
+}, 60000);
 
 app.use((err, req, res, next) => {
     console.error(err.stack);

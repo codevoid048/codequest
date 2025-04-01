@@ -32,21 +32,8 @@ import RatingChart from "@/platforms/codechefgraph"
 
 
 export default function ProfilePage() {
-  const { user, token } = useAuth();
-  // console.log("user data", user);
-  // console.log("user token", token);
-  const navigate = useNavigate();
-  interface user {
-    _id: string // Changed from number to string to match MongoDB IDs
-    username: string
-    collegeName: string
-    branch: string
-    name: string
-    RegistrationNumber: string
-    rank: number
-    avatar: string
-    points: number
-  }
+  const { user }=useAuth();
+  const navigate=useNavigate();
 
   const problemsSolved = {
     total: 487,

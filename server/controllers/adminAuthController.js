@@ -3,10 +3,12 @@ import Admin from "../models/Admin.js";
 export const adminLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
+        console.log("Admin login request received:", {email,password});
         if (!email || !password) {
             return res.status(400).json({ message: "All fields are required" });
         }
         const admin = await Admin.findOne({ email });
+        console.log("Admin found:", admin);
         if (!admin) {
             return res.status(400).json({ error: "No admin found" });
         }
