@@ -1,23 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import './App.css'
-<<<<<<< HEAD
-import  {Navbar } from './components/Navbar'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Home from './components/Home'
-import Potd from './components/Challenges'
-import LoginPage from './components/Login'
-import LogoutPage from './components/Logout'
-import RegisterPage from './components/SignUp'
-import Footer from './components/footer'
-import AboutPage from './components/About'
-import UserDashboard from './components/Admin/Users.tsx'
-import Leaderboard from './components/Leaderboard'
-import ProfilePage from "./components/ProfilePage"
-import ResetPassword from './components/ResetPassword.tsx'
-import ForgotPassword from './components/ForgotPassword/index.tsx'
-import EditProfile from './components/ProfilePage/profileEdit.tsx'
-import AddChallenge from "./components/Admin/addChallenges.tsx";
-=======
 // import { Navbar } from '../../client-test/src/components/Navbar'
 // import { BrowserRouter as Router, Routes, Route, } from 'react-router-dom'
 // import Home from './components/Home'
@@ -36,13 +18,12 @@ import AddChallenge from "./components/Admin/addChallenges.tsx";
 // import AddChallenge from "./components/Admin/addChallenges.tsx";
 // import AdminLogin from './components/Admin/adminLogin.tsx'
 // >>>>>>> test
->>>>>>> b5856d7ebab222c0d8095d96cf66b909089a65b0
 import { Toaster } from 'react-hot-toast';
 import Home from './components/Home';
 import LoginPage from './components/Login';
 import LogoutPage from './components/Logout';
 import RegisterPage from './components/SignUp';
-import Leaderboard from './components/leaderboard';
+import Leaderboard from './components/Leaderboard';
 import AboutPage from './components/About';
 import ProfilePage from './components/ProfilePage';
 import ResetPassword from './components/ResetPassword.tsx';

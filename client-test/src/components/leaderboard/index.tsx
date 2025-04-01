@@ -23,7 +23,6 @@ const USERS_PER_PAGE = 8;
 
 export default function Leaderboard() {
   const [users, setUsers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [updatedUser, setUpdatedUser] = useState<number | null>(null);
   const [hoveredUser, setHoveredUser] = useState<number | null>(null);
@@ -423,7 +422,7 @@ export default function Leaderboard() {
                               : "" // Change text to blue when row is hovered
                           )}
                         >
-                          {user.solveChallenges? user.solveChallenges.length : 0}
+                          {user.solveChallenges? user.solveChallenges.length: 0}
                         </div>
                       </div>
 

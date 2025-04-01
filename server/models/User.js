@@ -53,7 +53,6 @@ const userSchema = new mongoose.Schema(
         type: Date, // or String if you prefer ISO strings
     },
     ],
-
     otherLinks: [
   {
     platform: String,  // The name of the social platform, e.g., 'twitter', 'linkedin', 'github'

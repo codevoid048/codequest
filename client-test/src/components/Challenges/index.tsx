@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import ProblemStatus from '@/lib/solutionStatus'
 // import {axiosInstance }from "@/lib/axios"
+import {useAuth} from "@/context/AuthContext"
 import axios from "axios";
 import {
   Award,
@@ -55,6 +56,7 @@ const Challenges: React.FC = () => {
   const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" });
   const [problemsList, setProblemsList] = useState<challenge[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [solvePotd,setSolvePotd]=useState("");
   const [sortOption, setSortOption] = useState<SortOption>("date");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -187,11 +189,44 @@ const Challenges: React.FC = () => {
       prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
     );
   };
+  const { user, token } = useAuth();
+  const markSolved = async (id: number) => {
+  try {
+   
+    console.log("mark solved user",user);
+    console.log("mark solved token",token); // Get the user and token from AuthContext
 
-  const markSolved = (id: number) => {
-    setProblemsList((prev) => prev.map((p) => (p.id === id ? { ...p, status: "Solved" } : p)));
-  };
+    if (!token) {
+      console.error("User not authenticated");
+      return;
+    }
 
+    // Update UI optimistically
+    setProblemsList((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, status: "Solved" } : p))
+    );
+    
+    // Send request to backend with token
+    await axios.post(
+      "http://localhost:5000/api/profile/solvedChallenges",
+      { problemId: id },
+      
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // Attach token for authentication
+        },
+      }
+    );
+
+    console.log("Challenge marked as solved in the database.");
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("Error updating challenge status:", error.response?.data || error.message);
+    } else {
+      console.error("Error updating challenge status:", error);
+    }
+  }
+};
   const getDifficultyStyle = (difficulty: string) => {
     return {
       Easy: "text-emerald-400 bg-emerald-900/50 dark:text-emerald-600 dark:bg-emerald-100",

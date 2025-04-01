@@ -1,7 +1,7 @@
 import { User } from "../models/User.js";
 import { Activity } from "../models/Activity.js";
 // import generateToken from '../controllers/authController.js'; // Ensure the file extension is correct
-
+import {Challenge} from "../models/Challenge.js";
 
 export const getUserProfile = async (req, res) => {
     try {
@@ -122,3 +122,51 @@ export const getUserActivity = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 }
+export const solvedChallenges = async (req, res) => {
+    console.log("Request Body:", req.body); 
+    const { problemId } = req.body;
+    const userId = req.user.id;
+
+
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Adding problemId to solvedChallenges if not already present
+        if (!user.solveChallenges.includes(problemId)) {
+            user.solveChallenges.push(problemId);
+        }
+
+        const problem = await Challenge.findById(problemId);
+        console.log("Problem found:", problem);
+        if (!problem) {
+            return res.status(404).json({ error: "Problem not found" });
+        }
+
+        const problemDate = new Date(problem.createdAt);
+        problemDate.setHours(0, 0, 0, 0);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (problemDate.getTime() === today.getTime()) {
+            const solvedDates = user.potdSolved.map(date => 
+                new Date(date).setHours(0, 0, 0, 0)
+            );
+
+            if (!solvedDates.includes(today.getTime())) {
+                user.potdSolved.push(today);
+            }
+        }
+
+        // Save the user document
+        await user.save();
+
+        res.status(200).json({ message: "Problem marked as solved and stored in DB" });
+    } catch (err) {
+        console.error("Error in solvedChallenges:", err);
+        res.status(500).json({ message: "Server error", error: err.message });
+    }
+};

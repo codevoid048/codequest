@@ -92,7 +92,6 @@ export function DailyChallengeCard() {
             onHoverStart={() => setIsHovered(true)}
             onHoverEnd={() => setIsHovered(false)}
             className="max-w-3xl mx-auto"
-<<<<<<< HEAD
         > {isLoading ? (
             <div className="flex justify-center items-center h-40">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -101,16 +100,10 @@ export function DailyChallengeCard() {
             
             <Card className="overflow-hidden border-2 transition-all w-130  mx-auto  duration-300 hover:border-primary/50 hover:shadow-lg">
                 <CardHeader className="bg-muted/50 pb-4 mt-0">
-=======
-        >
-            <Card className="overflow-hidden border-2 transition-all duration-300 hover:border-primary/50 hover:shadow-lg w-lg content-center">
-                <CardHeader className="bg-muted/50 pb-4">
->>>>>>> b5856d7ebab222c0d8095d96cf66b909089a65b0
                     <div className="flex items-center justify-between">
                         <Badge variant="outline" className="bg-primary/10 text-primary">
                             <Clock className="mr-1 h-15 w-8" /> Daily Challenge
                         </Badge>
-<<<<<<< HEAD
                         <span
                     className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 mt-3 ${getDifficultyStyle(
                       dailyProblem?.difficulty
@@ -119,20 +112,11 @@ export function DailyChallengeCard() {
                     {getDifficultyIcon(dailyProblem?.difficulty)}
                     {dailyProblem?.difficulty}
                   </span>
-=======
-                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500">
-                            <Zap className="mr-1 h-10 w-6" /> Medium
-                        </Badge>
->>>>>>> b5856d7ebab222c0d8095d96cf66b909089a65b0
                     </div>
                     <CardTitle className="text-2xl mt-1">{dailyProblem?.title}</CardTitle>
                     <CardDescription>{dailyProblem?.date}</CardDescription>
                 </CardHeader>
-<<<<<<< HEAD
                 <CardContent className="pt-0">
-=======
-                {/* <CardContent className="pt-6">
->>>>>>> b5856d7ebab222c0d8095d96cf66b909089a65b0
                     <div className="space-y-4">
                                 <div className="flex flex-wrap gap-2">
                                     {dailyProblem?.categories.map((cat) => (
@@ -148,7 +132,7 @@ export function DailyChallengeCard() {
 
                         
                     </div>
-                </CardContent> */}
+                </CardContent>
                 <CardFooter className="bg-muted/30 flex justify-between items-center">
                     <div>
                         <p className="text-sm text-muted-foreground">Solve this challenge to earn {dailyProblem?.points} points</p>
