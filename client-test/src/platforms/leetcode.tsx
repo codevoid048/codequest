@@ -1,60 +1,83 @@
 import axios from "axios";
 
-export const fetchLeetCodeProfile = async (username: string) => {
+const cacheData = (key: string, data: any) => {
+  localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+};
+
+const getCachedData = (key: string, expiry = 300000) => {
+  const cached = localStorage.getItem(key);
+  if (!cached) return null;
+  const { data, timestamp } = JSON.parse(cached);
+  return Date.now() - timestamp < expiry ? data : null;
+};
+
+export const fetchLeetCodeProfile = async (username: string, signal?: AbortSignal) => {
+  const CACHE_KEY = `leetcode-${username}`;
+  const cached = getCachedData(CACHE_KEY);
+  if (cached) return cached;
+
   try {
-    const res = await axios.post("http://localhost:5000/platforms/leetcode", {
-      username,
-    });
-    // const res = await axios.get(`https://alfa-leetcode-api.onrender.com/userProfile/${username}/`);
-    // console.log(res.data)
+    const res = await axios.post("http://localhost:5000/platforms/leetcode", { username }, { signal });
+    cacheData(CACHE_KEY, res.data);
     return res.data;
   } catch (error) {
-    console.error("Error fetching LeetCode data:", (error as Error).message);
-    return null;
+    console.error("Error fetching LeetCode data:", error);
+    return cached ?? null;
   }
 };
 
-export const fetchCodeforcesProfile = async (username: string) => {
-  try {
-    const response = await axios.get(`https://codeforces.com/api/user.status?handle=${username}`);
-    const submissions: { verdict: string; problem: { contestId: number; index: string } }[] = response.data.result;
+export const fetchCodeforcesProfile = async (username: string, signal?: AbortSignal) => {
+  const CACHE_KEY = `codeforces-${username}`;
+  const cached = getCachedData(CACHE_KEY);
+  if (cached) return cached;
 
+  try {
+    const response = await axios.get(`https://codeforces.com/api/user.status?handle=${username}`, { signal });
+    const submissions = response.data.result;
     let solvedProblems = new Set();
 
-    submissions.forEach((submission) => {
+    submissions.forEach((submission : any) => {
       if (submission.verdict === "OK") {
         let problemId = `${submission.problem.contestId}-${submission.problem.index}`;
         solvedProblems.add(problemId);
       }
     });
-
-    return solvedProblems.size;
+    
+    const result = solvedProblems.size;
+    cacheData(CACHE_KEY, result);
+    return result;
   } catch (error) {
-    console.error('Error fetching user data:', error);
+    console.error("Error fetching Codeforces data:", error);
+    return cached ?? 0;
   }
 };
 
+export const fetchgfgProfile = async (username: string, signal?: AbortSignal) => {
+  const CACHE_KEY = `gfg-${username}`;
+  const cached = getCachedData(CACHE_KEY);
+  if (cached) return cached;
 
-export const fetchgfgProfile = async (username: string) => {
   try {
-
-    const res = await axios.get(`http://localhost:5000/geeksforgeeks-profile/${username}`);
-    // const res = await axios.get(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`);
-    // console.log(res.data);
-    return res.data;  
+    const res = await axios.get(`http://localhost:5000/geeksforgeeks-profile/${username}`, { signal });
+    cacheData(CACHE_KEY, res.data);
+    return res.data;
   } catch (error) {
-    console.error("Error fetching LeetCode data:", (error as Error).message);
-    return null;
+    console.error("Error fetching GFG data:", error);
+    return cached ?? null;
   }
 };
 
-export const fetchCodeChefProfile = async (username: string) => {
-  try {
+export const fetchCodeChefProfile = async (username: string, signal?: AbortSignal) => {
+  const CACHE_KEY = `codechef-${username}`;
+  const cached = getCachedData(CACHE_KEY);
+  if (cached) return cached;
 
-    const res = await axios.get( `https://codechef-api.vercel.app/handle/${username}`);
-    return res.data;  
+  try {
+    const res = await axios.get(`https://codechef-api.vercel.app/handle/${username}`, { signal });
+    cacheData(CACHE_KEY, res.data);
+    return res.data;
   } catch (error) {
-    console.error("Error fetching LeetCode data:", (error as Error).message);
-    return null;
+    console.error("Error fetching CodeChef data:", error);
+    return cached ?? null;
   }
 };

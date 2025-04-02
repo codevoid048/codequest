@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,7 @@ import {
   ChevronUp,
   Code2,
   Flame,
-  Github,
+  Github ,
   Linkedin,
   MapPin,
   School,
@@ -26,14 +26,27 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchCodeChefProfile, fetchCodeforcesProfile, fetchgfgProfile, fetchLeetCodeProfile } from '@/platforms/leetcode'
-import RatingChart from "@/platforms/codechefgraph"
+import { fetchCodeChefProfile, fetchCodeforcesProfile, fetchgfgProfile, fetchLeetCodeProfile } from "@/platforms/leetcode";
 
+const RatingChart = React.lazy(() => import("@/platforms/codechefgraph"));
 
 
 export default function ProfilePage() {
-  const { user }=useAuth();
-  const navigate=useNavigate();
+  const { user, token } = useAuth();
+  // console.log("user data", user);
+  // console.log("user token", token);
+  const navigate = useNavigate();
+  interface user {
+    _id: string // Changed from number to string to match MongoDB IDs
+    username: string
+    collegeName: string
+    branch: string
+    name: string
+    RegistrationNumber: string
+    rank: number
+    avatar: string
+    points: number
+  }
 
   const problemsSolved = {
     total: 487,
@@ -41,48 +54,44 @@ export default function ProfilePage() {
     medium: 231,
     hard: 52,
   };
-  const [rating, setRating] = useState([]);
+
   const [platformSolved, setPlatformSolved] = useState({
     leetcodeTotal: 0,
     codeChefStars: "",
     codeforcesTotal: 0,
     gfgTotal: 0,
   });
+  const [rating, setRating] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchLeetCodeProfile("saiganeshambati").then((data) => {
-      const {
-        totalSolved,
-      } = data;
-      // console.log(totalSolved)
-      setPlatformSolved((prevState) => ({
-        ...prevState,
-        leetcodeTotal: totalSolved ?? 0,
-      }));
-    });
-    fetchCodeforcesProfile("code__void").then((data) => {
-      // console.log(data);
-      setPlatformSolved((prevState) => ({
-        ...prevState,
-        codeforcesTotal: data ?? 0,
-      }));
-    });
-    fetchCodeChefProfile("saiganesh999").then((data) => {
-      const { stars, ratingData } = data;
-      setPlatformSolved((prevState) => ({
-        ...prevState,
-        codeChefStars: stars ?? "",
-      }));
-      // console.log("Rating Data:", ratingData);
-      setRating(ratingData);
-    });
-    fetchgfgProfile("saiganeshafb97").then((data) => {
-      // console.log(data.data.total_problems_solved);
-      setPlatformSolved((prevState) => ({
-            ...prevState,
-            gfgTotal: data.data.total_problems_solved ?? 0,
-          }));
-    });
+    const abortController = new AbortController();
+
+    const fetchData = async () => {
+      try {
+        const [leetData, codeforcesData, codeChefData, gfgData] = await Promise.all([
+          fetchLeetCodeProfile("saiganeshambati", abortController.signal),
+          fetchCodeforcesProfile("code__void", abortController.signal),
+          fetchCodeChefProfile("saiganesh999", abortController.signal),
+          fetchgfgProfile("saiganeshafb97", abortController.signal),
+        ]);
+
+        setPlatformSolved({
+          leetcodeTotal: leetData?.totalSolved ?? 0,
+          codeforcesTotal: codeforcesData ?? 0,
+          codeChefStars: codeChefData?.stars ?? "",
+          gfgTotal: gfgData?.data?.total_problems_solved ?? 0,
+        });
+        setRating(codeChefData?.ratingData || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+    return () => abortController.abort();
   }, []);
 
 
