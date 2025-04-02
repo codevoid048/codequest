@@ -1,5 +1,5 @@
 import express from "express"
-import { registerUser, loginUser, verifyEmail, logoutUser, googleAuthCallback, githubAuthCallback } from "../controllers/authController.js"
+import { registerUser, loginUser, verifyEmail, logoutUser, googleAuthCallback, githubAuthCallback, forgotPassword, resetPassword, getCurrentUser } from "../controllers/authController.js"
 const router = express.Router();
 import passport from "../config/passport.js";
 
@@ -14,5 +14,8 @@ router.get("/google/callback", passport.authenticate("google", { session: false 
 router.get("/github/callback", passport.authenticate("github", { session: false }), githubAuthCallback);
 
 router.post("/logout", logoutUser);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password/:token", resetPassword);
+router.get("/me", getCurrentUser);
 
 export default router;

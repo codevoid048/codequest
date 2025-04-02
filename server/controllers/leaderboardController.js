@@ -1,92 +1,117 @@
 
 import { getLeaderBoard, } from "../utils/leaderBoardCache.js";
 import { User } from "../models/User.js";
+import { calculatePoints } from "../utils/pointsCalculator.js"; // Adjust the path
+import { updateRanks } from "../utils/leaderBoardCache.js";
 
 export const setDummyData = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 8;
-        const skip = (page - 1) * limit;
+        const dummyUsers = req.body;
+        const insertedUsers = await User.insertMany(dummyUsers);
 
-        // Find total number of users
-        const totalUsers = await User.countDocuments();
-        const totalPages = Math.ceil(totalUsers / limit);
-
-        // Fetch users sorted by points in descending order
-        const users = await User.find({})
-            .sort({ points: -1 })
-            .select('name points rank streak solveChallenges')
-            .skip(skip)
-            .limit(limit);
-
-        res.status(200).json({
-            users,
-            totalUsers,
-            totalPages
+        res.status(201).json({
+        message: "Dummy users inserted successfully",
+        data: insertedUsers,
         });
     } catch (error) {
-        console.error('Leaderboard fetch error:', error);
-        res.status(500).json({ message: 'Server error fetching leaderboard' });
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
     }
 }
 
-// Optional: Add a route to update user points dynamically
+// export const updateUserPoints = async (req, res) => {
+//     try {
+//         const { userId, problemId, difficulty } = req.body;
+
+//         // Find the user by ID
+//         const user = await User.findById(userId);
+//         if (!user) {
+//             return res.status(404).json({ error: "User not found" });
+//         }
+
+//         // Calculate points based on difficulty
+//         const pointsEarned = calculatePoints(difficulty);
+
+//         // Update user points and solved challenges
+//         user.points += pointsEarned;
+//         user.solveChallenges.push({ problemId, difficulty, pointsEarned });
+
+//         // Save the updated user data
+//         await user.save();
+
+//         res.json({ message: "User points updated successfully", user });
+//     } catch (error) {
+//         console.error("Error updating user points:", error);
+//         res.status(500).json({ error: "Internal server error" });
+//     }
+// };
+
+
+
 export const updateUserPoints = async (req, res) => {
     try {
-        const { userId, pointsToAdd } = req.body;
-        
-        // Update user points
-        const updatedUser = await User.findByIdAndUpdate(
-            userId, 
-            { $inc: { points: pointsToAdd } }, 
-            { new: true }
-        );
+        const { userId, problemId, difficulty } = req.body;
 
-        if (!updatedUser) {
-            return res.status(404).json({ message: 'User not found' });
+        // Validate input
+        if (!userId || !problemId || !difficulty) {
+            return res.status(400).json({ error: "Missing required fields" });
         }
 
-        res.status(200).json(updatedUser);
+        // Find the user by ID
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Check if the problem is already solved
+        const alreadySolved = user.solveChallenges.some(challenge => challenge.problemId === problemId);
+        if (alreadySolved) {
+            return res.status(400).json({ error: "Problem already solved" });
+        }
+
+        // Calculate points based on difficulty
+        const pointsEarned = calculatePoints(difficulty);
+
+        // Update user points and solved challenges
+        user.points += pointsEarned;
+        user.solveChallenges.push({ problemId, difficulty, pointsEarned, solvedAt: new Date() });
+
+        // Save the updated user data
+        await user.save();
+
+        res.json({ message: "User points updated successfully", user });
     } catch (error) {
-        console.error('Points update error:', error);
-        res.status(500).json({ message: 'Server error updating points' });
+        console.error("Error updating user points:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
-}
+};
+
+
+// export const getLeaderboardData = async (req, res) => {
+//     try {
+//         const dummyUsers = req.body;
+//         const insertedUsers = await User.insertMany(dummyUsers);
+
+//         res.status(201).json({
+//         message: "Dummy users inserted successfully",
+//         data: insertedUsers,
+//         });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ message: 'Server error' });
+//     }
+// }
 
 export const getLeaderboardData = async (req, res) => {
 try {
     const users = await User.find({ isVerified: true })
     .sort({ points: -1 })
-    .select("name points solveChallenges streak");
-
+    .select("username points solveChallenges streak");
+    await updateRanks(); // Update ranks before sending data
     res.json(users);
 } catch (error) {
     console.error("Error fetching leaderboard:", error);
     res.status(500).json({ error: "Internal server error" });
 }
 };
-// export const getLeaderboardData = async (req, res) => {
-//     try {
-//         const page = parseInt(req.query.page) || 1;
-//         const limit = parseInt(req.query.limit) || 10;
 
-//         const leaderboard = await getLeaderBoard(page, limit);
-        
-//         // If user is authenticated, find their rank
-//         if (req.user) {
-//             const userData = await User.findById(req.user._id)
-//                                         .select('rank points');
-
-//             return res.status(200).json({
-//                 ...leaderboard,
-//                 userRank: userData.rank,
-//                 userPoints: userData.points
-//             })
-//         }
-
-//         res.status(200).json(leaderboard);
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: 'Server error' });
-//     }
-// }

@@ -55,37 +55,3 @@ export const getChallengeById = async (req, res) => {
     }
 };
 
-export const addChallenge = async (req, res) => {
-    try {
-        const { title, description, category, difficulty, points, problemLink } = req.body;
-
-        // Validate required fields
-        if (!title || !description || !category || !difficulty || !points || !problemLink) {
-            return res.status(400).json({ success: false, message: "All fields are required" });
-        }
-
-        // Ensure category is an array of strings
-        const categoryArray = Array.isArray(category) ? category : [category];
-
-        const newChallenge = new Challenge({
-            title,
-            description,
-            category: categoryArray,
-            difficulty,
-            points,
-            problemLink
-        });
-
-        const result = await newChallenge.save();
-
-        return res.status(201).json({
-            success: true,
-            message: "Challenge added successfully",
-            challenge: result
-        });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: "Server error" });
-    }
-};

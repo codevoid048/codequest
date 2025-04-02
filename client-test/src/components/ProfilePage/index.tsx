@@ -1,5 +1,5 @@
 "use client";
-
+import { useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,13 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 import {
   Calendar,
   ChevronUp,
   Code2,
   Flame,
-  Github,
+  Github ,
   Linkedin,
   MapPin,
   School,
@@ -24,23 +25,23 @@ import {
   Twitter,
 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function ProfilePage() {
-  const user = {
-    username: "codemaster42",
-    name: "Alex Johnson",
-    college: "Stanford University",
-    branch: "Computer Science",
-    rankPosition: 423,
-    location: "San Francisco, CA",
-    points: 12450,
-    streak: { current: 32 },
-    socialLinks: {
-      twitter: "https://twitter.com/codemaster42",
-      linkedin: "https://linkedin.com/in/alexjohnson",
-      github: "https://github.com/codemaster42",
-    },
-  };
+export default function ProfilePage() {  
+  const { user,token }=useAuth();
+  console.log("user data",user);
+  console.log("user token",token);
+  const navigate=useNavigate();
+  interface user {
+  _id: string // Changed from number to string to match MongoDB IDs
+  username: string
+  collegeName: string
+  branch: string
+  name: string
+  RegistrationNumber: string
+  rank: number
+  avatar: string
+  points: number}
 
   const problemsSolved = {
     total: 487,
@@ -65,16 +66,16 @@ export default function ProfilePage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   // Function to get the number of days in a month
-  const getDaysInMonth = (month, year) => {
+  const getDaysInMonth = (month: number, year: number): number => {
     return new Date(year, month + 1, 0).getDate();
   };
 
   // Generate contributions for a specific year
-  const generateContributions = (year) => {
-    const contributions = [];
-    const startDate = new Date(year, 0, 1); // January 1st of the selected year
-    const endDate = new Date(year, 11, 31); // December 31st of the selected year
-
+  const generateContributions = (year: number): { date: string; count: number }[] => {
+    const contributions: { date: string; count: number }[] = [];
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year, 11, 31);
+  
     for (
       let date = new Date(startDate);
       date <= endDate;
@@ -82,7 +83,7 @@ export default function ProfilePage() {
     ) {
       const count = Math.random() > 0.6 ? Math.floor(Math.random() * 10) : 0;
       contributions.push({
-        date: new Date(date).toISOString().split("T")[0],
+        date: date.toISOString().split("T")[0],
         count,
       });
     }
@@ -113,7 +114,7 @@ export default function ProfilePage() {
   ];
 
   // Function to determine color based on contribution count
-  const getColor = (count) => {
+  const getColor = (count: number): string => {
     if (count === 0) return "bg-gray-300";
     if (count <= 3) return "bg-green-200";
     if (count <= 6) return "bg-green-400";
@@ -121,15 +122,15 @@ export default function ProfilePage() {
   };
 
   // Function to check if a day is part of a streak
-  const isPartOfStreak = (monthIndex, dayIndex, monthContribs) => {
+  const isPartOfStreak = (monthIndex: number, dayIndex: number, monthContribs: { date: string; count: number }[]): boolean => {
     const currentDate = new Date(selectedYear, monthIndex, dayIndex + 1);
     const currentContrib = monthContribs.find(
       (c) => c.date === currentDate.toISOString().split("T")[0]
     );
     const currentCount = currentContrib ? currentContrib.count : 0;
-
+  
     if (currentCount === 0) return false;
-
+  
     // Check previous day
     const prevDate = new Date(currentDate);
     prevDate.setDate(prevDate.getDate() - 1);
@@ -137,7 +138,7 @@ export default function ProfilePage() {
       (c) => c.date === prevDate.toISOString().split("T")[0]
     );
     const prevCount = prevContrib ? prevContrib.count : 0;
-
+  
     // Check next day
     const nextDate = new Date(currentDate);
     nextDate.setDate(nextDate.getDate() + 1);
@@ -145,8 +146,7 @@ export default function ProfilePage() {
       (c) => c.date === nextDate.toISOString().split("T")[0]
     );
     const nextCount = nextContrib ? nextContrib.count : 0;
-
-    // Part of a streak if either the previous or next day has contributions
+  
     return prevCount > 0 || nextCount > 0;
   };
 
@@ -164,8 +164,9 @@ export default function ProfilePage() {
   };
 
   const hoverVariants = {
-    hover: { scale: 1.05, transition: { duration: 0.3 } },
+    hover: { scale: 1.05, opacity: 1, transition: { duration: 0.3 } },
   };
+  
 
   return (
     <div className="px-2 sm:px-4 py-3 sm:py-5 space-y-4 sm:space-y-8 min-h-screen">
@@ -182,45 +183,47 @@ export default function ProfilePage() {
             <Avatar className="w-24 h-24 sm:w-32 sm:h-32 border-4 border-primary shadow-lg">
               <AvatarImage
                 src="/placeholder.svg?height=128&width=128"
-                alt={user.name}
+                alt={user?.name || "User"}
               />
               <AvatarFallback className="text-4xl font-bold">
-                {user.name.charAt(0)}
+                {user?.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
 
             <div className="mt-4 text-center lg:text-left">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-teal-500 bg-clip-text text-transparent">
-                {user.name}
+                {user?.name}
               </h1>
-              <p className="text-lg text-muted-foreground">@{user.username}</p>
+              <p className="text-lg text-muted-foreground">
+                @{user?.username || "Unknown"}
+              </p>
 
               <div className="mt-2">
                 <p className="text-sm mt-1 flex items-center justify-center lg:justify-start text-muted-foreground">
                   <ChevronUp className="h-4 w-4 text-green-500" />
-                  Position #{user.rankPosition}
+                  Position #{user?.rank}
                 </p>
               </div>
 
               <div className="mt-5 space-y-2">
                 <p className="text-sm flex items-center gap-1.5">
                   <School className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user.college}
+                  {user?.collegeName}
                 </p>
                 <p className="text-sm flex items-center gap-1.5">
                   <Code2 className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user.branch}
+                  {user?.branch}
                 </p>
                 <p className="text-sm flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 text-muted-foreground" />{" "}
-                  {user.location}
+                  {user?.RegistrationNumber}
                 </p>
               </div>
 
               <div className="mt-4 flex justify-center gap-2 sm:gap-3">
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user.socialLinks.twitter}
+                    href={user?.otherLinks.twitter}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -229,7 +232,7 @@ export default function ProfilePage() {
                 </Button>
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user.socialLinks.linkedin}
+                    href={user?.otherLinks.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -238,7 +241,7 @@ export default function ProfilePage() {
                 </Button>
                 <Button variant="outline" size="icon" asChild>
                   <a
-                    href={user.socialLinks.github}
+                    href={user?.otherLinks.github}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -251,6 +254,7 @@ export default function ProfilePage() {
                 <Button
                   size="sm"
                   className="bg-gradient-to-r from-blue-500 to-teal-500"
+                  onClick={() => navigate("/profile/edit-profile")}
                 >
                   Edit Profile
                 </Button>
@@ -276,7 +280,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-teal-500 bg-clip-text text-transparent">
-                    {problemsSolved.total}
+                  {user?.solveChallenges?.length ?? 0}
                   </div>
                 </CardContent>
               </Card>
@@ -292,7 +296,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">
-                    {user.points}
+                    {user?.points}
                   </div>
                 </CardContent>
               </Card>
@@ -308,7 +312,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-                    {user.streak.current}
+                    {user?.streak}
                   </div>
                 </CardContent>
               </Card>

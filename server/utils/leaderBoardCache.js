@@ -5,31 +5,42 @@ const leaderBoardCache = new NodeCache({ stdTTL: 600 });
 
 export const updateRanks = async () => {
     try {
-        console.log('Updating leaderboard ranks.....');
-        const users = await User.find()
-                                .select('_id points streak solveChallenges name')
-                                .sort({ points: -1 })
-                                .lean();
-        
+        console.log('Updating leaderboard ranks..t');
+
+        // Fetch users sorted by points
+        const users = await User.find({ isVerified: true })
+            .select('_id points rank streak solveChallenges username')
+            .sort({ points: -1 })
+            .lean();
+
+        console.log("Users fetched for ranking:", users); // ✅ Debug log
+
+        // Prepare bulk update operations
         const bulkOps = users.map((user, index) => ({
             updateOne: {
                 filter: { _id: user._id },
-                update: { rank: index + 1 }
+                update: { $set: { rank: index + 1 } } // ✅ Ensure $set is used
             }
+        
         }));
+        // console.log("Bulk operations prepared:", users); // ✅ Debug log
 
-        await User.bulkWrite(bulkOps);
+        // Execute bulk update
+        if (bulkOps.length > 0) {
+            const result = await User.bulkWrite(bulkOps);
+            console.log("Bulk write result:", result); // ✅ Check if MongoDB updates
+        }
 
+        // Update cache
         leaderBoardCache.set('leaderboard', users.map((user, index) => ({
             ...user,
             rank: index + 1
         })));
 
-        console.log('Ranks updated successfully');
     } catch (error) {
-        console.error('Error updating ranks : ', error);
+        console.error('Error updating ranks:', error);
     }
-}
+};
 
 // Get cached leaderboard with pagination
 export const getLeaderBoard = async (page = 1, limit = 10) => {
