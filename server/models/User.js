@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema(
     codeforces: {
       username: { type: String, default: "" },
       solved: { type: Number, default: 0 },
-      rank: { type: Number, default: 0 },
+      rank: { type: String, default: "" },
       rating: { type: Number, default: 0 }
     },
 

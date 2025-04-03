@@ -4,7 +4,7 @@ import Home from './components/Home';
 import LoginPage from './components/Login';
 import LogoutPage from './components/Logout';
 import RegisterPage from './components/SignUp';
-import Leaderboard from './components/leaderboard';
+import Leaderboard from './components/Leaderboard';
 import AboutPage from './components/About';
 import ProfilePage from './components/ProfilePage';
 import ResetPassword from './components/ResetPassword.tsx';
@@ -31,8 +31,8 @@ function UserApp() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/logout" element={<LogoutPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/profile/edit-profile" element={<EditProfile />} />
+        <Route path="/profile/:username" element={<ProfilePage />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>

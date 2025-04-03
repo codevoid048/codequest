@@ -100,7 +100,7 @@ export function Navbar() {
               <Button onClick={logout} variant="outline">
                 Logout
               </Button>
-              <Link to="/profile">
+              <Link to={`/profile/${user?.username}`}>
                 <img
                   src="/default-profile.png"
                   alt="Profile"
@@ -156,7 +156,7 @@ export function Navbar() {
                     <Button onClick={logout} variant="outline" className="w-full">
                       Logout
                     </Button>
-                    <Link to="/profile">
+                    <Link to={`/profile/${user?.username}`}>
                       <img
                         src="/default-profile.png"
                         alt="Profile"

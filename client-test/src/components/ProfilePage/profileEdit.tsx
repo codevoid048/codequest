@@ -12,13 +12,13 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import axios from "axios"
 import { useAuth } from "@/context/AuthContext"
-import { toast } from "react-toastify"
+import { toast } from "react-hot-toast"
 
 export default function ProfileEditForm() {
     const { user, token, fetchUser } = useAuth()
 
-    console.log("User from AuthContext:", user)
-    console.log("Token from AuthContext:", token)
+    // console.log("User from AuthContext:", user)
+    // console.log("Token from AuthContext:", token)
 
     interface ProfileFormData {
         name: string
