@@ -1,13 +1,16 @@
 import { ArrowRight, Code, Trophy, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Link } from "react-router-dom"
+import { data, Link } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DailyChallengeCard } from "@/components/daily-challenge-card"
 import { HeroSection } from "@/components/hero-section"
 import { FeatureCard } from "@/components/feature-card"
 
+
 const Home = () => {
-    return (
+
+
+        return (
         <div>
             <HeroSection />
 

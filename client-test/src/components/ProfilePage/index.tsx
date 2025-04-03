@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,22 +26,27 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchCodeChefProfile, fetchCodeforcesProfile, fetchgfgProfile, fetchLeetCodeProfile } from "@/platforms/leetcode";
 
-export default function ProfilePage() {  
-  const { user,token }=useAuth();
-  console.log("user data",user);
-  console.log("user token",token);
-  const navigate=useNavigate();
+const RatingChart = React.lazy(() => import("@/platforms/codechefgraph"));
+
+
+export default function ProfilePage() {
+  const { user, token } = useAuth();
+  // console.log("user data", user);
+  // console.log("user token", token);
+  const navigate = useNavigate();
   interface user {
-  _id: string // Changed from number to string to match MongoDB IDs
-  username: string
-  collegeName: string
-  branch: string
-  name: string
-  RegistrationNumber: string
-  rank: number
-  avatar: string
-  points: number}
+    _id: string // Changed from number to string to match MongoDB IDs
+    username: string
+    collegeName: string
+    branch: string
+    name: string
+    RegistrationNumber: string
+    rank: number
+    avatar: string
+    points: number
+  }
 
   const problemsSolved = {
     total: 487,
@@ -50,16 +55,53 @@ export default function ProfilePage() {
     hard: 52,
   };
 
+  const [platformSolved, setPlatformSolved] = useState({
+    leetcodeTotal: 0,
+    codeChefStars: "",
+    codeforcesTotal: 0,
+    gfgTotal: 0,
+  });
+  const [rating, setRating] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    const fetchData = async () => {
+      try {
+        const [leetData, codeforcesData, codeChefData, gfgData] = await Promise.all([
+          fetchLeetCodeProfile("saiganeshambati", abortController.signal),
+          fetchCodeforcesProfile("code__void", abortController.signal),
+          fetchCodeChefProfile("saiganesh999", abortController.signal),
+          fetchgfgProfile("saiganeshafb97", abortController.signal),
+        ]);
+
+        setPlatformSolved({
+          leetcodeTotal: leetData?.totalSolved ?? 0,
+          codeforcesTotal: codeforcesData ?? 0,
+          codeChefStars: codeChefData?.stars ?? "",
+          gfgTotal: gfgData?.data?.total_problems_solved ?? 0,
+        });
+        setRating(codeChefData?.ratingData || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+    return () => abortController.abort();
+  }, []);
+
+
   const platforms = [
-    { name: "LeetCode", handle: "codemaster42", solved: 312, color: "#FFA116" },
+    { name: "LeetCode", handle: "codemaster42", solved: platformSolved.leetcodeTotal, color: "#FFA116" },
     {
-      name: "GeeksForGeeks",
-      handle: "alex_johnson",
-      solved: 203,
-      color: "#2F8D46",
+      name: "GeeksForGeeks", handle: "alex_johnson", solved: platformSolved.gfgTotal, color: "#2F8D46"
     },
-    { name: "CodeForces", handle: "alexj42", solved: 156, color: "#318CE7" },
-    { name: "CodeChef", handle: "alexj42", solved: 89, color: "#745D0B" },
+    { name: "CodeForces", handle: "alexj42", solved: platformSolved.codeforcesTotal, color: "#318CE7" },
+    { name: "CodeChef", handle: "alexj42", solved: platformSolved.codeChefStars, color: "#745D0B" },
   ];
 
   // State for year filter
@@ -75,7 +117,7 @@ export default function ProfilePage() {
     const contributions: { date: string; count: number }[] = [];
     const startDate = new Date(year, 0, 1);
     const endDate = new Date(year, 11, 31);
-  
+
     for (
       let date = new Date(startDate);
       date <= endDate;
@@ -128,9 +170,9 @@ export default function ProfilePage() {
       (c) => c.date === currentDate.toISOString().split("T")[0]
     );
     const currentCount = currentContrib ? currentContrib.count : 0;
-  
+
     if (currentCount === 0) return false;
-  
+
     // Check previous day
     const prevDate = new Date(currentDate);
     prevDate.setDate(prevDate.getDate() - 1);
@@ -138,7 +180,7 @@ export default function ProfilePage() {
       (c) => c.date === prevDate.toISOString().split("T")[0]
     );
     const prevCount = prevContrib ? prevContrib.count : 0;
-  
+
     // Check next day
     const nextDate = new Date(currentDate);
     nextDate.setDate(nextDate.getDate() + 1);
@@ -146,7 +188,7 @@ export default function ProfilePage() {
       (c) => c.date === nextDate.toISOString().split("T")[0]
     );
     const nextCount = nextContrib ? nextContrib.count : 0;
-  
+
     return prevCount > 0 || nextCount > 0;
   };
 
@@ -166,7 +208,7 @@ export default function ProfilePage() {
   const hoverVariants = {
     hover: { scale: 1.05, opacity: 1, transition: { duration: 0.3 } },
   };
-  
+
 
   return (
     <div className="px-2 sm:px-4 py-3 sm:py-5 space-y-4 sm:space-y-8 min-h-screen">
@@ -280,7 +322,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-teal-500 bg-clip-text text-transparent">
-                  {user?.solveChallenges?.length ?? 0}
+                    {user?.solveChallenges?.length ?? 0}
                   </div>
                 </CardContent>
               </Card>
@@ -350,9 +392,8 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#10B981"
                         strokeWidth="3"
-                        strokeDasharray={`${
-                          (problemsSolved.easy / 300) * 100
-                        }, 100`}
+                        strokeDasharray={`${(problemsSolved.easy / 300) * 100
+                          }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -383,9 +424,8 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#F59E0B"
                         strokeWidth="3"
-                        strokeDasharray={`${
-                          (problemsSolved.medium / 300) * 100
-                        }, 100`}
+                        strokeDasharray={`${(problemsSolved.medium / 300) * 100
+                          }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -416,9 +456,8 @@ export default function ProfilePage() {
                         fill="none"
                         stroke="#EF4444"
                         strokeWidth="3"
-                        strokeDasharray={`${
-                          (problemsSolved.hard / 100) * 100
-                        }, 100`}
+                        strokeDasharray={`${(problemsSolved.hard / 100) * 100
+                          }, 100`}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -590,13 +629,11 @@ export default function ProfilePage() {
                                     key={dayIndex}
                                     className={`h-4 w-4 rounded-[2px] ${getColor(
                                       count
-                                    )} ${
-                                      isToday ? "border-2 border-black" : ""
-                                    } ${
-                                      inStreak && count > 0
+                                    )} ${isToday ? "border-2 border-black" : ""
+                                      } ${inStreak && count > 0
                                         ? "[0_0_5px_2px_rgba(0,255,0,0.5)]"
                                         : ""
-                                    }`}
+                                      }`}
                                     style={{
                                       gridRow: dayOfWeek + 1, // Place in the correct row (1-7 for Mon-Sun)
                                       gridColumn: weekIndex, // Place in the correct week column
@@ -604,17 +641,16 @@ export default function ProfilePage() {
                                     title={
                                       isToday
                                         ? `0 submission on ${date.toLocaleString(
-                                            "en-US",
-                                            {
-                                              weekday: "long",
-                                              year: "numeric",
-                                              month: "long",
-                                              day: "numeric",
-                                            }
-                                          )}`
-                                        : `${
-                                            date.toISOString().split("T")[0]
-                                          }: ${count} contributions`
+                                          "en-US",
+                                          {
+                                            weekday: "long",
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
+                                          }
+                                        )}`
+                                        : `${date.toISOString().split("T")[0]
+                                        }: ${count} contributions`
                                     }
                                     whileHover={{ scale: 1.2 }}
                                     transition={{ duration: 0.2 }}
@@ -647,6 +683,7 @@ export default function ProfilePage() {
           </Card>
         </div>
       </motion.div>
+      <RatingChart ratingData={rating} />
     </div>
   );
 }
