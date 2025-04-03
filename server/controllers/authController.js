@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs";
+import crypto from "crypto"; // For generating OTP
 import { User } from "../models/User.js"
 import { Activity } from "../models/Activity.js"
 import { sendVerificationEmail } from "../utils/emailService.js"
@@ -34,13 +35,12 @@ const setAuthCookies = (res, user, token) => {
 
 export const registerUser = async (req, res) => {
   try {
-   const {
-    name, email, password, rank, streak, solveChallenges, points, username,
-    mobile, profilePicture, RegistrationNumber, branch, collegeName,
-    gfg, leetCode, codeforces, codechef, otherLinks
-  } = req.body;
+    const {
+      name, email, password, username,
+      mobile, profilePicture, RegistrationNumber, branch, collegeName,
+      gfg, leetCode, codeforces, codechef, otherLinks
+    } = req.body;
 
-    console.log(name);
     if (!name || !email || !password) {
       return res.status(400).json({ error: "All fields are required" });
     }
@@ -49,50 +49,84 @@ export const registerUser = async (req, res) => {
 
     console.log("Email Validation Response:", { valid, reason, validators });
 
-    if (!valid) return res.status(400).json({ message: "Please provide a valid email address", reason: validators[reason].reason })
+    if (!valid) return res.status(400).json({ message: "Please provide a valid email address", reason: validators[reason].reason });
+
+    const usernameRegex = /^[a-z][a-z0-9_]*$/;
+    if (!usernameRegex.test(username)) {
+      return res.status(400).json({ error: "Username must start with letters and contain only lowercase letters, numbers, and underscores" });
+    }
 
     const user = await User.findOne({ email });
-    if (user) return res.status(400).json({ error: "Email already exists" });
+    if (user && user.isVerified) return res.status(400).json({ error: "Email already exists" });
+
     const exist = await User.findOne({ username });
-    if (exist) return res.status(400).json({ error: "Useranme already exists, please choose another" });
-    const usernameRegex = /^[a-z][a-z0-9_]*$/;
-    if(!usernameRegex.test(username)) return res.status(400).json({ error: "Username must start with letters and contain only lowercase letters, numbers, and underscores" });
+    if (exist) return res.status(400).json({ error: "Username already exists, please choose another" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-    const newUser = new User({
+    // Generate a 6-digit OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    // Temporarily hold user data in memory or send it back to the client
+    const tempUserData = {
       name,
       email,
       username,
       password: hashedPassword,
-      rank: rank || 0,
-      streak: streak || 0,
-      points: points || 0,
-      solveChallenges: solveChallenges || [],
-      username: username || "",
+      rank: 0,
+      streak: 0,
+      points: 0,
+      solveChallenges: [],
       mobile: mobile || "",
       profilePicture: profilePicture || "",
       RegistrationNumber: RegistrationNumber || "",
       branch: branch || "",
       collegeName: collegeName || "",
-      gfg: gfg || {  rating: 0 },
+      gfg: gfg || { rating: 0 },
       leetCode: leetCode || { rating: 0 },
       codeforces: codeforces || { rating: 0 },
       codechef: codechef || { rating: 0 },
       otherLinks: otherLinks || [],
-    });
-    await newUser.save();
+      otp, // Include OTP for verification
+    };
 
-    // Send verification email
-    await sendVerificationEmail(email, verificationToken);
+    // Send OTP to user's email
+    await sendEmail(email, "Email Verification OTP", `Your OTP is: ${otp}`);
 
-    res.status(201).json({ message: "User registered. Check your email for verification." });
+    res.status(201).json({ message: "OTP sent to email. Verify to complete registration.", tempUserData });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server error", details: error.message });
   }
-}
+};
+
+export const verifyEmail = async (req, res) => {
+  try {
+    const { email, otp, tempUserData } = req.body;
+
+    if (!tempUserData) {
+      return res.status(400).json({ error: "Temporary user data is missing" });
+    }
+
+    if (tempUserData.otp !== otp) {
+      return res.status(400).json({ error: "Invalid OTP. Please try again." });
+    }
+
+    // Save user data to the database after verification
+    const newUser = new User({
+      ...tempUserData,
+      isVerified: true,
+      otp: undefined,
+    });
+
+    await newUser.save();
+
+    res.status(200).json({ message: "Email verified and user registered successfully!" });
+  } catch (error) {
+    console.error("Verification error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
 
 export const loginUser = async (req, res) => {
   try {
@@ -118,68 +152,45 @@ export const loginUser = async (req, res) => {
   }
 };
 
+export const googleAuthCallback = (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Authentication failed" });
+  }
 
-export const verifyEmail = async (req, res) => {
-    try {
-      const { token } = req.params;
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findOne({ email: decoded.email });
-      if (!user) return res.status(400).json({ error: "Invalid token" });
-      if (user.verificationTokenExpires && user.verificationTokenExpires < Date.now()) {
-        return res.status(400).json({ error: "Token expired. Request a new verification email." });
-      }
-  
-      user.isVerified = true;
-      user.verificationToken = undefined;
-      user.verificationTokenExpires = undefined;
-      await user.save();
-  
-      res.json({ message: "Email verified successfully! You can now log in." });
-    } catch (error) {
-      console.error("Verification error:", error);
-      res.status(400).json({ error: "Invalid or expired token" });
-    }
-  };
-  
-  export const googleAuthCallback = (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ message: "Authentication failed" });
-    }
-  
-    const { user, token } = req.user;
-    setAuthCookies(res, user, token);
-    res.redirect(`${process.env.CLIENT_URL}/challenges`);
-  };
+  const { user, token } = req.user;
+  setAuthCookies(res, user, token);
+  res.redirect(`${process.env.CLIENT_URL}/challenges`);
+};
 
-  export const githubAuthCallback = (req, res) => {
-    if (!req.user) {
-      return res.status(401).json({ message: "Authentication failed" });
-    }
-  
-    const { user, token } = req.user;
-    setAuthCookies(res, user, token);
-    res.redirect(`${process.env.CLIENT_URL}/challenges`);
-  };
+export const githubAuthCallback = (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Authentication failed" });
+  }
 
-  
- export const logoutUser = async (req, res) => {
-    console.log("Logout API hit"); // Debugging log
+  const { user, token } = req.user;
+  setAuthCookies(res, user, token);
+  res.redirect(`${process.env.CLIENT_URL}/challenges`);
+};
 
-    // Clear JWT cookie
-    res.clearCookie("jwt", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Lax",
-    });
 
-    // Clear user cookie
-    res.clearCookie("user", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "Lax",
-    });
+export const logoutUser = async (req, res) => {
+  console.log("Logout API hit"); // Debugging log
 
-    res.status(200).json({ message: "Logged out successfully" });
+  // Clear JWT cookie
+  res.clearCookie("jwt", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+  });
+
+  // Clear user cookie
+  res.clearCookie("user", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+  });
+
+  res.status(200).json({ message: "Logged out successfully" });
 };
 
 

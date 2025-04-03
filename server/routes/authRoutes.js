@@ -4,7 +4,7 @@ const router = express.Router();
 import passport from "../config/passport.js";
 
 router.post('/register', registerUser);
-router.get('/verify/:token', verifyEmail);
+router.post('/verify', verifyEmail); // Change to POST for OTP verification
 router.post('/login', loginUser);
 
 router.get("/google",passport.authenticate("google", { scope: ["profile", "email"], session: false}));

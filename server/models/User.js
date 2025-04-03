@@ -50,8 +50,8 @@ const userSchema = new mongoose.Schema(
 
     // Verification flag
     isVerified: { type: Boolean, default: false },
-    verificationToken: { type: String },
-    verificationTokenExpires: { type: Date },
+    otp: { type: Number },
+    otpExpires: { type: Date },
 
     // Progress/Stats
     points: { type: Number, default: 0 },
