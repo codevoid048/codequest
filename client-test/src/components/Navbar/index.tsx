@@ -125,7 +125,14 @@ export function Navbar() {
               <Button onClick={logout} variant="outline">
                 Logout
               </Button>
-            </div>
+              <Link to={`/profile/${user?.username}`}>
+                <img
+                  src="/default-profile.png"
+                  alt="Profile"
+                  className="w-8 h-8 rounded-full"
+                />
+              </Link>
+            </>
           )}
         </div>
 
@@ -174,8 +181,12 @@ export function Navbar() {
                     <Button onClick={logout} variant="outline" className="w-full">
                       Logout
                     </Button>
-                    <Link to="/profile">
-                      {renderUserAvatar()}
+                    <Link to={`/profile/${user?.username}`}>
+                      <img
+                        src="/default-profile.png"
+                        alt="Profile"
+                        className="w-8 h-8 rounded-full"
+                      />
                     </Link>
                   </>
                 )}

@@ -4,6 +4,6 @@ import { getChallenges, getChallengeById } from "../controllers/challengeControl
 
 const router = express.Router();
 
-router.get('/',getChallenges);
+router.get('/', getChallenges);
 router.get('/:id', getChallengeById);
 export default router;

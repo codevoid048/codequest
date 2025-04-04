@@ -5,7 +5,7 @@ const leaderBoardCache = new NodeCache({ stdTTL: 600 });
 
 export const updateRanks = async () => {
     try {
-        console.log('Updating leaderboard ranks..t');
+        //console.log('Updating leaderboard ranks..t');
 
         // Fetch users sorted by points
         const users = await User.find({ isVerified: true })
