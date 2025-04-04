@@ -4,7 +4,7 @@ import Home from './components/Home';
 import LoginPage from './components/Login';
 import LogoutPage from './components/Logout';
 import RegisterPage from './components/SignUp';
-import Leaderboard from './components/Leaderboard';
+import Leaderboard from './components/leaderboard';
 import AboutPage from './components/About';
 import ProfilePage from './components/ProfilePage';
 import ResetPassword from './components/ResetPassword.tsx';

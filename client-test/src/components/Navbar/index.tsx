@@ -119,20 +119,13 @@ export function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-4">
-              <Link to="/profile">
+              <Link to={`/profile/${user?.username}`}>
                 {renderUserAvatar()}
               </Link>
               <Button onClick={logout} variant="outline">
                 Logout
               </Button>
-              <Link to={`/profile/${user?.username}`}>
-                <img
-                  src="/default-profile.png"
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full"
-                />
-              </Link>
-            </>
+            </div>
           )}
         </div>
 
