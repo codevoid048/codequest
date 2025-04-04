@@ -51,7 +51,7 @@ function UserApp() {
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/edit-profile" element={<EditProfile />} />
+        <Route path="/profile/edit-profile" element={<EditProfile />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>

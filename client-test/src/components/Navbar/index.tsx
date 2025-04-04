@@ -13,6 +13,7 @@ export function Navbar() {
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
+  
   // Scroll detection
   useEffect(() => {
     const handleScroll = () => {
@@ -34,6 +35,27 @@ export function Navbar() {
     { href: "/leaderboard", label: "Leaderboard" },
     { href: "/about", label: "About" },
   ];
+
+  // Function to render user avatar or initial
+  const renderUserAvatar = () => {
+    if (user?.profilePicture) {
+      return (
+        <img
+          src={user.profilePicture}
+          alt="Profile"
+          className="w-8 h-8 rounded-full"
+        />
+      );
+    } else {
+      // Display first letter of username with blue background
+      const initial = user?.username ? user.username.charAt(0).toUpperCase() : "U";
+      return (
+        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+          <span className="text-primary-foreground font-medium text-sm">{initial}</span>
+        </div>
+      );
+    }
+  };
 
   return (
     <header
@@ -96,18 +118,14 @@ export function Navbar() {
               </Button>
             </>
           ) : (
-            <>
+            <div className="flex items-center gap-4">
+              <Link to="/profile">
+                {renderUserAvatar()}
+              </Link>
               <Button onClick={logout} variant="outline">
                 Logout
               </Button>
-              <Link to="/profile">
-                <img
-                  src="/default-profile.png"
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full"
-                />
-              </Link>
-            </>
+            </div>
           )}
         </div>
 
@@ -157,11 +175,7 @@ export function Navbar() {
                       Logout
                     </Button>
                     <Link to="/profile">
-                      <img
-                        src="/default-profile.png"
-                        alt="Profile"
-                        className="w-8 h-8 rounded-full"
-                      />
+                      {renderUserAvatar()}
                     </Link>
                   </>
                 )}

@@ -163,7 +163,7 @@ export default function Leaderboard() {
   return (
     <div
       className={cn(
-        "min-h-screen transition-all duration-500 bg-background text-foreground",
+        "min-h-screen transition-all duration-500 px-20 bg-background text-foreground",
         isDarkMode ? "dark" : "",
         "bg-grid-pattern"
       )}
@@ -515,7 +515,7 @@ export default function Leaderboard() {
             >
               {/* Page info */}
               <div className="text-sm text-muted-foreground ml-8">
-                page {currentPage} of {Math.ceil(users.length / USERS_PER_PAGE)}
+                Page {currentPage} of {Math.ceil(users.length / USERS_PER_PAGE)}
               </div>
 
               {/* Pagination controls */}
