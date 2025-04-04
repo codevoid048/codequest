@@ -26,8 +26,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchCodeChefProfile, fetchCodeforcesProfile, fetchgfgProfile, fetchLeetCodeProfile } from "@/platforms/leetcode";
-
 const RatingChart = React.lazy(() => import("@/platforms/codechefgraph"));
 
 
@@ -37,7 +35,7 @@ export default function ProfilePage() {
   // console.log("user token", token);
   const navigate = useNavigate();
   interface user {
-    _id: string // Changed from number to string to match MongoDB IDs
+    _id: string
     username: string
     collegeName: string
     branch: string
@@ -64,44 +62,15 @@ export default function ProfilePage() {
   const [rating, setRating] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const abortController = new AbortController();
-
-    const fetchData = async () => {
-      try {
-        const [leetData, codeforcesData, codeChefData, gfgData] = await Promise.all([
-          fetchLeetCodeProfile("saiganeshambati", abortController.signal),
-          fetchCodeforcesProfile("code__void", abortController.signal),
-          fetchCodeChefProfile("saiganesh999", abortController.signal),
-          fetchgfgProfile("saiganeshafb97", abortController.signal),
-        ]);
-
-        setPlatformSolved({
-          leetcodeTotal: leetData?.totalSolved ?? 0,
-          codeforcesTotal: codeforcesData ?? 0,
-          codeChefStars: codeChefData?.stars ?? "",
-          gfgTotal: gfgData?.data?.total_problems_solved ?? 0,
-        });
-        setRating(codeChefData?.ratingData || []);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-    return () => abortController.abort();
-  }, []);
 
 
   const platforms = [
-    { name: "LeetCode", handle: "codemaster42", solved: platformSolved.leetcodeTotal, color: "#FFA116" },
+    { name: "LeetCode", handle: "codemaster42", solved: 10, color: "#FFA116" },
     {
-      name: "GeeksForGeeks", handle: "alex_johnson", solved: platformSolved.gfgTotal, color: "#2F8D46"
+      name: "GeeksForGeeks", handle: "alex_johnson", solved: 10, color: "#2F8D46"
     },
-    { name: "CodeForces", handle: "alexj42", solved: platformSolved.codeforcesTotal, color: "#318CE7" },
-    { name: "CodeChef", handle: "alexj42", solved: platformSolved.codeChefStars, color: "#745D0B" },
+    { name: "CodeForces", handle: "alexj42", solved: 10, color: "#318CE7" },
+    { name: "CodeChef", handle: "alexj42", solved: 10, color: "#745D0B" },
   ];
 
   // State for year filter

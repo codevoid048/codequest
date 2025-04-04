@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
 
 interface challenge {
   id: number;
@@ -29,7 +30,7 @@ interface challenge {
   title: string;
   categories: string[];
   difficulty: "Easy" | "Medium" | "Hard";
-  platform: "LeetCode" | "GFG" | "CodeChef";
+  platform: "LeetCode" | "GFG" | "CodeChef" | "Codeforces";
   status: "Solved" | "Unsolved";
   description: string;
   problemUrl?: string;
@@ -45,6 +46,8 @@ interface ProblemStatusProps {
   viewSolution: (id: string) => void;
 }
 
+
+
 type FilterTab = "all" | "solved" | "unsolved";
 type SortOption = "date" | "difficulty" | "status";
 
@@ -59,13 +62,20 @@ const Challenges: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSolved, setIsSolved] = useState(false);
   const itemsPerPage = 5;
+
+
+
+  function convertTimestampToDate(timestamp: number) {
+    const date = new Date(timestamp * 1000); 
+    return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
+}
 
   useEffect(() => {
     const fetchProblems = async () => {
       try {
         const res = await axios.get('http://localhost:5000/api/challenges');
-        console.log(res.data);
         if (res.data && Array.isArray(res.data.challenges)) {
           const data = res.data.challenges.map((challenge: any) => ({
             id: challenge._id,
@@ -83,6 +93,7 @@ const Challenges: React.FC = () => {
             problemUrl: challenge.problemLink,
           }));
           setProblemsList(data);
+          // console.log("Problems List:", problemsList);
           setIsLoading(false);
         }
       } catch (error) {
@@ -93,7 +104,15 @@ const Challenges: React.FC = () => {
 
   }, []);
 
-
+  useEffect(() => {
+    fetchLeetCodeProfile("saiganeshambati").then((res) => {
+      // console.log(res);
+    });
+    fetchCodeforcesProfile("code__void").then((res) => {
+      // console.log(res);
+    });
+    
+  }, []);
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -120,17 +139,22 @@ const Challenges: React.FC = () => {
   //   [problemsList]
   // );
   const dailyProblem = useMemo(() => {
+    if (problemsList.length === 0) return null; // Handle empty list
+
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize time to midnight
   
     const todayProblem = problemsList.find((problem) => {
       const problemDate = new Date(problem.date);
       problemDate.setHours(0, 0, 0, 0); // Normalize problem date
+      console.log("Comparing:", problemDate, "with", today);
       return problemDate.getTime() === today.getTime();
     });
   
     return todayProblem || problemsList[0]; // Default to first problem if no match found
   }, [problemsList]);
+
+  console.log(dailyProblem);
 
   const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList]);
   const difficultyLevels = ["Easy", "Medium", "Hard"];
@@ -209,6 +233,28 @@ const Challenges: React.FC = () => {
 
   const openProblemLink = (url?: string) => url && window.open(url, "_blank");
 
+  useEffect(() => {
+    const checkIfProblemSolved = async () => {
+      const leetCodeData = await fetchLeetCodeProfile("saiganeshambati");
+        if (leetCodeData) {
+          const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string }) => {
+            const submissionDate = new Date(parseInt(submission.timestamp) * 1000);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            // console.log(submissionDate.toDateString(),today.toDateString());
+            // console.log(submission.title,"Kadane's Algorithm");
+            if (submission.title === "Kadane's Algorithm" && 
+                submissionDate.toDateString() === today.toDateString()) {
+                  console.log("success")
+              setIsSolved(true);
+            }
+          });
+        }
+    };
+    // console.log(dailyProblem);
+    checkIfProblemSolved();
+  }, []);
+
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Problem of the Day Section */}
@@ -273,20 +319,26 @@ const Challenges: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex flex-col gap-4 justify-center">
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
-                      Solve Now
-                    </Button>
+                    {isSolved ? (
+                      <Button className="bg-green-600 hover:bg-green-700 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
+                        Solved
+                      </Button>
+                    ) : (
+                      <Button className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
+                        Solve Now
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-4 text-sm">
-                  <span
+                  {/* <span
                     className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${getDifficultyStyle(
                       dailyProblem?.difficulty
                     )}`}
                   >
                     {getDifficultyIcon(dailyProblem?.difficulty)}
                     {dailyProblem?.difficulty}
-                  </span>
+                  </span> */}
                   <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-3 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
                     <Code className="h-4 w-4 text-primary" />
                     {dailyProblem?.platform}
@@ -515,7 +567,7 @@ const Challenges: React.FC = () => {
                             markSolved={markSolved}
                             viewSolution={(id) => {
                               // Implement your view solution logic
-                              console.log(`Viewing solution for problem ${id}`);
+                              // console.log(`Viewing solution for problem ${id}`);
                             }}
                           />
 
