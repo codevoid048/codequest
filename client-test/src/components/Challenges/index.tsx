@@ -21,6 +21,9 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
+import { postPotdChallenge } from "@/lib/potdchallenge";
+import { useAuth } from "@/context/AuthContext";
 
 interface challenge {
   id: number;
@@ -28,7 +31,7 @@ interface challenge {
   title: string;
   categories: string[];
   difficulty: "Easy" | "Medium" | "Hard";
-  platform: "LeetCode" | "GFG" | "CodeChef";
+  platform: "LeetCode" | "GFG" | "CodeChef" | "Codeforces";
   status: "Solved" | "Unsolved";
   description: string;
   problemUrl?: string;
@@ -44,6 +47,11 @@ interface ProblemStatusProps {
   viewSolution: (id: string) => void;
 }
 
+// const { user } = useAuth();
+
+
+
+
 type FilterTab = "all" | "solved" | "unsolved";
 type SortOption = "date" | "difficulty" | "status";
 
@@ -58,7 +66,15 @@ const Challenges: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSolved, setIsSolved] = useState(false);
   const itemsPerPage = 5;
+
+
+
+  function convertTimestampToDate(timestamp: number) {
+    const date = new Date(timestamp * 1000); 
+    return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
+}
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -81,6 +97,7 @@ const Challenges: React.FC = () => {
             problemUrl: challenge.problemLink,
           }));
           setProblemsList(data);
+          // console.log("Problems List:", problemsList);
           setIsLoading(false);
         }
       } catch (error) {
@@ -88,10 +105,19 @@ const Challenges: React.FC = () => {
       }
     };
     fetchProblems();
+    // console.log("user",user);
 
   }, []);
 
-
+  useEffect(() => {
+    fetchLeetCodeProfile("saiganeshambati").then((res) => {
+      // console.log(res);
+    });
+    fetchCodeforcesProfile("code__void").then((res) => {
+      // console.log(res);
+    });
+    
+  }, []);
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -118,6 +144,8 @@ const Challenges: React.FC = () => {
   //   [problemsList]
   // );
   const dailyProblem = useMemo(() => {
+    if (problemsList.length === 0) return null; // Handle empty list
+
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize time to midnight
   
@@ -129,6 +157,8 @@ const Challenges: React.FC = () => {
 
     return todayProblem || problemsList[0]; // Default to first problem if no match found
   }, [problemsList]);
+
+  // console.log("dailyProblem",dailyProblem);
 
   const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList]);
   const difficultyLevels = ["Easy", "Medium", "Hard"];
@@ -207,6 +237,77 @@ const Challenges: React.FC = () => {
 
   const openProblemLink = (url?: string) => url && window.open(url, "_blank");
 
+  useEffect(() => {
+    const checkIfProblemSolved = async () => {
+      try {
+        if(dailyProblem?.platform === "LeetCode"){
+        const leetCodeData = await fetchLeetCodeProfile("saiganeshambati");
+        if (leetCodeData?.recentSubmissions) {
+          const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
+            const submissionDate = new Date(parseInt(submission.timestamp) * 1000);
+            const today = new Date();
+            const submissionUTC = new Date(Date.UTC(
+              submissionDate.getUTCFullYear(),
+              submissionDate.getUTCMonth(), 
+              submissionDate.getUTCDate()
+            ));
+            
+            const todayUTC = new Date(Date.UTC(
+              today.getUTCFullYear(),
+              today.getUTCMonth(),
+              today.getUTCDate()
+            ));
+            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && 
+            submissionUTC.getTime() === todayUTC.getTime();
+          });
+
+          
+          if (solvedProblem) {
+            setIsSolved(true);
+            postPotdChallenge();
+            return;
+          }
+        }
+      }
+      else if(dailyProblem?.platform === "Codeforces"){
+        const codeforcesData = await fetchCodeforcesProfile("saiganeshambati000"); 
+        if (codeforcesData?.result) {
+          const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string } ;verdict:string}) => {
+            const submissionDate = new Date(submission.creationTimeSeconds * 1000);
+            const today = new Date();
+            
+            // Convert both dates to UTC to avoid timezone issues
+            const submissionUTC = new Date(Date.UTC(
+              submissionDate.getUTCFullYear(),
+              submissionDate.getUTCMonth(), 
+              submissionDate.getUTCDate()
+            ));
+            
+            const todayUTC = new Date(Date.UTC(
+              today.getUTCFullYear(),
+              today.getUTCMonth(),
+              today.getUTCDate()
+            ));
+            
+            return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
+              submissionUTC.getTime() === todayUTC.getTime();
+          });
+
+          if (solvedProblem) {
+            setIsSolved(true);
+            postPotdChallenge();
+            return;
+          }
+        }
+      }
+      } catch (error) {
+        console.error("Error checking problem status:", error);
+      }
+    };
+
+    checkIfProblemSolved();
+  }, [dailyProblem]);
+
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Problem of the Day Section */}
@@ -271,20 +372,26 @@ const Challenges: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex flex-col gap-4 justify-center">
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
-                      Solve Now
-                    </Button>
+                    {isSolved ? (
+                      <Button className="bg-green-600 hover:bg-green-700 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
+                        Solved
+                      </Button>
+                    ) : (
+                      <Button className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
+                        Solve Now
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-4 text-sm">
-                  <span
+                  {/* <span
                     className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${getDifficultyStyle(
                       dailyProblem?.difficulty
                     )}`}
                   >
                     {getDifficultyIcon(dailyProblem?.difficulty)}
                     {dailyProblem?.difficulty}
-                  </span>
+                  </span> */}
                   <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-3 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
                     <Code className="h-4 w-4 text-primary" />
                     {dailyProblem?.platform}
@@ -513,7 +620,7 @@ const Challenges: React.FC = () => {
                             markSolved={markSolved}
                             viewSolution={(id) => {
                               // Implement your view solution logic
-                              console.log(`Viewing solution for problem ${id}`);
+                              // console.log(`Viewing solution for problem ${id}`);
                             }}
                           />
 

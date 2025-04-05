@@ -68,8 +68,9 @@ const userSchema = new mongoose.Schema(
     // POTD solved: store dates (unique per day)
     potdSolved: [
       {
-        type: Date, // or String if you prefer ISO strings
+        timestamp: { type: String }, // ISO date string format
       },
+
     ],
 
     otherLinks: [

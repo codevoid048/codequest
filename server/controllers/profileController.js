@@ -190,6 +190,35 @@ export const getUserActivity = async (req, res) => {
         res.status(500).json({ message: "Server error" })
     }
 }
+export const postPotdChallenge = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { timestamp } = req.body;
+        const date = new Date(timestamp).toISOString().split('T')[0]; // Extract only the date part
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        const potdExists = user.potdSolved.some(potd => potd.timestamp.split('T')[0] === date);
+        if (potdExists) {
+            return res.status(200).json({ message: 'POTD challenge already solved for today' });
+        }
+
+        user.potdSolved.push({ timestamp: timestamp });
+        await user.save();
+
+        res.status(200).json({ message: 'POTD challenge recorded successfully' });
+    } catch (error) {
+        console.error('POTD challenge update error:', error);
+        res.status(500).json({ 
+            message: 'Server error', 
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+
+    }
+};
+
 
 // Get user by username (for public profiles)
 export const getUserByUsername = async (req, res) => {

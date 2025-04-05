@@ -114,6 +114,17 @@ export default function ProfilePage() {
     hard: Math.floor((profileUser.solveChallenges?.length || 0) * 0.1),
   }
 
+  const [platformSolved, setPlatformSolved] = useState({
+    leetcodeTotal: 0,
+    codeChefStars: "",
+    codeforcesTotal: 0,
+    gfgTotal: 0,
+  });
+  const [rating, setRating] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+
+
   const platforms = [
     {
       name: "LeetCode",
@@ -627,6 +638,7 @@ export default function ProfilePage() {
           </motion.div>
         </motion.div>
       </motion.div>
+      <RatingChart ratingData={rating} />
     </div>
   )
 }
