@@ -16,6 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 
 // Number of users per page
@@ -23,7 +24,6 @@ const USERS_PER_PAGE = 8;
 
 export default function Leaderboard() {
   const [users, setUsers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [updatedUser, setUpdatedUser] = useState<number | null>(null);
   const [hoveredUser, setHoveredUser] = useState<number | null>(null);
@@ -58,23 +58,6 @@ export default function Leaderboard() {
     };
     fetchLearderboard();
   }, []);
-
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    controls.start({
-      rotate: [0, 360],
-      transition: { duration: 0.7 },
-    });
-    setTimeout(() => {
-      setIsDarkMode(!isDarkMode);
-      // Toggle dark class on document
-      if (!isDarkMode) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-    }, 350);
-  };
 
   // Get rank icon based on position
   const getRankIcon = (rank: number) => {
@@ -163,7 +146,7 @@ export default function Leaderboard() {
   return (
     <div
       className={cn(
-        "min-h-screen transition-all duration-500 bg-background text-foreground",
+        "min-h-screen transition-all duration-500 px-20 bg-background text-foreground",
         isDarkMode ? "dark" : "",
         "bg-grid-pattern"
       )}
@@ -337,7 +320,7 @@ export default function Leaderboard() {
                       </div>
 
                       {/* Username with special styling for top 3 */}
-                      <div className="col-span-5 flex items-center gap-3">
+                      <Link to={`/profile/${user.username}`} className="col-span-5 flex items-center gap-3">
                         {isTop3 && (
                           <motion.div
                             animate={{ rotate: [0, 5, 0, -5, 0] }}
@@ -374,7 +357,7 @@ export default function Leaderboard() {
                         >
                           {user.username}
                         </motion.span>
-                      </div>
+                      </Link>
 
                       {/* Points with animation */}
                       <motion.div
@@ -515,7 +498,7 @@ export default function Leaderboard() {
             >
               {/* Page info */}
               <div className="text-sm text-muted-foreground ml-8">
-                page {currentPage} of {Math.ceil(users.length / USERS_PER_PAGE)}
+                Page {currentPage} of {Math.ceil(users.length / USERS_PER_PAGE)}
               </div>
 
               {/* Pagination controls */}
@@ -548,7 +531,7 @@ export default function Leaderboard() {
                       onClick={() => typeof page === "number" && goToPage(page)}
                       disabled={page === "..."}
                       className={cn(
-                        "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 text-sm font-medium",
+                        "flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200 text-sm font-medium",
                         page === currentPage
                           ? isDarkMode
                             ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"

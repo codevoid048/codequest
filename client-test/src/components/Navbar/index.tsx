@@ -35,11 +35,31 @@ export function Navbar() {
     { href: "/about", label: "About" },
   ];
 
+  // Function to render user avatar or initial
+  const renderUserAvatar = () => {
+    if (user?.profilePicture) {
+      return (
+        <img
+          src={user.profilePicture}
+          alt="Profile"
+          className="w-8 h-8 rounded-full"
+        />
+      );
+    } else {
+      // Display first letter of username with blue background
+      const initial = user?.username ? user.username.charAt(0).toUpperCase() : "U";
+      return (
+        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+          <span className="text-primary-foreground font-medium text-sm">{initial}</span>
+        </div>
+      );
+    }
+  };
+
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-200 px-20 ${
-        isScrolled ? "bg-background/80 backdrop-blur-md border-b" : "bg-transparent"
-      }`}
+      className={`sticky top-0 z-50 w-full transition-all duration-200 px-20 ${isScrolled ? "bg-background/80 backdrop-blur-md border-b" : "bg-transparent"
+        }`}
     >
       <div className="container flex h-16 items-center justify-between">
         {/* Logo & Desktop Navigation */}
@@ -60,9 +80,8 @@ export function Navbar() {
               <Link
                 key={item.href}
                 to={item.href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === item.href ? "text-primary" : "text-muted-foreground"
-                }`}
+                className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === item.href ? "text-primary" : "text-muted-foreground"
+                  }`}
               >
                 {item.label}
               </Link>
@@ -96,18 +115,14 @@ export function Navbar() {
               </Button>
             </>
           ) : (
-            <>
+            <div className="flex items-center gap-4">
+              <Link to={`/profile/${user?.username}`}>
+                {renderUserAvatar()}
+              </Link>
               <Button onClick={logout} variant="outline">
                 Logout
               </Button>
-              <Link to={`/profile/${user?.username}`}>
-                <img
-                  src="/default-profile.png"
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full"
-                />
-              </Link>
-            </>
+            </div>
           )}
         </div>
 
@@ -131,9 +146,8 @@ export function Navbar() {
                   <Link
                     key={item.href}
                     to={item.href}
-                    className={`text-sm font-medium transition-colors hover:text-primary ${
-                      location.pathname === item.href ? "text-primary" : "text-muted-foreground"
-                    }`}
+                    className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === item.href ? "text-primary" : "text-muted-foreground"
+                      }`}
                   >
                     {item.label}
                   </Link>
@@ -157,11 +171,7 @@ export function Navbar() {
                       Logout
                     </Button>
                     <Link to={`/profile/${user?.username}`}>
-                      <img
-                        src="/default-profile.png"
-                        alt="Profile"
-                        className="w-8 h-8 rounded-full"
-                      />
+                      {renderUserAvatar()}
                     </Link>
                   </>
                 )}
