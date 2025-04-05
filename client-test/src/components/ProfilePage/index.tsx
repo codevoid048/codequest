@@ -8,6 +8,8 @@ import { useAuth } from "@/context/AuthContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import ProfileSkeleton from "@/components/profile-skeleton"
+import { usePartialRendering } from "@/lib/use-partial-rendering"
 import {
   Calendar,
   ChevronUp,
@@ -50,6 +52,12 @@ export default function ProfilePage() {
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
+  // Partial rendering states
+  const { isReady: sidebarReady } = usePartialRendering(200)
+  const { isReady: statsReady } = usePartialRendering(400)
+  const { isReady: difficultyReady } = usePartialRendering(600)
+  const { isReady: contributionsReady } = usePartialRendering(800)
+
   // Fetch user details from backend using Axios
   useEffect(() => {
     const fetchProfileUser = async () => {
@@ -75,11 +83,7 @@ export default function ProfilePage() {
 
   // Handle loading and error states
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
+    return <ProfileSkeleton />
   }
 
   if (error) {
@@ -242,117 +246,125 @@ export default function ProfilePage() {
       >
         {/* Sidebar - Profile Details */}
         <motion.div className="lg:col-span-1" variants={cardVariants}>
-          <Card className="overflow-hidden shadow-lg border-0">
-            <div className="h-24 bg-gradient-to-r from-purple-500 to-cyan-500"></div>
-            <div className="px-6 pb-6 -mt-12">
-              <Avatar className="w-24 h-24 border-4 border-white shadow-xl mx-auto">
-                <AvatarImage
-                  src={profileUser.profilePicture || "/placeholder.svg?height=128&width=128"}
-                  alt={profileUser.name || "User"}
-                />
-                <AvatarFallback className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500">
-                  {profileUser.name?.charAt(0) || "?"}
-                </AvatarFallback>
-              </Avatar>
+          {sidebarReady ? (
+            <Card className="overflow-hidden shadow-lg border-0">
+              <div className="h-24 bg-gradient-to-r from-purple-500 to-cyan-500"></div>
+              <div className="px-6 pb-6 -mt-12">
+                <Avatar className="w-24 h-24 border-4 border-white shadow-xl mx-auto">
+                  <AvatarImage
+                    src={profileUser.profilePicture || "/placeholder.svg?height=128&width=128"}
+                    alt={profileUser.name || "User"}
+                  />
+                  <AvatarFallback className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500">
+                    {profileUser.name?.charAt(0) || "?"}
+                  </AvatarFallback>
+                </Avatar>
 
-              <div className="mt-4 text-center">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text text-transparent">
-                  {profileUser.name}
-                </h1>
-                <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
+                <div className="mt-4 text-center">
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text text-transparent">
+                    {profileUser.name}
+                  </h1>
+                  <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
 
-                <div className="mt-2">
-                  <p className="text-sm flex items-center justify-center text-muted-foreground">
-                    <ChevronUp className="h-4 w-4 text-green-500 mr-1" />
-                    Position #{profileUser.rank || "N/A"}
-                  </p>
-                </div>
-
-                <div className="mt-5 space-y-3">
-                  {profileUser.collegeName && (
-                    <p className="text-sm flex items-center gap-2 justify-center">
-                      <School className="h-4 w-4 text-purple-500" /> {profileUser.collegeName}
+                  <div className="mt-2">
+                    <p className="text-sm flex items-center justify-center text-muted-foreground">
+                      <ChevronUp className="h-4 w-4 text-green-500 mr-1" />
+                      Position #{profileUser.rank || "N/A"}
                     </p>
-                  )}
-                  {profileUser.branch && (
-                    <p className="text-sm flex items-center gap-2 justify-center">
-                      <Code2 className="h-4 w-4 text-cyan-500" /> {profileUser.branch}
-                    </p>
-                  )}
-                  {profileUser.RegistrationNumber && (
-                    <p className="text-sm flex items-center gap-2 justify-center">
-                      <MapPin className="h-4 w-4 text-pink-500" /> {profileUser.RegistrationNumber}
-                    </p>
-                  )}
-                </div>
-
-                <div className="mt-6 flex justify-center gap-3">
-                  {twitterLink && (
-                    <Button variant="outline" size="icon" className="rounded-full" asChild>
-                      <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
-                        <Twitter className="h-4 w-4 text-sky-500" />
-                      </Link>
-                    </Button>
-                  )}
-                  {linkedinLink && (
-                    <Button variant="outline" size="icon" className="rounded-full" asChild>
-                      <Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
-                        <Linkedin className="h-4 w-4 text-blue-600" />
-                      </Link>
-                    </Button>
-                  )}
-                  {githubLink && (
-                    <Button variant="outline" size="icon" className="rounded-full" asChild>
-                      <Link to={githubLink} target="_blank" rel="noopener noreferrer">
-                        <Github className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-
-                {isOwnProfile && (
-                  <div className="mt-6">
-                    <Button
-                      className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600"
-                      onClick={() => navigate("/profile/edit-profile")}
-                    >
-                      Edit Profile
-                    </Button>
                   </div>
-                )}
+
+                  <div className="mt-5 space-y-3">
+                    {profileUser.collegeName && (
+                      <p className="text-sm flex items-center gap-2 justify-center">
+                        <School className="h-4 w-4 text-purple-500" /> {profileUser.collegeName}
+                      </p>
+                    )}
+                    {profileUser.branch && (
+                      <p className="text-sm flex items-center gap-2 justify-center">
+                        <Code2 className="h-4 w-4 text-cyan-500" /> {profileUser.branch}
+                      </p>
+                    )}
+                    {profileUser.RegistrationNumber && (
+                      <p className="text-sm flex items-center gap-2 justify-center">
+                        <MapPin className="h-4 w-4 text-pink-500" /> {profileUser.RegistrationNumber}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-6 flex justify-center gap-3">
+                    {twitterLink && (
+                      <Button variant="outline" size="icon" className="rounded-full" asChild>
+                        <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
+                          <Twitter className="h-4 w-4 text-sky-500" />
+                        </Link>
+                      </Button>
+                    )}
+                    {linkedinLink && (
+                      <Button variant="outline" size="icon" className="rounded-full" asChild>
+                        <Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
+                          <Linkedin className="h-4 w-4 text-blue-600" />
+                        </Link>
+                      </Button>
+                    )}
+                    {githubLink && (
+                      <Button variant="outline" size="icon" className="rounded-full" asChild>
+                        <Link to={githubLink} target="_blank" rel="noopener noreferrer">
+                          <Github className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+
+                  {isOwnProfile && (
+                    <div className="mt-6">
+                      <Button
+                        className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600"
+                        onClick={() => navigate("/profile/edit-profile")}
+                      >
+                        Edit Profile
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          ) : (
+            <div className="h-[450px] bg-muted animate-pulse rounded-lg"></div>
+          )}
 
           {/* Coding Platforms */}
           <motion.div variants={cardVariants} className="mt-6">
-            <Card className="shadow-lg border-0">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center text-lg">
-                  <Github className="mr-2 h-5 w-5 text-gray-500" /> Coding Platforms
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {platforms.map((platform) => (
-                  <motion.div
-                    key={platform.name}
-                    whileHover={{ scale: 1.02 }}
-                    className="border-l-4 rounded-lg shadow-sm p-3"
-                    style={{ borderLeftColor: platform.color }}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium">{platform.name}</div>
-                        <div className="text-sm text-muted-foreground">@{platform.handle}</div>
+            {sidebarReady ? (
+              <Card className="shadow-lg border-0">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-lg">
+                    <Github className="mr-2 h-5 w-5 text-gray-500" /> Coding Platforms
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {platforms.map((platform) => (
+                    <motion.div
+                      key={platform.name}
+                      whileHover={{ scale: 1.02 }}
+                      className="border-l-4 rounded-lg shadow-sm p-3"
+                      style={{ borderLeftColor: platform.color }}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">{platform.name}</div>
+                          <div className="text-sm text-muted-foreground">@{platform.handle}</div>
+                        </div>
+                        <div className="text-lg font-bold" style={{ color: platform.color }}>
+                          {platform.rating}
+                        </div>
                       </div>
-                      <div className="text-lg font-bold" style={{ color: platform.color }}>
-                        {platform.rating}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </CardContent>
-            </Card>
+                    </motion.div>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="h-[300px] bg-muted animate-pulse rounded-lg mt-6"></div>
+            )}
           </motion.div>
         </motion.div>
 
@@ -360,270 +372,289 @@ export default function ProfilePage() {
         <motion.div className="lg:col-span-3" variants={cardVariants}>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
-              <Card className="shadow-lg border-0 overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
-                <CardContent className="pt-6">
-                  <div className="flex items-center">
-                    <div className="bg-blue-100 p-3 rounded-lg mr-4">
-                      <Code2 className="h-6 w-6 text-blue-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Problems Solved</p>
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                        {problemsSolved.total}
-                      </h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+            {statsReady ? (
+              <>
+                <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+                  <Card className="shadow-lg border-0 overflow-hidden">
+                    <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center">
+                        <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                          <Code2 className="h-6 w-6 text-blue-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Problems Solved</p>
+                          <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
+                            {problemsSolved.total}
+                          </h3>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
-            <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
-              <Card className="shadow-lg border-0 overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
-                <CardContent className="pt-6">
-                  <div className="flex items-center">
-                    <div className="bg-amber-100 p-3 rounded-lg mr-4">
-                      <Trophy className="h-6 w-6 text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Points</p>
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                        {profileUser.points || 0}
-                      </h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+                  <Card className="shadow-lg border-0 overflow-hidden">
+                    <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center">
+                        <div className="bg-amber-100 p-3 rounded-lg mr-4">
+                          <Trophy className="h-6 w-6 text-amber-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Total Points</p>
+                          <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                            {profileUser.points || 0}
+                          </h3>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
-            <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
-              <Card className="shadow-lg border-0 overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
-                <CardContent className="pt-6">
-                  <div className="flex items-center">
-                    <div className="bg-red-100 p-3 rounded-lg mr-4">
-                      <Flame className="h-6 w-6 text-red-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-                        {profileUser.streak || 0}
-                      </h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+                  <Card className="shadow-lg border-0 overflow-hidden">
+                    <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center">
+                        <div className="bg-red-100 p-3 rounded-lg mr-4">
+                          <Flame className="h-6 w-6 text-red-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
+                          <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
+                            {profileUser.streak || 0}
+                          </h3>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </>
+            ) : (
+              <>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-[100px] bg-muted animate-pulse rounded-lg"></div>
+                ))}
+              </>
+            )}
           </div>
 
           {/* Problem Difficulty Breakdown */}
           <motion.div variants={cardVariants} className="mt-6">
-            <Card className="shadow-lg border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Sparkles className="mr-2 h-5 w-5 text-amber-500" /> Problem Difficulty Breakdown
-                </CardTitle>
-                <CardDescription>Track your progress across difficulty levels</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <motion.div
-                    variants={cardVariants}
-                    whileHover={{ scale: 1.03 }}
-                    className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm"
-                  >
-                    <div className="relative w-28 h-28 mx-auto">
-                      <svg className="w-full h-full" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#E5E7EB"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#10B981"
-                          strokeWidth="3"
-                          strokeDasharray={`${(problemsSolved.easy / 300) * 100}, 100`}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-3xl font-bold text-green-600">{problemsSolved.easy}</div>
+            {difficultyReady ? (
+              <Card className="shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Sparkles className="mr-2 h-5 w-5 text-amber-500" /> Problem Difficulty Breakdown
+                  </CardTitle>
+                  <CardDescription>Track your progress across difficulty levels</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <motion.div
+                      variants={cardVariants}
+                      whileHover={{ scale: 1.03 }}
+                      className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm"
+                    >
+                      <div className="relative w-28 h-28 mx-auto">
+                        <svg className="w-full h-full" viewBox="0 0 36 36">
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#E5E7EB"
+                            strokeWidth="3"
+                          />
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#10B981"
+                            strokeWidth="3"
+                            strokeDasharray={`${(problemsSolved.easy / 300) * 100}, 100`}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-3xl font-bold text-green-600">{problemsSolved.easy}</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-sm font-medium text-green-800 mt-3">Easy</div>
-                  </motion.div>
+                      <div className="text-sm font-medium text-green-800 mt-3">Easy</div>
+                    </motion.div>
 
-                  <motion.div
-                    variants={cardVariants}
-                    whileHover={{ scale: 1.03 }}
-                    className="text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm"
-                  >
-                    <div className="relative w-28 h-28 mx-auto">
-                      <svg className="w-full h-full" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#E5E7EB"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#F59E0B"
-                          strokeWidth="3"
-                          strokeDasharray={`${(problemsSolved.medium / 300) * 100}, 100`}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-3xl font-bold text-yellow-600">{problemsSolved.medium}</div>
+                    <motion.div
+                      variants={cardVariants}
+                      whileHover={{ scale: 1.03 }}
+                      className="text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm"
+                    >
+                      <div className="relative w-28 h-28 mx-auto">
+                        <svg className="w-full h-full" viewBox="0 0 36 36">
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#E5E7EB"
+                            strokeWidth="3"
+                          />
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#F59E0B"
+                            strokeWidth="3"
+                            strokeDasharray={`${(problemsSolved.medium / 300) * 100}, 100`}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-3xl font-bold text-yellow-600">{problemsSolved.medium}</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-sm font-medium text-yellow-800 mt-3">Medium</div>
-                  </motion.div>
+                      <div className="text-sm font-medium text-yellow-800 mt-3">Medium</div>
+                    </motion.div>
 
-                  <motion.div
-                    variants={cardVariants}
-                    whileHover={{ scale: 1.03 }}
-                    className="text-center p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm"
-                  >
-                    <div className="relative w-28 h-28 mx-auto">
-                      <svg className="w-full h-full" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#E5E7EB"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#EF4444"
-                          strokeWidth="3"
-                          strokeDasharray={`${(problemsSolved.hard / 100) * 100}, 100`}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-3xl font-bold text-red-600">{problemsSolved.hard}</div>
+                    <motion.div
+                      variants={cardVariants}
+                      whileHover={{ scale: 1.03 }}
+                      className="text-center p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm"
+                    >
+                      <div className="relative w-28 h-28 mx-auto">
+                        <svg className="w-full h-full" viewBox="0 0 36 36">
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#E5E7EB"
+                            strokeWidth="3"
+                          />
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#EF4444"
+                            strokeWidth="3"
+                            strokeDasharray={`${(problemsSolved.hard / 100) * 100}, 100`}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-3xl font-bold text-red-600">{problemsSolved.hard}</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-sm font-medium text-red-800 mt-3">Hard</div>
-                  </motion.div>
-                </div>
-              </CardContent>
-            </Card>
+                      <div className="text-sm font-medium text-red-800 mt-3">Hard</div>
+                    </motion.div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="h-[300px] bg-muted animate-pulse rounded-lg mt-6"></div>
+            )}
           </motion.div>
 
           {/* Contributions Map */}
           <motion.div variants={cardVariants} className="mt-6">
-            <Card className="shadow-lg border-0">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle className="flex items-center">
-                    <Calendar className="mr-2 h-5 w-5 text-green-500" /> Contributions
-                  </CardTitle>
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(Number.parseInt(e.target.value))}
-                    className="border rounded-md p-2 text-sm bg-background"
-                  >
-                    {yearOptions.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <CardDescription>Your coding activity for {selectedYear}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto pb-4">
-                  <div className="min-w-[950px]">
-                    <div className="flex gap-4 text-xs text-muted-foreground text-center mb-2">
-                      {[
-                        "January",
-                        "February",
-                        "March",
-                        "April",
-                        "May",
-                        "June",
-                        "July",
-                        "August",
-                        "September",
-                        "October",
-                        "November",
-                        "December",
-                      ].map((month) => (
-                        <div key={month} className="flex-1 truncate">
-                          {month}
-                        </div>
+            {contributionsReady ? (
+              <Card className="shadow-lg border-0">
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center">
+                      <Calendar className="mr-2 h-5 w-5 text-green-500" /> Contributions
+                    </CardTitle>
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(Number.parseInt(e.target.value))}
+                      className="border rounded-md p-2 text-sm bg-background"
+                    >
+                      {yearOptions.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
                       ))}
-                    </div>
-                    <div className="flex gap-4">
-                      {contributionsByMonth.map((monthContribs, monthIndex) => {
-                        const daysInMonth = getDaysInMonth(monthIndex, selectedYear)
-                        const firstDayOfMonth = new Date(selectedYear, monthIndex, 1).getDay()
-                        const offset = (firstDayOfMonth + 6) % 7
-                        const totalContributions = monthContribs.reduce(
-                          (sum, contrib) => sum + (contrib ? contrib.count : 0),
-                          0,
-                        )
-                        const numWeeks = Math.ceil((daysInMonth + offset) / 7)
-
-                        return (
-                          <div key={monthIndex} className="flex-1">
-                            <div
-                              className="grid gap-1"
-                              style={{
-                                gridTemplateColumns: `repeat(${numWeeks}, 1fr)`,
-                                gridTemplateRows: "repeat(7, 1fr)",
-                              }}
-                            >
-                              {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
-                                const date = new Date(selectedYear, monthIndex, dayIndex + 1)
-                                const dayOfWeek = (date.getDay() + 6) % 7
-                                const weekIndex = Math.floor((dayIndex + offset) / 7) + 1
-                                const contrib = monthContribs.find((c) => c.date === date.toISOString().split("T")[0])
-                                const count = contrib ? contrib.count : 0
-                                const isToday =
-                                  date.toISOString().split("T")[0] === new Date().toISOString().split("T")[0]
-                                const inStreak = isPartOfStreak({ monthIndex, dayIndex, monthContribs })
-
-                                return (
-                                  <motion.div
-                                    key={dayIndex}
-                                    className={`h-4 w-4 rounded-sm ${getColor(count)} ${isToday ? "ring-2 ring-black dark:ring-white" : ""
-                                      } ${inStreak && count > 0 ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
-                                    style={{ gridRow: dayOfWeek + 1, gridColumn: weekIndex }}
-                                    title={`${date.toLocaleDateString()}: ${count} contributions`}
-                                    whileHover={{ scale: 1.5, zIndex: 10 }}
-                                    transition={{ duration: 0.2 }}
-                                  />
-                                )
-                              })}
-                            </div>
-                            <div className="text-xs text-muted-foreground text-center mt-1">
-                              {totalContributions} contributions
-                            </div>
+                    </select>
+                  </div>
+                  <CardDescription>Your coding activity for {selectedYear}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto pb-4">
+                    <div className="min-w-[950px]">
+                      <div className="flex gap-4 text-xs text-muted-foreground text-center mb-2">
+                        {[
+                          "January",
+                          "February",
+                          "March",
+                          "April",
+                          "May",
+                          "June",
+                          "July",
+                          "August",
+                          "September",
+                          "October",
+                          "November",
+                          "December",
+                        ].map((month) => (
+                          <div key={month} className="flex-1 truncate">
+                            {month}
                           </div>
-                        )
-                      })}
+                        ))}
+                      </div>
+                      <div className="flex gap-4">
+                        {contributionsByMonth.map((monthContribs, monthIndex) => {
+                          const daysInMonth = getDaysInMonth(monthIndex, selectedYear)
+                          const firstDayOfMonth = new Date(selectedYear, monthIndex, 1).getDay()
+                          const offset = (firstDayOfMonth + 6) % 7
+                          const totalContributions = monthContribs.reduce(
+                            (sum, contrib) => sum + (contrib ? contrib.count : 0),
+                            0,
+                          )
+                          const numWeeks = Math.ceil((daysInMonth + offset) / 7)
+
+                          return (
+                            <div key={monthIndex} className="flex-1">
+                              <div
+                                className="grid gap-1"
+                                style={{
+                                  gridTemplateColumns: `repeat(${numWeeks}, 1fr)`,
+                                  gridTemplateRows: "repeat(7, 1fr)",
+                                }}
+                              >
+                                {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
+                                  const date = new Date(selectedYear, monthIndex, dayIndex + 1)
+                                  const dayOfWeek = (date.getDay() + 6) % 7
+                                  const weekIndex = Math.floor((dayIndex + offset) / 7) + 1
+                                  const contrib = monthContribs.find((c) => c.date === date.toISOString().split("T")[0])
+                                  const count = contrib ? contrib.count : 0
+                                  const isToday =
+                                    date.toISOString().split("T")[0] === new Date().toISOString().split("T")[0]
+                                  const inStreak = isPartOfStreak({ monthIndex, dayIndex, monthContribs })
+
+                                  return (
+                                    <motion.div
+                                      key={dayIndex}
+                                      className={`h-4 w-4 rounded-sm ${getColor(count)} ${
+                                        isToday ? "ring-2 ring-black dark:ring-white" : ""
+                                      } ${inStreak && count > 0 ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
+                                      style={{ gridRow: dayOfWeek + 1, gridColumn: weekIndex }}
+                                      title={`${date.toLocaleDateString()}: ${count} contributions`}
+                                      whileHover={{ scale: 1.5, zIndex: 10 }}
+                                      transition={{ duration: 0.2 }}
+                                    />
+                                  )
+                                })}
+                              </div>
+                              <div className="text-xs text-muted-foreground text-center mt-1">
+                                {totalContributions} contributions
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-4">
+                      <span>Less</span>
+                      <div className="h-3 w-3 rounded-sm bg-gray-300"></div>
+                      <div className="h-3 w-3 rounded-sm bg-green-200"></div>
+                      <div className="h-3 w-3 rounded-sm bg-green-400"></div>
+                      <div className="h-3 w-3 rounded-sm bg-green-500"></div>
+                      <span>More</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-4">
-                    <span>Less</span>
-                    <div className="h-3 w-3 rounded-sm bg-gray-300"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-200"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-400"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-500"></div>
-                    <span>More</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="h-[400px] bg-muted animate-pulse rounded-lg mt-6"></div>
+            )}
           </motion.div>
         </motion.div>
       </motion.div>
