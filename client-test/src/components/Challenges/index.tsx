@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import ProblemStatus from '@/lib/solutionStatus'
-// import {axiosInstance }from "@/lib/axios"
 import axios from "axios";
 import {
   Award,
@@ -152,11 +151,10 @@ const Challenges: React.FC = () => {
   
     const todayProblem = problemsList.find((problem) => {
       const problemDate = new Date(problem.date);
-      problemDate.setHours(0, 0, 0, 0); // Normalize problem date
-      // console.log("Comparing:", problemDate, "with", today);
+      problemDate.setHours(0, 0, 0, 0);
       return problemDate.getTime() === today.getTime();
     });
-  
+
     return todayProblem || problemsList[0]; // Default to first problem if no match found
   }, [problemsList]);
 
