@@ -16,12 +16,20 @@ export const leetcodeData = async (req, res) => {
         query: `
           {
             matchedUser(username: "${username}") {
+              profile {
+                realName
+                ranking
+                starRating
+              }
               submitStatsGlobal {
                 acSubmissionNum {
                   difficulty
                   count
                 }
               }
+            }
+            userContestRanking(username: "${username}") {
+              rating
             }
           }
         `,
@@ -39,9 +47,11 @@ export const leetcodeData = async (req, res) => {
 
       await User.findByIdAndUpdate(
         user._id,
-        { 
+        {
           $set: {
-            'leetCode.solved': totalSolved
+            'leetCode.solved': totalSolved,
+            'leetCode.rank' : responseData?.data?.matchedUser?.profile?.ranking || -1,
+            'leetCode.rating' : Math.floor(responseData?.data?.userContestRanking?.rating) || -1,
           }
         }
       );
@@ -93,6 +103,8 @@ export const codeforcesData = async (req, res) => {
 
       const response = await axios.get(`https://codeforces.com/api/user.status?handle=${username}`);
       const submissions = response.data.result;
+      const res = await axios.get(`https://codeforces.com/api/user.info?handles=${username}`);
+      const userInfo = res.data.result[0];
 
       let solvedProblems = new Set();
       submissions.forEach((submission) => {
@@ -108,7 +120,9 @@ export const codeforcesData = async (req, res) => {
         user._id,
         {
           $set: {
-            'codeforces.solved': totalSolved
+            'codeforces.solved': totalSolved,
+            'codeforces.rating': userInfo.rating || -1,
+            'codeforces.rank': userInfo.rank || "",
           }
         }
       );

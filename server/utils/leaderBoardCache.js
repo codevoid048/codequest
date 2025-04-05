@@ -5,7 +5,7 @@ const leaderBoardCache = new NodeCache({ stdTTL: 600 });
 
 export const updateRanks = async () => {
     try {
-        console.log('Updating leaderboard ranks..t');
+        //console.log('Updating leaderboard ranks..t');
 
         // Fetch users sorted by points
         const users = await User.find({ isVerified: true })
@@ -13,7 +13,7 @@ export const updateRanks = async () => {
             .sort({ points: -1 })
             .lean();
 
-        // console.log("Users fetched for ranking:", users); // ✅ Debug log
+        //console.log("Users fetched for ranking:", users); // ✅ Debug log
 
         // Prepare bulk update operations
         const bulkOps = users.map((user, index) => ({
