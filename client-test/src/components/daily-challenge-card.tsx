@@ -1,11 +1,11 @@
 import { useState,useMemo,useEffect } from "react"
 import { motion } from "framer-motion"
-import { ArrowRight, CheckCircle, Clock, Code2, Zap } from "lucide-react"
+import { ArrowRight, Clock, Award, Flame } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Link } from "react-router-dom"
-import { Award, Flame } from "lucide-react"
+
 import axios from "axios"
 export function DailyChallengeCard() {
     interface challenge {
@@ -146,5 +146,7 @@ export function DailyChallengeCard() {
                 </CardFooter>
             </Card>)}
         </motion.div>
-    )
+    );
 }
+
+export default DailyChallengeCard;

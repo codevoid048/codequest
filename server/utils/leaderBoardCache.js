@@ -12,8 +12,6 @@ export const updateRanks = async () => {
             .sort({ points: -1 })
             .lean();
 
-        //console.log("Users fetched for ranking:", users); // ✅ Debug log
-
         // Prepare bulk update operations
         const bulkOps = users.map((user, index) => ({
             updateOne: {
@@ -22,12 +20,10 @@ export const updateRanks = async () => {
             }
         
         }));
-        // console.log("Bulk operations prepared:", users); // ✅ Debug log
 
         // Execute bulk update
         if (bulkOps.length > 0) {
             const result = await User.bulkWrite(bulkOps);
-            // ✅ Check if MongoDB updates
         }
 
         // Update cache

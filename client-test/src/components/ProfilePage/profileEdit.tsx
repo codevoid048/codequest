@@ -2,23 +2,36 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
-import { Upload, CheckCircle, User, Mail, Hash, BookOpen, Building, Code } from "lucide-react"
+import { Upload, CheckCircle, User, Mail, Hash, BookOpen, Building, Code, X, Crop } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Slider } from "@/components/ui/slider"
 import axios from "axios"
 import { useAuth } from "@/context/AuthContext"
+import { useNavigate } from "react-router-dom"
 import { toast } from "react-hot-toast"
+import Cropper from "react-easy-crop"
+
+interface Point {
+    x: number
+    y: number
+}
+
+interface Area {
+    x: number
+    y: number
+    width: number
+    height: number
+}
 
 export default function ProfileEditForm() {
     const { user, token, fetchUser } = useAuth()
-
-    // console.log("User from AuthContext:", user)
-    // console.log("Token from AuthContext:", token)
 
     interface ProfileFormData {
         name: string
@@ -45,21 +58,28 @@ export default function ProfileEditForm() {
             { platform: "leetcode", url: "" },
             { platform: "github", url: "" },
             { platform: "codeforces", url: "" },
-            { platform: "hackerrank", url: "" }, // Added this to match your UI
+            { platform: "codechef", url: "" },
+            { platform: "gfg", url: "" },
+            { platform: "hackerrank", url: "" },
         ],
     })
 
     const [image, setImage] = useState<string | null>(null)
+    const [cropDialogOpen, setCropDialogOpen] = useState(false)
+    const [crop, setCrop] = useState<Point>({ x: 0, y: 0 })
+    const [zoom, setZoom] = useState(1)
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
+    const [imageSrc, setImageSrc] = useState<string | null>(null)
+    const [imageUploading, setImageUploading] = useState(false)
+
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isLoading, setIsLoading] = useState(false)
-    const [buttonText, setButtonText] = useState("Save Registration");
+    const [buttonText, setButtonText] = useState("Save Profile")
+    const [imageError, setImageError] = useState<string | null>(null)
+    const navigate = useNavigate();
 
-
-    // Log token whenever it changes (for debugging)
+    // If user data is available, pre-fill the form
     useEffect(() => {
-        console.log("Token in ProfileEditForm:", token)
-
-        // If user data is available, pre-fill the form
         if (user) {
             setFormData((prevData) => ({
                 ...prevData,
@@ -69,14 +89,35 @@ export default function ProfileEditForm() {
                 registerNumber: user.RegistrationNumber || "",
                 branch: user.branch || "",
                 college: user.collegeName || "",
-                image: user.image || "",
+                image: user.profilePicture || "",
                 isAffiliate: user.isAffiliate || false,
-                // Handle otherLinks if available
-                otherLinks: user.otherLinks || formData.otherLinks,
             }))
 
-            if (user.image) {
-                setImage(user.image)
+            // Handle coding profiles
+            if (user.leetCode?.username) {
+                handleLinkChange("leetcode", user.leetCode.username)
+            }
+            if (user.codeforces?.username) {
+                handleLinkChange("codeforces", user.codeforces.username)
+            }
+            if (user.codechef?.username) {
+                handleLinkChange("codechef", user.codechef.username)
+            }
+            if (user.gfg?.username) {
+                handleLinkChange("gfg", user.gfg.username)
+            }
+
+            // Handle other links
+            if (user.otherLinks && Array.isArray(user.otherLinks)) {
+                user.otherLinks.forEach((link) => {
+                    if (link.platform && link.url) {
+                        handleLinkChange(link.platform.toLowerCase(), link.url)
+                    }
+                })
+            }
+
+            if (user.profilePicture) {
+                setImage(user.profilePicture)
             }
         }
     }, [user, token])
@@ -87,15 +128,89 @@ export default function ProfileEditForm() {
     }, [])
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setImageError(null)
         if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0]
+
+            // Check file size (limit to 6MB)
+            if (file.size > 6 * 1024 * 1024) {
+                setImageError("Image size should be less than 6MB")
+                return
+            }
+
             const reader = new FileReader()
             reader.onload = (event) => {
                 const result = event.target?.result as string
-                setImage(result)
-                setFormData((prev) => ({ ...prev, image: result }))
+                setImageSrc(result)
+                setCropDialogOpen(true)
             }
-            reader.readAsDataURL(e.target.files[0])
+            reader.readAsDataURL(file)
         }
+    }
+
+    const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: Area) => {
+        setCroppedAreaPixels(croppedAreaPixels)
+    }, [])
+
+    const createImage = (url: string): Promise<HTMLImageElement> =>
+        new Promise((resolve, reject) => {
+            const image = new Image()
+            image.addEventListener("load", () => resolve(image))
+            image.addEventListener("error", (error) => reject(error))
+            image.crossOrigin = "anonymous" // This helps avoid CORS issues
+            image.src = url
+        })
+
+    const getCroppedImg = async (imageSrc: string, pixelCrop: Area, rotation = 0): Promise<string> => {
+        const image = await createImage(imageSrc)
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")
+
+        if (!ctx) {
+            throw new Error("Could not get canvas context")
+        }
+
+        // Set canvas size to the cropped size
+        canvas.width = pixelCrop.width
+        canvas.height = pixelCrop.height
+
+        // Draw the cropped image onto the canvas
+        ctx.drawImage(
+            image,
+            pixelCrop.x,
+            pixelCrop.y,
+            pixelCrop.width,
+            pixelCrop.height,
+            0,
+            0,
+            pixelCrop.width,
+            pixelCrop.height,
+        )
+
+        // As Base64 string
+        return canvas.toDataURL("image/jpeg", 0.9)
+    }
+
+    const handleCropSave = async () => {
+        if (imageSrc && croppedAreaPixels) {
+            try {
+                setImageUploading(true)
+                const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels)
+                setImage(croppedImage)
+                setFormData((prev) => ({ ...prev, image: croppedImage }))
+                setCropDialogOpen(false)
+            } catch (e) {
+                console.error("Error cropping image:", e)
+                toast.error("Failed to crop image. Please try again.")
+            } finally {
+                setImageUploading(false)
+            }
+        }
+    }
+
+    const handleCropCancel = () => {
+        setCropDialogOpen(false)
+        setImageSrc(null)
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,23 +247,23 @@ export default function ProfileEditForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
-        setButtonText("Saving...");
+        setButtonText("Saving...")
 
         // Basic validation
-        if (!formData.name || !formData.email) {
-            alert("Please fill in required fields (Name and Email)");
-            setIsLoading(false);
+        if (!formData.name) {
+            toast.error("Name is required")
+            setIsLoading(false)
+            setButtonText("Save Profile")
             return
         }
 
         // Get token from context or localStorage as fallback
-        const currentToken = token || localStorage.getItem("auth_token");
-        console.log("Current token in ProfileEditForm:", currentToken);
-        console.log("Form data being submitted:", formData);
+        const currentToken = token || localStorage.getItem("auth_token")
 
         if (!currentToken) {
-            alert("User is not authenticated. Please log in.");
-            setIsLoading(false);
+            toast.error("You are not authenticated. Please log in.")
+            setIsLoading(false)
+            setButtonText("Save Profile")
             return
         }
 
@@ -164,23 +279,24 @@ export default function ProfileEditForm() {
             if (response.status === 200) {
                 toast.success("Profile updated successfully!")
                 // Refresh user data after successful update
-                await new Promise((resolve) => setTimeout(resolve, 1000));
+                await new Promise((resolve) => setTimeout(resolve, 1000))
                 // Fetch updated user data
-                await fetchUser();
-                setButtonText("Saved "); // Show saved state
-                setTimeout(() => setButtonText("Save Registration"), 3000); // Reset after 2 sec
-                // fetchUser()
+                await fetchUser()
+                setButtonText("Saved!")
+                setTimeout(() => setButtonText("Save Profile"), 3000)
             }
+            navigate(-1);
         } catch (error: any) {
             console.error("Error updating profile:", error)
 
             if (error.response) {
-                alert(`Error: ${error.response.data.message || "Failed to update profile"}`)
+                toast.error(error.response.data.message || "Failed to update profile")
             } else if (error.request) {
-                alert("No response from server. Please check your network connection.")
+                toast.error("No response from server. Please check your network connection.")
             } else {
                 toast.error("Failed to update profile. Please try again.")
             }
+            setButtonText("Save Profile")
         } finally {
             setIsLoading(false)
         }
@@ -190,6 +306,58 @@ export default function ProfileEditForm() {
         <div className="min-h-screen p-6 flex items-center justify-center bg-background overflow-hidden">
             <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-background"></div>
+
+            {/* Image Cropping Dialog */}
+            <Dialog open={cropDialogOpen} onOpenChange={setCropDialogOpen}>
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Crop className="h-5 w-5" /> Crop Profile Picture
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="relative h-[300px] w-full mt-4">
+                        {imageSrc && (
+                            <Cropper
+                                image={imageSrc}
+                                crop={crop}
+                                zoom={zoom}
+                                aspect={1}
+                                cropShape="round"
+                                onCropChange={setCrop}
+                                onCropComplete={onCropComplete}
+                                onZoomChange={setZoom}
+                            />
+                        )}
+                    </div>
+
+                    <div className="mt-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="zoom">Zoom</Label>
+                            <div className="flex items-center gap-2">
+                                <Slider
+                                    id="zoom"
+                                    min={1}
+                                    max={3}
+                                    step={0.1}
+                                    value={[zoom]}
+                                    onValueChange={(value) => setZoom(value[0])}
+                                />
+                                <span className="text-sm text-muted-foreground w-10 text-center">{zoom.toFixed(1)}x</span>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={handleCropCancel}>
+                                Cancel
+                            </Button>
+                            <Button onClick={handleCropSave} disabled={imageUploading}>
+                                {imageUploading ? "Processing..." : "Apply"}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
@@ -207,9 +375,9 @@ export default function ProfileEditForm() {
                                 className="text-center"
                             >
                                 <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-                                    Coding Club Registration
+                                    Edit Your Profile
                                 </h1>
-                                <p className="text-muted-foreground mt-2">Join our community of passionate coders</p>
+                                <p className="text-muted-foreground mt-2">Update your profile information</p>
                             </motion.div>
 
                             <motion.div
@@ -220,27 +388,62 @@ export default function ProfileEditForm() {
                             >
                                 {/* User Image Upload */}
                                 <motion.div variants={item} className="md:col-span-2 flex flex-col items-center justify-center">
-                                    <div
-                                        className="relative w-32 h-32 rounded-full border-2 border-dashed border-primary/50 flex items-center justify-center overflow-hidden group cursor-pointer hover:border-primary transition-colors duration-300"
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >
-                                        {image ? (
-                                            <img src={image || "/placeholder.svg"} alt="User" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="text-center p-4">
-                                                <Upload className="w-10 h-10 mx-auto text-primary group-hover:scale-110 transition-transform duration-300" />
-                                                <p className="text-xs mt-2 text-muted-foreground">Upload Photo</p>
-                                            </div>
+                                    <div className="relative">
+                                        <div
+                                            className="relative w-32 h-32 rounded-full border-2 border-dashed border-primary/50 flex items-center justify-center overflow-hidden group cursor-pointer hover:border-primary transition-colors duration-300"
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            {image ? (
+                                                <img src={image || "/placeholder.svg"} alt="User" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="text-center p-4">
+                                                    <Upload className="w-10 h-10 mx-auto text-primary group-hover:scale-110 transition-transform duration-300" />
+                                                    <p className="text-xs mt-2 text-muted-foreground">Upload Photo</p>
+                                                </div>
+                                            )}
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                onChange={handleImageUpload}
+                                                className="hidden"
+                                                accept="image/*"
+                                            />
+                                            <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        </div>
+
+                                        {image && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon"
+                                                className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-background border-border"
+                                                onClick={() => {
+                                                    setImage(null)
+                                                    setFormData((prev) => ({ ...prev, image: "" }))
+                                                }}
+                                            >
+                                                <X className="h-4 w-4" />
+                                                <span className="sr-only">Remove image</span>
+                                            </Button>
                                         )}
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            onChange={handleImageUpload}
-                                            className="hidden"
-                                            accept="image/*"
-                                        />
-                                        <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                     </div>
+
+                                    {imageError && <p className="text-xs text-red-500 mt-2">{imageError}</p>}
+                                    <p className="text-xs text-muted-foreground mt-2">Click to upload a profile picture (max 6MB)</p>
+                                    {image && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="mt-2"
+                                            onClick={() => {
+                                                setImageSrc(image)
+                                                setCropDialogOpen(true)
+                                            }}
+                                        >
+                                            <Crop className="h-4 w-4 mr-2" /> Recrop Image
+                                        </Button>
+                                    )}
                                 </motion.div>
 
                                 {/* Personal Information */}
@@ -256,8 +459,8 @@ export default function ProfileEditForm() {
                                                 className="bg-background/50 border-input focus:border-primary transition-colors duration-300 pl-3"
                                                 value={formData.name}
                                                 onChange={handleChange}
+                                                required
                                             />
-                                            <div className="absolute bottom-0 left-0 w-0 group-focus-within:w-full h-0.5 bg-primary transition-all duration-300"></div>
                                         </div>
                                     </div>
 
@@ -373,6 +576,28 @@ export default function ProfileEditForm() {
                                             </div>
 
                                             <div className="space-y-2">
+                                                <Label htmlFor="codechef">CodeChef</Label>
+                                                <Input
+                                                    id="codechef"
+                                                    placeholder="Your CodeChef username"
+                                                    className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
+                                                    value={formData.otherLinks.find((link) => link.platform === "codechef")?.url || ""}
+                                                    onChange={(e) => handleLinkChange("codechef", e.target.value)}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="gfg">GeeksForGeeks</Label>
+                                                <Input
+                                                    id="gfg"
+                                                    placeholder="Your GeeksForGeeks username"
+                                                    className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
+                                                    value={formData.otherLinks.find((link) => link.platform === "gfg")?.url || ""}
+                                                    onChange={(e) => handleLinkChange("gfg", e.target.value)}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2">
                                                 <Label htmlFor="hackerrank">HackerRank</Label>
                                                 <Input
                                                     id="hackerrank"
@@ -389,7 +614,7 @@ export default function ProfileEditForm() {
                                 {/* Checkbox and Submit */}
                                 <motion.div variants={item} className="md:col-span-2 space-y-6">
                                     <div className="flex items-center space-x-2">
-                                        <Checkbox id="affiliate" checked={formData.isAffiliate} value={formData.isAffiliate ? "true" : "false"} onCheckedChange={handleAffiliateChange} />
+                                        <Checkbox id="affiliate" checked={formData.isAffiliate} onCheckedChange={handleAffiliateChange} />
                                         <Label
                                             htmlFor="affiliate"
                                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"

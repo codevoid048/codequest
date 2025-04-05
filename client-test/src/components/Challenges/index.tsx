@@ -4,9 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/context/AuthContext";
 import ProblemStatus from '@/lib/solutionStatus'
-// import {axiosInstance }from "@/lib/axios"
 import axios from "axios";
 import {
   Award,
@@ -24,6 +22,27 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
+import { postPotdChallenge } from "@/lib/potdchallenge";
+import { useAuth } from "@/context/AuthContext";
+interface User {
+  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
+  gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
+  codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+  profilePicture?: string
+  name?: string
+  username?: string
+  rank?: number
+  collegeName?: string
+  branch?: string
+  RegistrationNumber?: string
+  otherLinks?: { platform: string; url: string }[]
+  solveChallenges?: Array<unknown>
+  potdSolved?: Array<unknown>
+  points?: number
+  streak?: number
+}
 
 interface challenge {
   id: number;
@@ -31,7 +50,7 @@ interface challenge {
   title: string;
   categories: string[];
   difficulty: "Easy" | "Medium" | "Hard";
-  platform: "LeetCode" | "GFG" | "CodeChef";
+  platform: "LeetCode" | "GFG" | "CodeChef" | "Codeforces";
   status: "Solved" | "Unsolved";
   description: string;
   problemUrl?: string;
@@ -46,10 +65,12 @@ interface ProblemStatusProps {
   markSolved: (id: string) => void;
   viewSolution: (id: string) => void;
 }
-interface userStats{
-  streak: number;
-  potdSolved: number;
-}
+
+// const { user } = useAuth();
+
+
+
+
 type FilterTab = "all" | "solved" | "unsolved";
 type SortOption = "date" | "difficulty" | "status";
 
@@ -64,14 +85,21 @@ const Challenges: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [userStats, setUserStats] = useState<userStats | null>(null);
+  const [isSolved, setIsSolved] = useState(false);
+  const [User, setUser] = useState<User | null>(null);
   const itemsPerPage = 5;
+  const { user } = useAuth() ;
+
+
+  function convertTimestampToDate(timestamp: number) {
+    const date = new Date(timestamp * 1000); 
+    return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
+}
 
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-       const res = await axios.get('http://localhost:5000/api/challenges');
-        console.log(res.data);
+        const res = await axios.get('http://localhost:5000/api/challenges');
         if (res.data && Array.isArray(res.data.challenges)) {
           const data = res.data.challenges.map((challenge: any) => ({
             id: challenge._id,
@@ -89,6 +117,7 @@ const Challenges: React.FC = () => {
             problemUrl: challenge.problemLink,
           }));
           setProblemsList(data);
+          // console.log("Problems List:", problemsList);
           setIsLoading(false);
         }
       } catch (error) {
@@ -96,34 +125,30 @@ const Challenges: React.FC = () => {
       }
     };
     fetchProblems();
+    // console.log("user",user);
 
   }, []);
-  const { user } = useAuth();
-  // console.log("current user: ", user);
- 
+  
   useEffect(() => {
-    const fetchUserStats = async () => {
+    const fetchUserData = async () => {
       try {
-        // console.log(" current userId: ", user);
-        
-        // or however you're storing it
-        const res = await axios.get("http://localhost:5000/api/profile/userStats", {
+        const res = await axios.get("http://localhost:5000/api/profile/getUser", {
           params: {
-            userId:user?._id // send only the user ID
+            userId: user?._id, // sending only the userId
           },
         });
-        console.log(res.data);
-        setUserStats(res.data);
+        console.log("Complete user data:", res.data);
+        setUser(res.data.user); // or setUserData if you rename the state
       } catch (error) {
-        console.error("Failed to fetch user stats", error);
+        console.error("Failed to fetch complete user data", error);
       }
     };
   
     if (user) {
-      fetchUserStats();
+      fetchUserData();
     }
   }, [user]);
-  
+
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
@@ -149,17 +174,21 @@ const Challenges: React.FC = () => {
   //   [problemsList]
   // );
   const dailyProblem = useMemo(() => {
+    if (problemsList.length === 0) return null; // Handle empty list
+
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize time to midnight
   
     const todayProblem = problemsList.find((problem) => {
       const problemDate = new Date(problem.date);
-      problemDate.setHours(0, 0, 0, 0); // Normalize problem date
+      problemDate.setHours(0, 0, 0, 0);
       return problemDate.getTime() === today.getTime();
     });
-  
+
     return todayProblem || problemsList[0]; // Default to first problem if no match found
   }, [problemsList]);
+
+  // console.log("dailyProblem",dailyProblem);
 
   const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList]);
   const difficultyLevels = ["Easy", "Medium", "Hard"];
@@ -238,110 +267,187 @@ const Challenges: React.FC = () => {
 
   const openProblemLink = (url?: string) => url && window.open(url, "_blank");
 
+  useEffect(() => {
+    console.log(User?.leetCode?.username)
+    const checkIfProblemSolved = async () => {
+      try {
+        if(dailyProblem?.platform === "LeetCode"){
+        const leetCodeData = await fetchLeetCodeProfile(`${User?.leetCode?.username}`);
+        if (leetCodeData?.recentSubmissions) {
+          const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
+            const submissionDate = new Date(parseInt(submission.timestamp) * 1000);
+            const today = new Date();
+            const submissionUTC = new Date(Date.UTC(
+              submissionDate.getUTCFullYear(),
+              submissionDate.getUTCMonth(), 
+              submissionDate.getUTCDate()
+            ));
+            
+            const todayUTC = new Date(Date.UTC(
+              today.getUTCFullYear(),
+              today.getUTCMonth(),
+              today.getUTCDate()
+            ));
+            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && 
+            submissionUTC.getTime() === todayUTC.getTime();
+          });
+
+          
+          if (solvedProblem) {
+            setIsSolved(true);
+            postPotdChallenge();
+            return;
+          }
+        }
+      }
+      else if(dailyProblem?.platform === "Codeforces"){
+        const codeforcesData = await fetchCodeforcesProfile(`${User?.codeforces?.username}`);
+        if (codeforcesData?.result) {
+          const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string } ;verdict:string}) => {
+            const submissionDate = new Date(submission.creationTimeSeconds * 1000);
+            const today = new Date();
+            
+            // Convert both dates to UTC to avoid timezone issues
+            const submissionUTC = new Date(Date.UTC(
+              submissionDate.getUTCFullYear(),
+              submissionDate.getUTCMonth(), 
+              submissionDate.getUTCDate()
+            ));
+            
+            const todayUTC = new Date(Date.UTC(
+              today.getUTCFullYear(),
+              today.getUTCMonth(),
+              today.getUTCDate()
+            ));
+            
+            return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
+              submissionUTC.getTime() === todayUTC.getTime();
+          });
+
+          if (solvedProblem) {
+            setIsSolved(true);
+            postPotdChallenge();
+            return;
+          }
+        }
+      }
+      } catch (error) {
+        console.error("Error checking problem status:", error);
+      }
+    };
+
+    checkIfProblemSolved();
+  }, [dailyProblem]);
+
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
-     {/* Problem of the Day Section */}
-<Card className="border-1 shadow-xl bg-card rounded-xl overflow-hidden relative">
-  <CardContent className="p-1 sm:p-3">
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <div className="flex items-center">
-        <div className="mr-3 bg-primary/10 dark:bg-primary/20 p-2 rounded-lg">
-          <Flame className="h-6 w-6 text-primary" />
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
-          Daily Challenge
-        </h2>
-      </div>
-      
-      {/* New components: Streak and POTD Solved */}
+      {/* Problem of the Day Section */}
+      <Card className="border-1 shadow-xl bg-card rounded-xl overflow-hidden relative">
+        <CardContent className="p-1 sm:p-3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center">
+              <div className="mr-3 bg-primary/10 dark:bg-primary/20 p-2 rounded-lg">
+                <Flame className="h-6 w-6 text-primary" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+                Daily Challenge
+              </h2>
+            </div>
+            {/* New components: Streak and POTD Solved */}
       <div className="flex items-center gap-4 mx-auto sm:mx-0">
         {/* Streak with light bulb icon */}
         <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
           <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
-          <span className="font-semibold">{userStats?.streak} day streak</span>
+          <span className="font-semibold">{User?.streak} day streak</span>
         </div>
         
         {/* POTD Solved counter */}
         <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
           <CheckCircle className="h-5 w-5 text-green-500" />
-          <span className="font-semibold">{userStats?.potdSolved} solved</span>
+          <span className="font-semibold">{User?.potdSolved?.length} solved</span>
         </div>
       </div>
       
-      <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
-        <Clock className="h-5 w-5 mr-2 text-primary" />
-        <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
-          {countdown.hours}
-        </span>
-        <span className="text-muted-foreground px-1">:</span>
-        <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
-          {countdown.minutes}
-        </span>
-        <span className="text-muted-foreground px-1">:</span>
-        <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
-          {countdown.seconds}
-        </span>
-      </div>
-    </div>
-    {isLoading ? (
-      <div className="flex justify-center items-center h-40">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    ) : (
-      <Card
-        className="border-1 cursor-pointer hover:shadow-lg bg-card rounded-xl overflow-hidden mt-4"
-        onClick={() => openProblemLink(dailyProblem?.problemUrl)}
-      >
-        <CardContent>
-          <div className="flex flex-col sm:flex-row justify-between gap-6">
-            <div className="space-y-2 flex-1">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4 mr-2" />
-                {dailyProblem?.date}  
-              </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-foreground">
-                {dailyProblem?.title}
-              </h3>
-              <p className="text-muted-foreground text-sm line-clamp-2">
-                {dailyProblem?.description}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {dailyProblem?.categories.map((cat) => (
-                  <Badge
-                    key={cat}
-                    variant="secondary"
-                    className="text-xs py-1 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
-                  >
-                    {cat}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            <div className="flex flex-col gap-4 justify-center">
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
-                Solve Now
-              </Button>
+            <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
+              <Clock className="h-5 w-5 mr-2 text-primary" />
+              <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
+                {countdown.hours}
+              </span>
+              <span className="text-muted-foreground px-1">:</span>
+              <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
+                {countdown.minutes}
+              </span>
+              <span className="text-muted-foreground px-1">:</span>
+              <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
+                {countdown.seconds}
+              </span>
             </div>
           </div>
-          <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-4 text-sm">
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${getDifficultyStyle(
-                dailyProblem?.difficulty
-              )}`}
+          {isLoading ? (
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <Card
+              className="border-1 cursor-pointer hover:shadow-lg bg-card rounded-xl overflow-hidden mt-4"
+              onClick={() => openProblemLink(dailyProblem?.problemUrl)}
             >
-              {getDifficultyIcon(dailyProblem?.difficulty)}
-              {dailyProblem?.difficulty}
-            </span>
-            <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-3 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
-              <Code className="h-4 w-4 text-primary" />
-              {dailyProblem?.platform}
-            </span>
-          </div>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row justify-between gap-6">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {dailyProblem?.date}  
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-foreground">
+                      {dailyProblem?.title}
+                    </h3>
+                    <p className="text-muted-foreground text-sm line-clamp-2">
+                      {dailyProblem?.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {dailyProblem?.categories.map((cat) => (
+                        <Badge
+                          key={cat}
+                          variant="secondary"
+                          className="text-xs py-1 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
+                        >
+                          {cat}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-4 justify-center">
+                    {isSolved ? (
+                      <Button className="bg-green-600 hover:bg-green-700 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
+                        Solved
+                      </Button>
+                    ) : (
+                      <Button className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
+                        Solve Now
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-4 text-sm">
+                  {/* <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${getDifficultyStyle(
+                      dailyProblem?.difficulty
+                    )}`}
+                  >
+                    {getDifficultyIcon(dailyProblem?.difficulty)}
+                    {dailyProblem?.difficulty}
+                  </span> */}
+                  <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-3 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
+                    <Code className="h-4 w-4 text-primary" />
+                    {dailyProblem?.platform}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </CardContent>
       </Card>
-    )}
-  </CardContent>
-</Card>
 
       {/* Main Content Layout */}
       <div className="flex flex-col lg:flex-row gap-6">
@@ -560,11 +666,32 @@ const Challenges: React.FC = () => {
                             markSolved={markSolved}
                             viewSolution={(id) => {
                               // Implement your view solution logic
-                              console.log(`Viewing solution for problem ${id}`);
+                              // console.log(`Viewing solution for problem ${id}`);
                             }}
                           />
 
-                         
+                          {/* <div className="flex flex-col gap-2 self-start sm:self-center min-w-[100px]">
+                            {problem.status === "Solved" ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-emerald-900/5 dark:bg-emerald-100 text-emerald-400 dark:text-emerald-800 text-xs py-1 px-2 w-full text-center flex items-center justify-center border-emerald-200 dark:border-emerald-800"
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" /> Solved
+                              </Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs py-1 px-2 w-full border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markSolved(problem.id);
+                                }}
+                              >
+                                Mark Solved
+                              </Button>
+                            )}
+                          </div> */}
                         </div>
                       </CardContent>
                     </Card>

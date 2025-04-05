@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import mongoose from "mongoose"
+import bcrypt from "bcryptjs"
 
 const userSchema = new mongoose.Schema(
   {
@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
     username: { type: String, required: false, unique: true, trim: true, lowercase: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     password: { type: String },
-    profilePicture: { type: String },
+    profilePicture: { type: String }, // This will store base64 image data
     RegistrationNumber: { type: String },
     branch: { type: String },
     mobile: { type: String },
@@ -22,27 +22,26 @@ const userSchema = new mongoose.Schema(
       username: { type: String, default: "" },
       solved: { type: Number, default: 0 },
       rank: { type: Number, default: 0 },
-      rating: { type: Number, default: 0 }
+      rating: { type: Number, default: 0 },
     },
     leetCode: {
       username: { type: String, default: "" },
       solved: { type: Number, default: 0 },
       rank: { type: Number, default: 0 },
-      rating: { type: Number, default: 0 }
+      rating: { type: Number, default: 0 },
     },
     codechef: {
       username: { type: String, default: "" },
       stars: { type: String, default: "" },
       rank: { type: Number, default: 0 },
-      rating: { type: Number, default: 0 }
+      rating: { type: Number, default: 0 },
     },
     codeforces: {
       username: { type: String, default: "" },
       solved: { type: Number, default: 0 },
       rank: { type: String, default: "" },
-      rating: { type: Number, default: 0 }
+      rating: { type: Number, default: 0 },
     },
-
 
     //reset password tokens
     resetPasswordToken: { type: String, default: null },
@@ -57,7 +56,6 @@ const userSchema = new mongoose.Schema(
     points: { type: Number, default: 0 },
     rank: { type: Number, default: 0 },
     streak: { type: Number, default: 0 },
-    location:{ type: String },
 
     // All challenges solved (non-POTD)
     solveChallenges: [
@@ -70,23 +68,24 @@ const userSchema = new mongoose.Schema(
     // POTD solved: store dates (unique per day)
     potdSolved: [
       {
-        type: Date, // or String if you prefer ISO strings
+        timestamp: { type: String }, // ISO date string format
       },
+
     ],
     otherLinks: [
       {
-        platform: String,  // The name of the social platform, e.g., 'twitter', 'linkedin', 'github'
-        url: String        // The URL of the user's profile on that platform
-      }
+        platform: String, // The name of the social platform, e.g., 'twitter', 'linkedin', 'github'
+        url: String, // The URL of the user's profile on that platform
+      },
     ],
   },
-  { timestamps: true }
-);
+  { timestamps: true },
+)
 
 // Compare entered password with stored password
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
+  return await bcrypt.compare(enteredPassword, this.password)
+}
 
+export const User = mongoose.model("User", userSchema)
 
-export const User = mongoose.model("User", userSchema);
