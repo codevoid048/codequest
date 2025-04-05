@@ -1,4 +1,3 @@
-//APp 
 import express from "express";
 import session from "express-session";
 import cors from "cors";
@@ -17,6 +16,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import platformRoute from "./routes/platformsRoute.js";
 import axios from "axios";
 import { fetchCodeChefProfile, fetchCodeforcesProfile, fetchgfgProfile, fetchLeetCodeProfile } from "./utils/platforms.js";
+// import userRoutes from "./routes/userRoutes.js";
 dotenv.config();
 const app = express();
 
@@ -35,18 +35,8 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/auth/admin', adminAuthRoutes);
 app.use('/admin', adminRoutes);
 app.use('/platforms', platformRoute);
+// app.use('/api/user', userRoutes);
 
-app.get("/geeksforgeeks-profile/:handle", async (req, res) => {
-  try {
-    const handle = req.params.handle;
-    const response = await axios.get(
-      `https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${handle}`
-    );
-    return res.json(response.data);
-  } catch (error) {
-    return res.status(error.response?.status || 500).json({ error: "Error fetching data" });
-  }
-});
 
 updateRanks();
 fetchCodeforcesProfile();

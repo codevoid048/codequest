@@ -23,6 +23,8 @@ import {
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
+import { postPotdChallenge } from "@/lib/potdchallenge";
+import { useAuth } from "@/context/AuthContext";
 
 interface challenge {
   id: number;
@@ -45,6 +47,9 @@ interface ProblemStatusProps {
   markSolved: (id: string) => void;
   viewSolution: (id: string) => void;
 }
+
+// const { user } = useAuth();
+
 
 
 
@@ -101,6 +106,7 @@ const Challenges: React.FC = () => {
       }
     };
     fetchProblems();
+    // console.log("user",user);
 
   }, []);
 
@@ -147,14 +153,14 @@ const Challenges: React.FC = () => {
     const todayProblem = problemsList.find((problem) => {
       const problemDate = new Date(problem.date);
       problemDate.setHours(0, 0, 0, 0); // Normalize problem date
-      console.log("Comparing:", problemDate, "with", today);
+      // console.log("Comparing:", problemDate, "with", today);
       return problemDate.getTime() === today.getTime();
     });
   
     return todayProblem || problemsList[0]; // Default to first problem if no match found
   }, [problemsList]);
 
-  console.log(dailyProblem);
+  // console.log("dailyProblem",dailyProblem);
 
   const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList]);
   const difficultyLevels = ["Easy", "Medium", "Hard"];
@@ -235,25 +241,74 @@ const Challenges: React.FC = () => {
 
   useEffect(() => {
     const checkIfProblemSolved = async () => {
-      const leetCodeData = await fetchLeetCodeProfile("saiganeshambati");
-        if (leetCodeData) {
-          const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string }) => {
+      try {
+        if(dailyProblem?.platform === "LeetCode"){
+        const leetCodeData = await fetchLeetCodeProfile("saiganeshambati");
+        if (leetCodeData?.recentSubmissions) {
+          const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
             const submissionDate = new Date(parseInt(submission.timestamp) * 1000);
             const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            // console.log(submissionDate.toDateString(),today.toDateString());
-            // console.log(submission.title,"Kadane's Algorithm");
-            if (submission.title === "Kadane's Algorithm" && 
-                submissionDate.toDateString() === today.toDateString()) {
-                  console.log("success")
-              setIsSolved(true);
-            }
+            const submissionUTC = new Date(Date.UTC(
+              submissionDate.getUTCFullYear(),
+              submissionDate.getUTCMonth(), 
+              submissionDate.getUTCDate()
+            ));
+            
+            const todayUTC = new Date(Date.UTC(
+              today.getUTCFullYear(),
+              today.getUTCMonth(),
+              today.getUTCDate()
+            ));
+            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && 
+            submissionUTC.getTime() === todayUTC.getTime();
           });
+
+          
+          if (solvedProblem) {
+            setIsSolved(true);
+            postPotdChallenge();
+            return;
+          }
         }
+      }
+      else if(dailyProblem?.platform === "Codeforces"){
+        const codeforcesData = await fetchCodeforcesProfile("saiganeshambati000"); 
+        if (codeforcesData?.result) {
+          const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string } ;verdict:string}) => {
+            const submissionDate = new Date(submission.creationTimeSeconds * 1000);
+            const today = new Date();
+            
+            // Convert both dates to UTC to avoid timezone issues
+            const submissionUTC = new Date(Date.UTC(
+              submissionDate.getUTCFullYear(),
+              submissionDate.getUTCMonth(), 
+              submissionDate.getUTCDate()
+            ));
+            
+            const todayUTC = new Date(Date.UTC(
+              today.getUTCFullYear(),
+              today.getUTCMonth(),
+              today.getUTCDate()
+            ));
+            
+            return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
+              submissionUTC.getTime() === todayUTC.getTime();
+          });
+
+          if (solvedProblem) {
+            setIsSolved(true);
+            postPotdChallenge();
+            return;
+          }
+        }
+      }
+      } catch (error) {
+        console.error("Error checking problem status:", error);
+      }
     };
-    // console.log(dailyProblem);
+
     checkIfProblemSolved();
-  }, []);
+  }, [dailyProblem]);
 
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">

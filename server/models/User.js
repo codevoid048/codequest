@@ -19,27 +19,27 @@ const userSchema = new mongoose.Schema(
 
     // External Account Links (for verification)
     gfg: {
-      username: { type: String, default: "" },
+      username: { type: String, default: "",unique:true},
       solved: { type: Number, default: 0 },
       rank: { type: Number, default: 0 },
       rating: { type: Number, default: 0 }
     },
     leetCode: {
-      username: { type: String, default: "" },
+      username: { type: String, default: "",unique:true },
       solved: { type: Number, default: 0 },
       rank: { type: Number, default: 0 },
       rating: { type: Number, default: 0 }
     },
     codechef: {
-      username: { type: String, default: "" },
+      username: { type: String, default: "",unique:true },
       stars: { type: String, default: "" },
       rank: { type: Number, default: 0 },
       rating: { type: Number, default: 0 }
     },
     codeforces: {
-      username: { type: String, default: "" },
+      username: { type: String, default: "",unique:true },
       solved: { type: Number, default: 0 },
-      rank: { type: Number, default: 0 },
+      rank: { type: String, default: "" },
       rating: { type: Number, default: 0 }
     },
 
@@ -50,8 +50,8 @@ const userSchema = new mongoose.Schema(
 
     // Verification flag
     isVerified: { type: Boolean, default: false },
-    verificationToken: { type: String },
-    verificationTokenExpires: { type: Date },
+    otp: { type: Number },
+    otpExpires: { type: Date },
 
     // Progress/Stats
     points: { type: Number, default: 0 },
@@ -70,7 +70,7 @@ const userSchema = new mongoose.Schema(
     // POTD solved: store dates (unique per day)
     potdSolved: [
       {
-        type: Date, // or String if you prefer ISO strings
+        timestamp: { type: String }, // ISO date string format
       },
     ],
 
