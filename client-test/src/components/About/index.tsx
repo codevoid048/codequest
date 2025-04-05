@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ParticlesBackground } from "@/components/particles-background";
+import { DottedBackground } from "../dotted-background"
 
 
 export default function AboutPage() {
@@ -172,7 +172,7 @@ export default function AboutPage() {
     return (
         <div className="relative w-full min-h-screen">
             {/* Full-screen Particles Background */}
-            <ParticlesBackground />
+            <DottedBackground />
             <div className="relative z-10">
                 <div className="container mx-auto py-10 px-4 text-gray-800 overflow-hidden">
                     {/* About CodeQuest Platform */}
