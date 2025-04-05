@@ -295,7 +295,7 @@ export default function AboutPage() {
                     {/* About SRKR Coding Club */}
                     <motion.section
                         id="about"
-                        className="mb-20"
+                        className="mb-20 px-20"
                         initial="hidden"
                         animate={isVisible.about ? "visible" : "hidden"}
                         variants={fadeIn}
@@ -311,13 +311,13 @@ export default function AboutPage() {
                                 <TabsList className="grid grid-cols-2 w-full max-w-md">
                                     <TabsTrigger
                                         value="club"
-                                        className="data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300"
+                                        className="data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 cursor-pointer"
                                     >
                                         Our Story
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="achievements"
-                                        className="data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300"
+                                        className="data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 cursor-pointer"
                                     >
                                         Achievements
                                     </TabsTrigger>
@@ -496,7 +496,7 @@ export default function AboutPage() {
                     {/* What We Offer */}
                     <motion.section
                         id="offers"
-                        className="mb-20"
+                        className="mb-20 px-20"
                         initial="hidden"
                         animate={isVisible.offers ? "visible" : "hidden"}
                         variants={fadeIn}
@@ -708,7 +708,7 @@ export default function AboutPage() {
                     {/* Major Events */}
                     <motion.section
                         id="events"
-                        className="mb-20"
+                        className="mb-20 px-20"
                         initial="hidden"
                         animate={isVisible.events ? "visible" : "hidden"}
                         variants={fadeIn}
