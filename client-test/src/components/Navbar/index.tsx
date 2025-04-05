@@ -13,7 +13,6 @@ export function Navbar() {
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
-
   // Scroll detection
   useEffect(() => {
     const handleScroll = () => {
