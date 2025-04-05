@@ -4,9 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/context/AuthContext";
 import ProblemStatus from '@/lib/solutionStatus'
 // import {axiosInstance }from "@/lib/axios"
-import {useAuth} from "@/context/AuthContext"
 import axios from "axios";
 import {
   Award,
@@ -18,6 +18,7 @@ import {
   Code,
   Filter,
   Flame,
+  Lightbulb,
   Search,
   Tag,
 } from "lucide-react";
@@ -45,7 +46,10 @@ interface ProblemStatusProps {
   markSolved: (id: string) => void;
   viewSolution: (id: string) => void;
 }
-
+interface userStats{
+  streak: number;
+  potdSolved: number;
+}
 type FilterTab = "all" | "solved" | "unsolved";
 type SortOption = "date" | "difficulty" | "status";
 
@@ -56,17 +60,17 @@ const Challenges: React.FC = () => {
   const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" });
   const [problemsList, setProblemsList] = useState<challenge[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [solvePotd,setSolvePotd]=useState("");
   const [sortOption, setSortOption] = useState<SortOption>("date");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [userStats, setUserStats] = useState<userStats | null>(null);
   const itemsPerPage = 5;
 
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/challenges');
+       const res = await axios.get('http://localhost:5000/api/challenges');
         console.log(res.data);
         if (res.data && Array.isArray(res.data.challenges)) {
           const data = res.data.challenges.map((challenge: any) => ({
@@ -84,7 +88,6 @@ const Challenges: React.FC = () => {
             description: challenge.description,
             problemUrl: challenge.problemLink,
           }));
-          console.log(data);
           setProblemsList(data);
           setIsLoading(false);
         }
@@ -95,9 +98,32 @@ const Challenges: React.FC = () => {
     fetchProblems();
 
   }, []);
-
-
-
+  const { user } = useAuth();
+  // console.log("current user: ", user);
+ 
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      try {
+        // console.log(" current userId: ", user);
+        
+        // or however you're storing it
+        const res = await axios.get("http://localhost:5000/api/profile/userStats", {
+          params: {
+            userId:user?._id // send only the user ID
+          },
+        });
+        console.log(res.data);
+        setUserStats(res.data);
+      } catch (error) {
+        console.error("Failed to fetch user stats", error);
+      }
+    };
+  
+    if (user) {
+      fetchUserStats();
+    }
+  }, [user]);
+  
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
@@ -189,44 +215,11 @@ const Challenges: React.FC = () => {
       prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
     );
   };
-  const { user, token } = useAuth();
-  const markSolved = async (id: number) => {
-  try {
-   
-    console.log("mark solved user",user);
-    console.log("mark solved token",token); // Get the user and token from AuthContext
 
-    if (!token) {
-      console.error("User not authenticated");
-      return;
-    }
+  const markSolved = (id: number) => {
+    setProblemsList((prev) => prev.map((p) => (p.id === id ? { ...p, status: "Solved" } : p)));
+  };
 
-    // Update UI optimistically
-    setProblemsList((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: "Solved" } : p))
-    );
-    
-    // Send request to backend with token
-    await axios.post(
-      "http://localhost:5000/api/profile/solvedChallenges",
-      { problemId: id },
-      
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // Attach token for authentication
-        },
-      }
-    );
-
-    console.log("Challenge marked as solved in the database.");
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("Error updating challenge status:", error.response?.data || error.message);
-    } else {
-      console.error("Error updating challenge status:", error);
-    }
-  }
-};
   const getDifficultyStyle = (difficulty: string) => {
     return {
       Easy: "text-emerald-400 bg-emerald-900/50 dark:text-emerald-600 dark:bg-emerald-100",
@@ -242,96 +235,113 @@ const Challenges: React.FC = () => {
       Hard: <Award className="h-4 w-4 text-rose-400 dark:text-rose-600" />,
     }[difficulty] || null;
   };
+
   const openProblemLink = (url?: string) => url && window.open(url, "_blank");
 
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
-      {/* Problem of the Day Section */}
-      <Card className="border-1 shadow-xl bg-card rounded-xl overflow-hidden relative">
-        <CardContent className="p-1 sm:p-3">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center">
-              <div className="mr-3 bg-primary/10 dark:bg-primary/20 p-2 rounded-lg">
-                <Flame className="h-6 w-6 text-primary" />
+     {/* Problem of the Day Section */}
+<Card className="border-1 shadow-xl bg-card rounded-xl overflow-hidden relative">
+  <CardContent className="p-1 sm:p-3">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex items-center">
+        <div className="mr-3 bg-primary/10 dark:bg-primary/20 p-2 rounded-lg">
+          <Flame className="h-6 w-6 text-primary" />
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+          Daily Challenge
+        </h2>
+      </div>
+      
+      {/* New components: Streak and POTD Solved */}
+      <div className="flex items-center gap-4 mx-auto sm:mx-0">
+        {/* Streak with light bulb icon */}
+        <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+          <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
+          <span className="font-semibold">{userStats?.streak} day streak</span>
+        </div>
+        
+        {/* POTD Solved counter */}
+        <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+          <CheckCircle className="h-5 w-5 text-green-500" />
+          <span className="font-semibold">{userStats?.potdSolved} solved</span>
+        </div>
+      </div>
+      
+      <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
+        <Clock className="h-5 w-5 mr-2 text-primary" />
+        <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
+          {countdown.hours}
+        </span>
+        <span className="text-muted-foreground px-1">:</span>
+        <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
+          {countdown.minutes}
+        </span>
+        <span className="text-muted-foreground px-1">:</span>
+        <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
+          {countdown.seconds}
+        </span>
+      </div>
+    </div>
+    {isLoading ? (
+      <div className="flex justify-center items-center h-40">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    ) : (
+      <Card
+        className="border-1 cursor-pointer hover:shadow-lg bg-card rounded-xl overflow-hidden mt-4"
+        onClick={() => openProblemLink(dailyProblem?.problemUrl)}
+      >
+        <CardContent>
+          <div className="flex flex-col sm:flex-row justify-between gap-6">
+            <div className="space-y-2 flex-1">
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4 mr-2" />
+                {dailyProblem?.date}  
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
-                Daily Challenge
-              </h2>
+              <h3 className="text-xl sm:text-2xl font-bold text-foreground">
+                {dailyProblem?.title}
+              </h3>
+              <p className="text-muted-foreground text-sm line-clamp-2">
+                {dailyProblem?.description}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {dailyProblem?.categories.map((cat) => (
+                  <Badge
+                    key={cat}
+                    variant="secondary"
+                    className="text-xs py-1 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
+                  >
+                    {cat}
+                  </Badge>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
-              <Clock className="h-5 w-5 mr-2 text-primary" />
-              <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
-                {countdown.hours}
-              </span>
-              <span className="text-muted-foreground px-1">:</span>
-              <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
-                {countdown.minutes}
-              </span>
-              <span className="text-muted-foreground px-1">:</span>
-              <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
-                {countdown.seconds}
-              </span>
+            <div className="flex flex-col gap-4 justify-center">
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
+                Solve Now
+              </Button>
             </div>
           </div>
-          {isLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <Card
-              className="border-1 cursor-pointer hover:shadow-lg bg-card rounded-xl overflow-hidden mt-4"
-              onClick={() => openProblemLink(dailyProblem?.problemUrl)}
+          <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-4 text-sm">
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${getDifficultyStyle(
+                dailyProblem?.difficulty
+              )}`}
             >
-              <CardContent>
-                <div className="flex flex-col sm:flex-row justify-between gap-6">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      {dailyProblem?.date}  
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-foreground">
-                      {dailyProblem?.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm line-clamp-2">
-                      {dailyProblem?.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {dailyProblem?.categories.map((cat) => (
-                        <Badge
-                          key={cat}
-                          variant="secondary"
-                          className="text-xs py-1 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
-                        >
-                          {cat}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-4 justify-center">
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
-                      Solve Now
-                    </Button>
-                  </div>
-                </div>
-                <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-4 text-sm">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${getDifficultyStyle(
-                      dailyProblem?.difficulty
-                    )}`}
-                  >
-                    {getDifficultyIcon(dailyProblem?.difficulty)}
-                    {dailyProblem?.difficulty}
-                  </span>
-                  <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-3 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
-                    <Code className="h-4 w-4 text-primary" />
-                    {dailyProblem?.platform}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              {getDifficultyIcon(dailyProblem?.difficulty)}
+              {dailyProblem?.difficulty}
+            </span>
+            <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-3 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
+              <Code className="h-4 w-4 text-primary" />
+              {dailyProblem?.platform}
+            </span>
+          </div>
         </CardContent>
       </Card>
+    )}
+  </CardContent>
+</Card>
 
       {/* Main Content Layout */}
       <div className="flex flex-col lg:flex-row gap-6">
@@ -554,28 +564,7 @@ const Challenges: React.FC = () => {
                             }}
                           />
 
-                          {/* <div className="flex flex-col gap-2 self-start sm:self-center min-w-[100px]">
-                            {problem.status === "Solved" ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-emerald-900/5 dark:bg-emerald-100 text-emerald-400 dark:text-emerald-800 text-xs py-1 px-2 w-full text-center flex items-center justify-center border-emerald-200 dark:border-emerald-800"
-                              >
-                                <CheckCircle className="h-3 w-3 mr-1" /> Solved
-                              </Badge>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs py-1 px-2 w-full border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  markSolved(problem.id);
-                                }}
-                              >
-                                Mark Solved
-                              </Button>
-                            )}
-                          </div> */}
+                         
                         </div>
                       </CardContent>
                     </Card>

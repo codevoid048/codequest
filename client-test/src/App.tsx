@@ -1,23 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import './App.css'
-// import { Navbar } from '../../client-test/src/components/Navbar'
-// import { BrowserRouter as Router, Routes, Route, } from 'react-router-dom'
-// import Home from './components/Home'
-// import Potd from './components/Challenges'
-// import LoginPage from './components/Login'
-// import LogoutPage from './components/Logout'
-// import RegisterPage from './components/SignUp'
-// import Footer from './components/footer'
-// import AboutPage from './components/About'
-// import UserDashboard from './components/Admin/Users.tsx'
-// import Leaderboard from './components/leaderboard'
-// import ProfilePage from "./components/ProfilePage"
-// import ResetPassword from './components/ResetPassword.tsx'
-// import ForgotPassword from './components/ForgotPassword/index.tsx'
-// import EditProfile from './components/ProfilePage/profileEdit.tsx'
-// import AddChallenge from "./components/Admin/addChallenges.tsx";
-// import AdminLogin from './components/Admin/adminLogin.tsx'
-// >>>>>>> test
 import { Toaster } from 'react-hot-toast';
 import Home from './components/Home';
 import LoginPage from './components/Login';
@@ -50,8 +31,8 @@ function UserApp() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/logout" element={<LogoutPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/edit-profile" element={<EditProfile />} />
+        <Route path="/profile/edit-profile" element={<EditProfile />} />
+        <Route path="/profile/:username" element={<ProfilePage />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
