@@ -13,7 +13,7 @@ export const leetcodeData = async (req, res) => {
     const users = await User.find({ 'leetCode.username': { $exists: true, $ne: '' } });
 
     for (const user of users) {
-      const username = user.leetCode.username;
+      const username = user.leetcode.username;
       if (!username) continue;
 
       const query = JSON.stringify({
@@ -53,9 +53,9 @@ export const leetcodeData = async (req, res) => {
         user._id,
         {
           $set: {
-            'leetCode.solved': totalSolved,
-            'leetCode.rank': responseData?.data?.matchedUser?.profile?.ranking || -1,
-            'leetCode.rating': Math.floor(responseData?.data?.userContestRanking?.rating) || -1,
+            'leetcode.solved': totalSolved,
+            'leetcode.rank': responseData?.data?.matchedUser?.profile?.ranking || -1,
+            'leetcode.rating': Math.floor(responseData?.data?.userContestRanking?.rating) || -1,
           }
         }
       );
@@ -185,7 +185,7 @@ export const solvedChallenges = async (req, res) => {
     }
 
     //Leetcode fetch and Update
-    const leetcoderesponse = await fetchLeetCodeProfile(user.leetCode.username);
+    const leetcoderesponse = await fetchLeetCodeProfile(user.leetcode.username);
     const leetcodeChallenges = leetcoderesponse.recentSubmissions
       .filter(submission => submission.statusDisplay === 'Accepted')
       .map(submission => submission.title);

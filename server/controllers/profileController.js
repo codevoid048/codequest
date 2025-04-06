@@ -90,7 +90,7 @@ export const updateUserProfile = async (req, res) => {
                 const url = link.url
 
                 if (platform === "leetcode" && url) {
-                    user.leetCode = { ...user.leetCode, username: url }
+                    user.leetcode = { ...user.leetcode, username: url }
                 } else if (platform === "codeforces" && url) {
                     user.codeforces = { ...user.codeforces, username: url }
                 } else if (platform === "github" && url) {
@@ -119,7 +119,7 @@ export const updateUserProfile = async (req, res) => {
             collegeName: updatedUser.collegeName,
             profilePicture: updatedUser.profilePicture,
             isAffiliate: updatedUser.isAffiliate,
-            leetCode: updatedUser.leetCode,
+            leetcode: updatedUser.leetcode,
             codeforces: updatedUser.codeforces,
             codechef: updatedUser.codechef,
             gfg: updatedUser.gfg,

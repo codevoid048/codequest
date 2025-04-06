@@ -25,7 +25,7 @@ interface PlatformManagerProps {
 export function PlatformManager({ userPlatforms, onVerifyPlatform }: PlatformManagerProps) {
   const platforms = [
     {
-      type: "leetcode",
+      type: "leetCode",
       isLinked: !!userPlatforms.leetcode?.username,
       username: userPlatforms.leetcode?.username,
       stats: userPlatforms.leetcode,

@@ -115,8 +115,6 @@ export function PlatformVerification({ platformType, isLinked, username, stats, 
         
         setIsLinking(false);
         setIsVerifying(false);
-        // Explicitly set isLinked to true
-        isLinked = true;
       } else {
         toast.error("Verification failed, try again")
       }
