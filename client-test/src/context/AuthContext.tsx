@@ -30,40 +30,40 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 // })
 
 // AuthProvider component
- const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
-const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
   // Function to fetch user data from the backend
   const fetchUser = async () => {
     try {
       // const res = await axios.get("http://localhost:5000/api/auth/me", { 
       //   withCredentials: true 
       // });
-    const storedToken = localStorage.getItem("auth_token");
+      const storedToken = localStorage.getItem("auth_token");
 
-    const res = await axios.get("http://localhost:5000/api/auth/me", {
-      withCredentials: true,
-      headers: { Authorization: `Bearer ${storedToken}` }, // Ensure token is sent
-    });
-      
-    console.log("API response:", res.data); // Log full response
-    console.log("Token from API:", res.data.token); 
+      const res = await axios.get("http://localhost:5000/api/auth/me", {
+        withCredentials: true,
+        headers: { Authorization: `Bearer ${storedToken}` }, // Ensure token is sent
+      });
+
+      console.log("API response:", res.data); // Log full response
+      console.log("Token from API:", res.data.token);
 
       if (res.data && res.data.user) {
         setUser(res.data.user);
         setIsAuthenticated(true);
-        
+
         // Make sure we're getting the token correctly from the response
         const authToken = res.data.token || storedToken;
         setToken(authToken);
-        
+
         // Also store token in localStorage for persistence
         if (authToken) {
           localStorage.setItem('auth_token', authToken);
         }
-        
+
         console.log("Token set in context:", authToken);
       }
     } catch (error) {
@@ -94,15 +94,15 @@ const [loading, setLoading] = useState<boolean>(true);
   // Logout function
   const logout = async () => {
     try {
-      await axios.post("http://localhost:5000/api/auth/logout", {}, { 
-        withCredentials: true 
+      await axios.post("http://localhost:5000/api/auth/logout", {}, {
+        withCredentials: true
       });
-      
+
       setUser(null);
       setIsAuthenticated(false);
       setToken(null);
       localStorage.removeItem('auth_token');
-      
+
       window.location.href = "/login"; // Redirect to login page
     } catch (error) {
       console.error("Logout failed:", error);
@@ -127,7 +127,7 @@ const [loading, setLoading] = useState<boolean>(true);
 };
 
 // Custom Hook to use AuthContext
- const useAuth = (): AuthContextType => {
+const useAuth = (): AuthContextType => {
   const context = React.useContext(AuthContext);
   // const storedToken = localStorage.getItem("auth_token");
   // console.log("Token in localStorage:", storedToken);

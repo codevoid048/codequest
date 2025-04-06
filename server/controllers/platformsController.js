@@ -2,12 +2,15 @@ import express from "express";
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import axios from "axios";
-import {User} from "../models/User.js";
+import { User } from "../models/User.js";
+import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "../lib/leetcode.js";
+import { Challenge } from "../models/Challenge.js";
+// import { fetchLeetCodeProfile } from "../utils/platforms.js";
 
 export const leetcodeData = async (req, res) => {
   try {
     const users = await User.find({ 'leetCode.username': { $exists: true, $ne: '' } });
-    
+
     for (const user of users) {
       const username = user.leetCode.username;
       if (!username) continue;
@@ -50,8 +53,8 @@ export const leetcodeData = async (req, res) => {
         {
           $set: {
             'leetCode.solved': totalSolved,
-            'leetCode.rank' : responseData?.data?.matchedUser?.profile?.ranking || -1,
-            'leetCode.rating' : Math.floor(responseData?.data?.userContestRanking?.rating) || -1,
+            'leetCode.rank': responseData?.data?.matchedUser?.profile?.ranking || -1,
+            'leetCode.rating': Math.floor(responseData?.data?.userContestRanking?.rating) || -1,
           }
         }
       );
@@ -164,3 +167,72 @@ export const codechefData = async (req, res) => {
     return res.status(500).json({ error: "Failed to fetch data" });
   }
 };
+
+export const solvedChallenges = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    //Leetcode fetch and Update
+    const leetcoderesponse = await fetchLeetCodeProfile(user.leetCode.username);
+    const leetcodeChallenges = leetcoderesponse.recentSubmissions
+      .filter(submission => submission.statusDisplay === 'Accepted')
+      .map(submission => submission.title);
+
+    const challenges = await Challenge.find();
+    const solvedChallengeIdsleetcode = challenges
+      .filter(challenge => leetcodeChallenges.includes(challenge.title))
+      .map(challenge => challenge._id);
+
+    if (solvedChallengeIdsleetcode.length > 0) {
+      await User.findByIdAndUpdate(
+        user._id,
+        {
+          $addToSet: {
+            'solveChallenges': { $each: solvedChallengeIdsleetcode }
+          }
+        }
+      );
+    }
+
+    //Codeforces fetch and Update
+    const codeforcesresponse = await fetchCodeforcesProfile(user.codeforces.username);
+    const codeforcesChallenges = codeforcesresponse.result.map(submission => {
+      if (submission.verdict === "OK") {
+        return submission.problem.name;
+      }
+    });
+
+    if (codeforcesChallenges.length > 0) {
+      const challenges = await Challenge.find();
+      const solvedChallengeIds = challenges.filter(challenge => codeforcesChallenges.includes(challenge.title)).map(challenge => challenge._id);
+
+      if (solvedChallengeIds.length > 0) {
+        await User.findByIdAndUpdate(
+          user._id,
+          {
+            $addToSet: {
+              'solveChallenges': { $each: solvedChallengeIds }
+            }
+          }
+        );
+      }
+    }
+    return res.json({ success: true, message: "Data Added Successfully" });
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return res.status(500).json({ error: "Failed to fetch data" });
+  }
+}
+
+
+
+
+
+
+
+
+

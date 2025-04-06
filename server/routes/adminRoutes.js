@@ -4,6 +4,6 @@ import { protectAdmin } from '../middleware/adminAuth.js';
 const router = express.Router();
 
 router.post('/add-challenges',addChallenge);
-router.get('/users', protectAdmin, getUsers);
+router.get('/users', getUsers);
 
 export default router;
