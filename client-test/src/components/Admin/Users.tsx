@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { Search, Users, Filter, X, ArrowUpDown } from "lucide-react"
 import axios from "axios"
@@ -21,7 +22,7 @@ interface User {
 }
 
 // Filter types
-type FilterType = "username" | "collegeName" | "branch"
+type FilterType = "collegeName" | "branch"
 
 export default function UserDashboard() {
   const [users, setUsers] = useState<User[]>([])
@@ -30,7 +31,6 @@ export default function UserDashboard() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(20)
   const [activeFilters, setActiveFilters] = useState<Record<FilterType, string[]>>({
-    username: [],
     collegeName: [],
     branch: [],
   })
@@ -39,6 +39,7 @@ export default function UserDashboard() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -95,7 +96,7 @@ export default function UserDashboard() {
 
 
   const clearFilters = () => {
-    setActiveFilters({ username: [], collegeName: [], branch: [] })
+    setActiveFilters({ collegeName: [], branch: [] })
     setSearchTerm("")
   }
 
@@ -283,31 +284,7 @@ export default function UserDashboard() {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Username Filter */}
-                <div>
-                  <h4 className="text-sm font-medium text-slate-500 mb-2 flex items-center">
-                    <Users size={14} className="mr-1" />
-                    Username
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {getUniqueValues("username").map((username) => (
-                      <Badge
-                        key={username}
-                        variant={activeFilters.username.includes(username) ? "default" : "outline"}
-                        className={`cursor-pointer transition-all duration-300 ${
-                          activeFilters.username.includes(username)
-                            ? "bg-violet-500 hover:bg-violet-600"
-                            : "hover:border-violet-500 hover:text-violet-600"
-                        }`}
-                        onClick={() => toggleFilter("username", username)}
-                      >
-                        {username}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* College Filter */}
                 <div>
                   <h4 className="text-sm font-medium text-slate-500 mb-2 flex items-center">
@@ -357,7 +334,7 @@ export default function UserDashboard() {
                 </div>
 
                 {/* Sort Options */}
-                <div className="md:col-span-3">
+                <div className="md:col-span-2">
                   <h4 className="text-sm font-medium text-slate-500 mb-2 flex items-center">
                     <ArrowUpDown size={14} className="mr-1" />
                     Sort By
@@ -432,7 +409,10 @@ export default function UserDashboard() {
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-2">
           {paginatedUsers.map((user) => (
             <motion.div key={user._id} variants={itemVariants}>
-              <Card className="overflow-hidden py-0 hover:shadow-md transition-shadow duration-300 w-full ">
+              <Card
+                className="overflow-hidden py-0 hover:shadow-md transition-shadow duration-300 w-full cursor-pointer"
+                onClick={() => navigate(`/profile/${user.username}`)}
+              >
                 <CardContent className="flex flex-row items-center p-2">
                   <Avatar className="h-8 w-8 mr-3">
                     <AvatarImage src={user.avatar || "/placeholder.svg?height=40&width=40"} alt={user.username} />

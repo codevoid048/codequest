@@ -243,8 +243,6 @@ export const solvedChallenges = async (req, res) => {
     console.log("Request Body:", req.body); 
     const { problemId } = req.body;
     const userId = req.user.id;
-
-
     try {
         const user = await User.findById(userId);
         if (!user) {
@@ -350,3 +348,81 @@ export const getUserById = async (req, res) => {
     }
   };
 
+export const updateUserStreak = async (userId) => {
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return { success: false, message: "User not found" };
+        }
+
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+        // Convert `potdSolved` dates to string format for easy comparison
+        const solvedDates = user.potdSolved.map(date => new Date(date).toISOString().split('T')[0]);
+
+        if (solvedDates.includes(today)) {
+            return { success: false, message: "Already solved today's POTD" };
+        }
+
+        // Check if yesterday's problem was solved
+        if (solvedDates.includes(yesterdayStr)) {
+            user.streak += 1; // Continue streak
+        } else {
+            user.streak = 1; // Reset streak (new streak start)
+        }
+
+        // Store today's solved date
+        user.potdSolved.push(new Date());
+
+        await user.save();
+        // Update leaderboard
+        await updateRanks();
+        return { success: true, streak: user.streak, message: "Streak updated successfully" };
+
+    } catch (error) {
+        console.error("Error updating streak:", error);
+        return { success: false, message: "An error occurred" };
+    }
+};
+
+export const getUserById = async (req, res) => {
+    try {
+      const userId = req.query.userId;
+  
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+      }
+  
+      const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      res.status(200).json({ user });
+    } catch (error) {
+      console.error("Server error:", error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
+
+//   export const getUserById = async (req, res) => {
+//     try {
+//         const userId = req.params.id; // Get user ID from request parameters
+
+//         const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
+
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found" });
+//         }
+//         res.status(200).json({ user });
+
+//     } catch (error) {
+//         console.error("Error fetching user by ID:", error);
+//         res.status(500).json({ message: "Server error" });
+//     }
+// }
+  

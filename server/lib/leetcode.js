@@ -1,6 +1,6 @@
 import axios from "axios";
  
- export const fetchLeetCodeProfile = async (username: string) => {
+ export const fetchLeetCodeProfile = async (username) => {
    try {
     //  const res = await axios.post("http://localhost:5000/platforms/leetcode", {
     //    username,
@@ -339,12 +339,12 @@ import axios from "axios";
     //  return mockdata;
      return res.data;
    } catch (error) {
-     console.error("Error fetching LeetCode data:", (error as Error).message);
+     console.error("Error fetching LeetCode data:", (error).message);
      return null;
    }
  };
  
- export const fetchCodeforcesProfile = async (username: string) => {
+ export const fetchCodeforcesProfile = async (username) => {
   const mockdata = {
     "status": "OK",
     "result": [
@@ -399,8 +399,7 @@ import axios from "axios";
    }
  };
 
-
-
+ 
 
  
  
