@@ -3,6 +3,7 @@ import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import axios from "axios";
 import {User} from "../models/User.js";
+import { getGFGName } from "../utils/gfgService.js";
 
 export const leetcodeData = async (req, res) => {
   try {
@@ -72,15 +73,22 @@ export const geeksforgeeksData = async (req, res) => {
       const username = user.gfg.username;
       if (!username) continue;
 
-      const response = await axios.get(`http://localhost:5000/geeksforgeeks-profile/${username}`);
-      const totalSolved = response.data.data;
+      const response = await getGFGName(username);
+      if (response.error) {
+        console.error(`Error fetching GFG data for user ${username}: ${response.error}`);
+        continue;
+      }
+      const totalSolved = response.total_problems_solved;
+      const instituteRank = response.institute_rank || -1;
+      const rating = response.rating || -1;
 
       await User.findByIdAndUpdate(
         user._id,
         {
           $set: {
-            'gfg.solved': totalSolved.total_problems_solved,
-            'gfg.rank': totalSolved.institute_rank
+            'gfg.solved': totalSolved,
+            'gfg.rank': instituteRank,
+            'gfg.rating': rating
           }
         }
       );

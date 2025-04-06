@@ -19,16 +19,16 @@ const userSchema = new mongoose.Schema(
 
     // External Account Links (for verification)
     gfg: {
-      username: { type: String, default: "" },
-      solved: { type: Number, default: 0 },
-      rank: { type: Number, default: 0 },
-      rating: { type: Number, default: 0 },
+      username: { type: String, default: "", trim: true },
+      solved: { type: Number, default: 0, min: 0 },
+      rank: { type: Number, default: 0, min: 0 },
+      rating: { type: Number, default: 0, min: 0 },
     },
     leetCode: {
-      username: { type: String, default: "" },
-      solved: { type: Number, default: 0 },
-      rank: { type: Number, default: 0 },
-      rating: { type: Number, default: 0 },
+      username: { type: String, default: "", trim: true },
+      solved: { type: Number, default: 0, min: 0 },
+      rank: { type: Number, default: 0, min: 0 },
+      rating: { type: Number, default: 0, min: 0 },
     },
     codechef: {
       username: { type: String, default: "" },

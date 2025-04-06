@@ -2,6 +2,7 @@ import express from "express"
 import { registerUser, loginUser, verifyEmail, logoutUser, googleAuthCallback, githubAuthCallback, forgotPassword, resetPassword, getCurrentUser } from "../controllers/authController.js"
 const router = express.Router();
 import passport from "../config/passport.js";
+import { verifyProfiles } from "../controllers/verifyProfiles.js";
 
 router.post('/register', registerUser);
 router.post('/verify', verifyEmail); // Change to POST for OTP verification
@@ -17,5 +18,6 @@ router.post("/logout", logoutUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 router.get("/me", getCurrentUser);
+router.post("/verifyacc", verifyProfiles);
 
 export default router;
