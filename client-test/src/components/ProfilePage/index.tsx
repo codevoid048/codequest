@@ -46,34 +46,60 @@ export default function ProfilePage() {
     solveChallenges?: Array<unknown>
     points?: number
     streak?: number
+    potdSolved?: { timestamp: string }[]
+  }
+
+  interface Challenge {
+    challengeid: string
+    platform: string
+    difficulty: string
     id?: string
   }
 
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  // const [rating, setRating] = useState([])
+  const [rating, setRating] = useState([])
+  const isOwnProfile = profileUser?.username === user?.username
+
+  useEffect(() => {
+    const fetchChallenges = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/challenges")
+        console.log("Challenges:", response.data)
+        if (Array.isArray(response.data)) {
+          setChallenges(response.data)
+        } else if (response.data && Array.isArray(response.data.challenges)) {
+          setChallenges(response.data.challenges)
+        } else {
+          console.error("Challenges data is not an array:", response.data)
+          setChallenges([])
+        }
+      } catch (err) {
+        console.error("Error fetching challenges:", err)
+      }
+    }
 
   const fetchProfileUser = async () => {
     setLoading(true)
     setError(null)
     const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
 
-    try {
-      const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
-      console.log("Fetched user data:", response.data)
-      setProfileUser(response.data.user)
-    } catch (err: any) {
-      console.error("Error fetching user:", err)
-      setError(err.response?.data?.message || "User not found")
-    } finally {
-      setLoading(false)
+      try {
+        const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
+        console.log("Fetched user data:", response.data)
+        setProfileUser(response.data.user)
+      } catch (err: any) {
+        console.error("Error fetching user:", err)
+        setError(err.response?.data?.message || "User not found")
+      } finally {
+        setLoading(false)
+      }
     }
-  }
-
-  // Fetch user details from backend using Axios
-  useEffect(() => {
+    
+    fetchChallenges()
     fetchProfileUser()
   }, [routeUsername, user?.username])
 
@@ -157,27 +183,36 @@ export default function ProfilePage() {
     )
   }
 
-  // Static data for now (can be fetched from backend later)
+  // Calculate the number of problems solved in each difficulty
+  const allSolved = profileUser?.solveChallenges || [];
+  let easyCount = 0;
+  let mediumCount = 0;
+  let hardCount = 0;
+
+  if (Array.isArray(challenges)) {
+    for (let i = 0; i < allSolved.length; i++) {
+      const challenge = challenges.find((challenge) => challenge.challengeid === allSolved[i])
+      if (challenge) {
+        if (challenge.difficulty === "Easy") {
+          easyCount++
+        } else if (challenge.difficulty === "Medium") {
+          mediumCount++
+        } else if (challenge.difficulty === "Hard") {
+          hardCount++
+        }
+      }
+    }
+  }
+
+  console.log(easyCount, mediumCount, hardCount)
   const problemsSolved = {
-    total: profileUser.solveChallenges?.length || 0,
-    easy: Math.floor((profileUser.solveChallenges?.length || 0) * 0.4),
-    medium: Math.floor((profileUser.solveChallenges?.length || 0) * 0.5),
-    hard: Math.floor((profileUser.solveChallenges?.length || 0) * 0.1),
+    total: allSolved.length,
+    easy: easyCount,
+    medium: mediumCount,
+    hard: hardCount,
   }
 
-  // Determine if the logged-in user is viewing their own profile
-  const isOwnProfile = user?.username === profileUser?.username
-
-  // Find social links from otherLinks array
-  const findSocialLink = (platform: string) => {
-    if (!profileUser.otherLinks) return null
-    const link = profileUser.otherLinks.find((link) => link.platform.toLowerCase() === platform.toLowerCase())
-    return link ? link.url : null
-  }
-
-  const twitterLink = findSocialLink("twitter")
-  const linkedinLink = findSocialLink("linkedin")
-  const githubLink = findSocialLink("github")
+  // Removed unused 'platforms' variable to resolve the error.
 
   interface GetDaysInMonthParams {
     month: number
@@ -311,21 +346,21 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="mt-6 flex justify-center gap-3">
-                  {twitterLink && (
+                  {profileUser.otherLinks?.find((link) => link.platform === "Twitter")?.url && (
                     <Button variant="outline" size="icon" className="rounded-full" asChild>
                       <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
                         <Twitter className="h-4 w-4 text-sky-500" />
                       </Link>
                     </Button>
                   )}
-                  {linkedinLink && (
+                  {profileUser.otherLinks?.find((link) => link.platform === "LinkedIn")?.url && (
                     <Button variant="outline" size="icon" className="rounded-full" asChild>
                       <Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
                         <Linkedin className="h-4 w-4 text-blue-600" />
                       </Link>
                     </Button>
                   )}
-                  {githubLink && (
+                  {profileUser.otherLinks?.find((link) => link.platform === "GitHub")?.url && (
                     <Button variant="outline" size="icon" className="rounded-full" asChild>
                       <Link to={githubLink} target="_blank" rel="noopener noreferrer">
                         <Github className="h-4 w-4" />
@@ -600,86 +635,88 @@ export default function ProfilePage() {
                 </div>
                 <CardDescription>Your coding activity for {selectedYear}</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent>   
                 <div className="overflow-x-auto pb-4">
                   <div className="min-w-[950px]">
-                    <div className="flex gap-4 text-xs text-muted-foreground text-center mb-2">
-                      {[
-                        "January",
-                        "February",
-                        "March",
-                        "April",
-                        "May",
-                        "June",
-                        "July",
-                        "August",
-                        "September",
-                        "October",
-                        "November",
-                        "December",
-                      ].map((month) => (
-                        <div key={month} className="flex-1 truncate">
-                          {month}
-                        </div>
-                      ))}
-                    </div>
                     <div className="flex gap-4">
-                      {contributionsByMonth.map((monthContribs, monthIndex) => {
-                        const daysInMonth = getDaysInMonth(monthIndex, selectedYear)
-                        const firstDayOfMonth = new Date(selectedYear, monthIndex, 1).getDay()
-                        const offset = (firstDayOfMonth + 6) % 7
-                        const totalContributions = monthContribs.reduce(
-                          (sum, contrib) => sum + (contrib ? contrib.count : 0),
-                          0,
-                        )
-                        const numWeeks = Math.ceil((daysInMonth + offset) / 7)
+                      {Array.from({ length: 12 }).map((_, monthIndex) => {
+                        const daysInMonth = getDaysInMonth(monthIndex, selectedYear);
+                        const firstDayOfMonth = new Date(selectedYear, monthIndex, 1).getDay();
+                        const numWeeks = Math.ceil((daysInMonth + firstDayOfMonth) / 7);
+                        const monthNames = [
+                          "January",
+                          "February",
+                          "March",
+                          "April",
+                          "May",
+                          "June",
+                          "July",
+                          "August",
+                          "September",
+                          "October",
+                          "November",
+                          "December",
+                        ];
 
                         return (
-                          <div key={monthIndex} className="flex-1">
-                            <div
-                              className="grid gap-1"
+                          <div key={monthIndex} className="flex-none">
+                            <div className="text-xs text-muted-foreground text-center mb-2">
+                              {monthNames[monthIndex]}
+                            </div>
+                            <div className="grid gap-1"
                               style={{
+                                gridTemplateRows: `repeat(7, 1fr)`,
                                 gridTemplateColumns: `repeat(${numWeeks}, 1fr)`,
-                                gridTemplateRows: "repeat(7, 1fr)",
                               }}
                             >
                               {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
-                                const date = new Date(selectedYear, monthIndex, dayIndex + 1)
-                                const dayOfWeek = (date.getDay() + 6) % 7
-                                const weekIndex = Math.floor((dayIndex + offset) / 7) + 1
-                                const contrib = monthContribs.find((c) => c.date === date.toISOString().split("T")[0])
-                                const count = contrib ? contrib.count : 0
-                                const isToday =
-                                  date.toISOString().split("T")[0] === new Date().toISOString().split("T")[0]
-                                const inStreak = isPartOfStreak({ monthIndex, dayIndex, monthContribs })
+                                const date = new Date(selectedYear, monthIndex, dayIndex + 1);
+                                const dayOfWeek = date.getDay();
+                                const dateString = date.toISOString().split("T")[0];
+                                const isSolved = profileUser?.potdSolved?.some((contrib) => {
+                                  try {
+                                    // Make sure we have a valid timestamp
+                                    if (!contrib.timestamp) return false;
+                                    
+                                    const contributionDate = new Date(contrib.timestamp);
+                                    
+                                    // Check if date is valid
+                                    if (isNaN(contributionDate.getTime())) return false;
+                                    
+                                    const contribDate = contributionDate.toISOString().split("T")[0];
+                                    return contribDate === dateString;
+                                  } catch (err) {
+                                    console.error("Invalid date format in contribution:", contrib.timestamp);
+                                    return false;
+                                  }
+                                });
+                                const isToday = dateString === new Date().toISOString().split("T")[0];
+                                const inStreak = isPartOfStreak({ monthIndex, dayIndex, monthContribs: contributionsByMonth[monthIndex] });
 
                                 return (
                                   <motion.div
                                     key={dayIndex}
-                                    className={`h-4 w-4 rounded-sm ${getColor(count)} ${
-                                      isToday ? "ring-2 ring-black dark:ring-white" : ""
-                                    } ${inStreak && count > 0 ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
-                                    style={{ gridRow: dayOfWeek + 1, gridColumn: weekIndex }}
-                                    title={`${date.toLocaleDateString()}: ${count} contributions`}
+                                    className={`h-4 w-4 rounded-sm ${isSolved ? "bg-green-500" : "bg-gray-300"} ${isToday ? "ring-2 ring-black dark:ring-white" : ""
+                                      } ${inStreak && isSolved ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
+                                    style={{ gridRow: dayOfWeek + 1, gridColumn: Math.floor((dayIndex + firstDayOfMonth) / 7) + 1 }}
+                                    title={`${date.toLocaleDateString()}: ${isSolved ? "Solved" : "Not Solved"}`}
                                     whileHover={{ scale: 1.5, zIndex: 10 }}
                                     transition={{ duration: 0.2 }}
                                   />
-                                )
+                                );
                               })}
                             </div>
                             <div className="text-xs text-muted-foreground text-center mt-1">
-                              {totalContributions} contributions
+                              {contributionsByMonth[monthIndex]?.length || 0} contributions
                             </div>
                           </div>
-                        )
+                        );
                       })}
                     </div>
                   </div>
                   <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-4">
                     <span>Less</span>
                     <div className="h-3 w-3 rounded-sm bg-gray-300"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-200"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-400"></div>
                     <div className="h-3 w-3 rounded-sm bg-green-500"></div>
                     <span>More</span>
                   </div>
@@ -689,6 +726,7 @@ export default function ProfilePage() {
           </motion.div>
         </motion.div>
       </motion.div>
+      {/* <RatingChart ratingData={rating} /> */}
     </div>
   )
 }

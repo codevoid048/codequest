@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs"
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    username: { type: String, required: true, unique: true, trim: true, lowercase: true },
+    username: { type: String, required: false, unique: true, trim: true, lowercase: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     password: { type: String },
     profilePicture: { type: String }, // This will store base64 image data
@@ -72,7 +72,6 @@ const userSchema = new mongoose.Schema(
       },
 
     ],
-
     otherLinks: [
       {
         platform: String, // The name of the social platform, e.g., 'twitter', 'linkedin', 'github'

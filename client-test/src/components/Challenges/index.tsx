@@ -16,14 +16,52 @@ import {
   Code,
   Filter,
   Flame,
+  Lightbulb,
   Search,
   Tag,
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
-import { postPotdChallenge } from "@/lib/potdchallenge";
+import { postPotdChallenge, solvedChallenges, streak  } from "@/lib/potdchallenge";
 import { useAuth } from "@/context/AuthContext";
+interface User {
+  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
+  gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
+  codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+  profilePicture?: string
+  name?: string
+  username?: string
+  rank?: number
+  collegeName?: string
+  branch?: string
+  RegistrationNumber?: string
+  otherLinks?: { platform: string; url: string }[]
+  solveChallenges?: Array<unknown>
+  potdSolved?: Array<unknown>
+  points?: number
+  streak?: number
+}
+
+interface User {
+  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
+  gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
+  codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+  profilePicture?: string
+  name?: string
+  username?: string
+  rank?: number
+  collegeName?: string
+  branch?: string
+  RegistrationNumber?: string
+  otherLinks?: { platform: string; url: string }[]
+  solveChallenges?: Array<unknown>
+  potdSolved?: Array<unknown>
+  points?: number
+  streak?: number
+}
 
 interface challenge {
   id: number;
@@ -67,8 +105,9 @@ const Challenges: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
+  const [User, setUser] = useState<User | null>(null);
   const itemsPerPage = 5;
-
+  const { user } = useAuth() ;
 
 
   function convertTimestampToDate(timestamp: number) {
@@ -108,16 +147,26 @@ const Challenges: React.FC = () => {
     // console.log("user",user);
 
   }, []);
-
+  
   useEffect(() => {
-    fetchLeetCodeProfile("saiganeshambati").then((res) => {
-      // console.log(res);
-    });
-    fetchCodeforcesProfile("code__void").then((res) => {
-      // console.log(res);
-    });
-    
-  }, []);
+    const fetchUserData = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/profile/getUser", {
+          params: {
+            userId: user?._id, // sending only the userId
+          },
+        });
+        console.log("Complete user data:", res.data);
+        setUser(res.data.user); // or setUserData if you rename the state
+      } catch (error) {
+        console.error("Failed to fetch complete user data", error);
+      }
+    };
+  
+    if (user) {
+      fetchUserData();
+    }
+  }, [user]);
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -238,64 +287,45 @@ const Challenges: React.FC = () => {
   const openProblemLink = (url?: string) => url && window.open(url, "_blank");
 
   useEffect(() => {
+    console.log(User?.leetCode?.username)
     const checkIfProblemSolved = async () => {
       try {
         if(dailyProblem?.platform === "LeetCode"){
-        const leetCodeData = await fetchLeetCodeProfile("saiganeshambati");
+        const leetCodeData = await fetchLeetCodeProfile(`${User?.leetCode?.username}`);
         if (leetCodeData?.recentSubmissions) {
           const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
-            const submissionDate = new Date(parseInt(submission.timestamp) * 1000);
-            const today = new Date();
-            const submissionUTC = new Date(Date.UTC(
-              submissionDate.getUTCFullYear(),
-              submissionDate.getUTCMonth(), 
-              submissionDate.getUTCDate()
-            ));
+            const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+            const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             
-            const todayUTC = new Date(Date.UTC(
-              today.getUTCFullYear(),
-              today.getUTCMonth(),
-              today.getUTCDate()
-            ));
-            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && 
-            submissionUTC.getTime() === todayUTC.getTime();
+            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && submissionDate === today;
           });
 
           
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
+            streak();
+            solvedChallenges();
             return;
           }
         }
       }
       else if(dailyProblem?.platform === "Codeforces"){
-        const codeforcesData = await fetchCodeforcesProfile("saiganeshambati000"); 
+        const codeforcesData = await fetchCodeforcesProfile(`${User?.codeforces?.username}`);
         if (codeforcesData?.result) {
           const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string } ;verdict:string}) => {
-            const submissionDate = new Date(submission.creationTimeSeconds * 1000);
-            const today = new Date();
-            
-            // Convert both dates to UTC to avoid timezone issues
-            const submissionUTC = new Date(Date.UTC(
-              submissionDate.getUTCFullYear(),
-              submissionDate.getUTCMonth(), 
-              submissionDate.getUTCDate()
-            ));
-            
-            const todayUTC = new Date(Date.UTC(
-              today.getUTCFullYear(),
-              today.getUTCMonth(),
-              today.getUTCDate()
-            ));
-            
+            const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+  
+            const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
-              submissionUTC.getTime() === todayUTC.getTime();
+              submissionDate === today;
           });
 
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
+            streak();
+            solvedChallenges();
             return;
           }
         }
@@ -322,6 +352,23 @@ const Challenges: React.FC = () => {
                 Daily Challenge
               </h2>
             </div>
+            {/* New components: Streak and POTD Solved */}
+            {user ? (
+  <div className="flex items-center gap-4 mx-auto sm:mx-0">
+    {/* Streak with light bulb icon */}
+    <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+      <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
+      <span className="font-semibold">{user?.streak} day streak</span>
+    </div>
+
+    {/* POTD Solved counter */}
+    <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+      <CheckCircle className="h-5 w-5 text-green-500" />
+      <span className="font-semibold">{user?.potdSolved?.length} solved</span>
+    </div>
+  </div>
+) : null}
+
             <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
               <Clock className="h-5 w-5 mr-2 text-primary" />
               <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
