@@ -22,7 +22,7 @@ import {
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
-import { postPotdChallenge } from "@/lib/potdchallenge";
+import { postPotdChallenge, solvedChallenges } from "@/lib/potdchallenge";
 import { useAuth } from "@/context/AuthContext";
 
 interface challenge {
@@ -244,27 +244,17 @@ const Challenges: React.FC = () => {
         const leetCodeData = await fetchLeetCodeProfile("saiganeshambati");
         if (leetCodeData?.recentSubmissions) {
           const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
-            const submissionDate = new Date(parseInt(submission.timestamp) * 1000);
-            const today = new Date();
-            const submissionUTC = new Date(Date.UTC(
-              submissionDate.getUTCFullYear(),
-              submissionDate.getUTCMonth(), 
-              submissionDate.getUTCDate()
-            ));
+            const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+            const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             
-            const todayUTC = new Date(Date.UTC(
-              today.getUTCFullYear(),
-              today.getUTCMonth(),
-              today.getUTCDate()
-            ));
-            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && 
-            submissionUTC.getTime() === todayUTC.getTime();
+            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && submissionDate === today;
           });
 
           
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
+            solvedChallenges();
             return;
           }
         }
@@ -273,29 +263,18 @@ const Challenges: React.FC = () => {
         const codeforcesData = await fetchCodeforcesProfile("saiganeshambati000"); 
         if (codeforcesData?.result) {
           const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string } ;verdict:string}) => {
-            const submissionDate = new Date(submission.creationTimeSeconds * 1000);
-            const today = new Date();
-            
-            // Convert both dates to UTC to avoid timezone issues
-            const submissionUTC = new Date(Date.UTC(
-              submissionDate.getUTCFullYear(),
-              submissionDate.getUTCMonth(), 
-              submissionDate.getUTCDate()
-            ));
-            
-            const todayUTC = new Date(Date.UTC(
-              today.getUTCFullYear(),
-              today.getUTCMonth(),
-              today.getUTCDate()
-            ));
+            const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+  
+            const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             
             return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
-              submissionUTC.getTime() === todayUTC.getTime();
+              submissionDate === today;
           });
 
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
+            solvedChallenges();
             return;
           }
         }
