@@ -23,8 +23,27 @@ import {
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
-import { postPotdChallenge, solvedChallenges } from "@/lib/potdchallenge";
+import { postPotdChallenge, solvedChallenges, streak  } from "@/lib/potdchallenge";
 import { useAuth } from "@/context/AuthContext";
+interface User {
+  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
+  gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
+  codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+  profilePicture?: string
+  name?: string
+  username?: string
+  rank?: number
+  collegeName?: string
+  branch?: string
+  RegistrationNumber?: string
+  otherLinks?: { platform: string; url: string }[]
+  solveChallenges?: Array<unknown>
+  potdSolved?: Array<unknown>
+  points?: number
+  streak?: number
+}
+
 interface User {
   leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
   gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
@@ -285,6 +304,7 @@ const Challenges: React.FC = () => {
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
+            streak();
             solvedChallenges();
             return;
           }
@@ -297,7 +317,6 @@ const Challenges: React.FC = () => {
             const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
   
             const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-            
             return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
               submissionDate === today;
           });
@@ -305,6 +324,7 @@ const Challenges: React.FC = () => {
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
+            streak();
             solvedChallenges();
             return;
           }
@@ -333,20 +353,22 @@ const Challenges: React.FC = () => {
               </h2>
             </div>
             {/* New components: Streak and POTD Solved */}
-      <div className="flex items-center gap-4 mx-auto sm:mx-0">
-        {/* Streak with light bulb icon */}
-        <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
-          <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
-          <span className="font-semibold">{User?.streak} day streak</span>
-        </div>
-        
-        {/* POTD Solved counter */}
-        <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
-          <CheckCircle className="h-5 w-5 text-green-500" />
-          <span className="font-semibold">{User?.potdSolved?.length} solved</span>
-        </div>
-      </div>
-      
+            {user ? (
+  <div className="flex items-center gap-4 mx-auto sm:mx-0">
+    {/* Streak with light bulb icon */}
+    <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+      <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
+      <span className="font-semibold">{user?.streak} day streak</span>
+    </div>
+
+    {/* POTD Solved counter */}
+    <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+      <CheckCircle className="h-5 w-5 text-green-500" />
+      <span className="font-semibold">{user?.potdSolved?.length} solved</span>
+    </div>
+  </div>
+) : null}
+
             <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
               <Clock className="h-5 w-5 mr-2 text-primary" />
               <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
