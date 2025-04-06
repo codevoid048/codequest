@@ -29,3 +29,15 @@ export const postPotdChallenge = async () => {
     return null;
   }
 };
+
+export const streak = async () => {
+  try {
+    const response = await axios.get('http://localhost:5000/api/profile/streak', {
+      withCredentials: true
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching streak:', error);
+    return null;
+  }
+}
