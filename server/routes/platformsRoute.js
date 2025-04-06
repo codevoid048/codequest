@@ -8,7 +8,4 @@ router.get('/gfg',  geeksforgeeksData);
 router.get('/codeforces', codeforcesData);
 router.get('/codechef', codechefData);
 
-
-
-
 export default router;
