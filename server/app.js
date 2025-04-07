@@ -15,7 +15,7 @@ import adminAuthRoutes from "./routes/adminAuthRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import platformRoute from "./routes/platformsRoute.js";
 import axios from "axios";
-import { fetchCodeChefProfile, fetchCodeforcesProfile, fetchgfgProfile, fetchLeetCodeProfile } from "./utils/platforms.js";
+import { fetchCodeChefProfile, fetchCodeforcesProfile, fetchgfgProfile, fetchLeetCodeProfile} from "./utils/platforms.js";
 import userRoutes from "./routes/userRoutes.js";
 dotenv.config();
 const app = express();

@@ -58,12 +58,12 @@ export const leetcodeData = async (req, res) => {
           }
         }
       );
-      console.log(`LeetCode data updated for user ${username}`);
+      // console.log(`LeetCode data updated for user ${username}`);
     }
     return res.json({ success: true, message: "All LeetCode data updated successfully" });
   } catch (error) {
     console.error("LeetCode API Error:", error.message);
-    return res.status(500).json({ error: "Failed to fetch data" });
+    return res.status(500).json({ error: `Failed to fetch data` });
   }
 };
 
@@ -75,7 +75,7 @@ export const geeksforgeeksData = async (req, res) => {
       const username = user.gfg.username;
       if (!username) continue;
 
-      const response = await axios.get(`http://localhost:5000/geeksforgeeks-profile/${username}`);
+      const response = await axios.get(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`);
       const totalSolved = response.data.data;
 
       await User.findByIdAndUpdate(
@@ -87,12 +87,12 @@ export const geeksforgeeksData = async (req, res) => {
           }
         }
       );
-      console.log(`Geeksforgeeks data updated for user ${username}`);
+      // console.log(`Geeksforgeeks data updated for user ${username}`);
     }
     return res.json({ success: true, message: "All GFG data updated successfully" });
   } catch (error) {
     console.error("GFG API Error:", error.message);
-    return res.status(500).json({ error: "Failed to fetch data" });
+    return res.status(500).json({ error: `Failed to fetch data` });
   }
 };
 
@@ -129,12 +129,12 @@ export const codeforcesData = async (req, res) => {
           }
         }
       );
-      console.log(`Codeforces data updated for user ${username}`);
+      // console.log(`Codeforces data updated for user ${username}`);
     }
     return res.json({ success: true, message: "All Codeforces data updated successfully" });
   } catch (error) {
     console.error("Codeforces API Error:", error.message);
-    return res.status(500).json({ error: "Failed to fetch data" });
+    return res.status(500).json({ error: `Failed to fetch data` });
   }
 };
 
@@ -159,14 +159,15 @@ export const codechefData = async (req, res) => {
           }
         }
       );
-      console.log(`Codechef data updated for user ${username}`);
+      // console.log(`Codechef data updated for user ${username}`);
     }
     return res.json({ success: true, message: "All Codechef data updated successfully" });
   } catch (error) {
     console.error("Codechef API Error:", error.message);
-    return res.status(500).json({ error: "Failed to fetch data" });
+    return res.status(500).json({ error: `Failed to fetch data` });  
   }
 };
+
 
 export const solvedChallenges = async (req, res) => {
   try {
@@ -178,7 +179,7 @@ export const solvedChallenges = async (req, res) => {
 
     //Leetcode fetch and Update
     const leetcoderesponse = await fetchLeetCodeProfile(user.leetCode.username);
-    const leetcodeChallenges = leetcoderesponse.recentSubmissions
+    const leetcodeChallenges = leetcoderesponse.recentSubmissionList
       .filter(submission => submission.statusDisplay === 'Accepted')
       .map(submission => submission.title);
 
@@ -186,6 +187,20 @@ export const solvedChallenges = async (req, res) => {
     const solvedChallengeIdsleetcode = challenges
       .filter(challenge => leetcodeChallenges.includes(challenge.title))
       .map(challenge => challenge._id);
+      const solvedProblemsleetcode = await Challenge.find({ _id: { $in: solvedChallengeIdsleetcode } }).populate('difficulty');
+      let easy=0,medium=0,hard=0;
+      for(const problem of solvedProblemsleetcode){
+        if(problem.difficulty==="Easy"){
+          easy++;
+        }
+        else if(problem.difficulty==="Medium"){
+          medium++;
+        }
+        else if(problem.difficulty==="Hard"){
+          hard++;
+        }
+      }
+    // console.log("solvedChallengeIdsleetcode",solvedChallengeIdsleetcode);
 
     if (solvedChallengeIdsleetcode.length > 0) {
       await User.findByIdAndUpdate(
@@ -209,6 +224,20 @@ export const solvedChallenges = async (req, res) => {
     if (codeforcesChallenges.length > 0) {
       const challenges = await Challenge.find();
       const solvedChallengeIds = challenges.filter(challenge => codeforcesChallenges.includes(challenge.title)).map(challenge => challenge._id);
+      const solvedProblems = await Challenge.find({ _id: { $in: solvedChallengeIds } }).populate('difficulty');
+
+      for(const problem of solvedProblems){
+        if(problem.difficulty==="Easy"){
+          easy++;
+        }
+        else if(problem.difficulty==="Medium"){
+          medium++;
+        }
+        else if(problem.difficulty==="Hard"){
+          hard++;
+        }
+      }
+      const points = easy*5 + medium*10 + hard*20;
 
       if (solvedChallengeIds.length > 0) {
         await User.findByIdAndUpdate(
@@ -220,16 +249,90 @@ export const solvedChallenges = async (req, res) => {
           }
         );
       }
+      await User.findByIdAndUpdate(
+        user._id,
+        {
+          $set: {
+            'points': points
+          }
+        }
+      );
     }
     return res.json({ success: true, message: "Data Added Successfully" });
   } catch (error) {
     console.error("Error fetching data:", error);
-    return res.status(500).json({ error: "Failed to fetch data" });
+    return res.status(500).json({ error: `Failed to fetch data` });
   }
 }
 
 
+export const fetchLeetCodeGraphql = async (req, res) => {
+  const username = req.body.username;
+  const query = `
+  {
+    matchedUser(username: "${username}") {
+      username
+      profile {
+        realName
+        userAvatar
+        ranking
+        reputation
+        starRating
+        aboutMe
+        skillTags
+      }
+      submitStats: submitStatsGlobal {
+        acSubmissionNum {
+          difficulty
+          count
+          submissions
+        }
+        totalSubmissionNum {
+          difficulty
+          count
+          submissions
+        }
+      }
+      badges {
+        id
+        displayName
+        icon
+        creationDate
+      }
+      upcomingBadges {
+        name
+        icon
+      }
+      activeBadge {
+        displayName
+        icon
+      }
+    }
+    userContestRanking(username: "${username}") {
+      attendedContestsCount
+      rating
+      globalRanking
+      totalParticipants
+      topPercentage
+    }
+    recentSubmissionList(username: "${username}", limit: 5) {
+      title
+      titleSlug
+      timestamp
+      statusDisplay
+      lang
+    }
+  }
+`;
 
+  try {
+    const response = await axios.post('https://leetcode.com/graphql', { query });
+    return res.json(response.data.data);
+  } catch (error) {
+    console.error('Error fetching user data from LeetCode:', error);
+    return null;
+  }
+};
 
 
 

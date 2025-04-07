@@ -21,6 +21,7 @@ import {
   Trophy,
   Twitter,
 } from "lucide-react"
+import { slovedChallenges } from "@/platforms/leetcode"
 
 export default function ProfilePage() {
   const { username: routeUsername } = useParams()
@@ -99,7 +100,9 @@ export default function ProfilePage() {
     }
     fetchChallenges()
     fetchProfileUser()
+    slovedChallenges();
   }, [routeUsername, user?.username])
+
 
   // Handle loading and error states
   if (loading) {

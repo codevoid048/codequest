@@ -16,12 +16,13 @@ import {
   Code,
   Filter,
   Flame,
+  RefreshCw,
   Search,
   Tag,
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
+import { fetchLeetCodeProfile, fetchCodeforcesProfile, slovedChallenges } from "@/platforms/leetcode";
 import { postPotdChallenge, solvedChallenges } from "@/lib/potdchallenge";
 import { useAuth } from "@/context/AuthContext";
 
@@ -116,7 +117,10 @@ const Challenges: React.FC = () => {
     fetchCodeforcesProfile("code__void").then((res) => {
       // console.log(res);
     });
-    
+      // slovedChallenges().then((res) => {
+      //   console.log(res);
+      // });
+
   }, []);
 
   useEffect(() => {
@@ -242,8 +246,8 @@ const Challenges: React.FC = () => {
       try {
         if(dailyProblem?.platform === "LeetCode"){
         const leetCodeData = await fetchLeetCodeProfile("saiganeshambati");
-        if (leetCodeData?.recentSubmissions) {
-          const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
+        if (leetCodeData?.recentSubmissionList) {
+          const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
             const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             
@@ -254,7 +258,6 @@ const Challenges: React.FC = () => {
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
-            solvedChallenges();
             return;
           }
         }
@@ -274,7 +277,6 @@ const Challenges: React.FC = () => {
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
-            solvedChallenges();
             return;
           }
         }
@@ -286,6 +288,10 @@ const Challenges: React.FC = () => {
 
     checkIfProblemSolved();
   }, [dailyProblem]);
+
+  const handleRerender = () => {
+    window.location.reload();
+  };
 
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
@@ -301,6 +307,13 @@ const Challenges: React.FC = () => {
                 Daily Challenge
               </h2>
             </div>
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 text-sm py-2 px-4 border-border text-foreground"
+              onClick={handleRerender}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
             <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
               <Clock className="h-5 w-5 mr-2 text-primary" />
               <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
