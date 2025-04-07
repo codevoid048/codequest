@@ -76,7 +76,7 @@ export const verifyProfiles = async (req, res) => {
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }
-            await user.updateOne({ $set: { 'leetcode.username': username } });
+            await user.updateOne({ $set: { 'leetCode.username': username } });
             return res.status(200).json({ message: 'Profile verified successfully' });
         } 
         else if (normalizedPlatform === 'codechef') {

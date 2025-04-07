@@ -11,7 +11,7 @@ interface PlatformData {
 }
 
 interface UserPlatforms {
-  leetcode?: PlatformData
+  leetCode?: PlatformData
   codechef?: PlatformData
   codeforces?: PlatformData
   gfg?: PlatformData
@@ -26,9 +26,9 @@ export function PlatformManager({ userPlatforms, onVerifyPlatform }: PlatformMan
   const platforms = [
     {
       type: "leetCode",
-      isLinked: !!userPlatforms.leetcode?.username,
-      username: userPlatforms.leetcode?.username,
-      stats: userPlatforms.leetcode,
+      isLinked: !!userPlatforms.leetCode?.username,
+      username: userPlatforms.leetCode?.username,
+      stats: userPlatforms.leetCode,
     },
     {
       type: "gfg",

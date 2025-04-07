@@ -37,25 +37,25 @@ export function PlatformVerification({ platformType, isLinked, username, stats, 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const platformLinks = {
-    leetcode: "https://leetcode.com/profile/",
+    leetCode: "https://leetcode.com/profile/",
     codechef: `https://www.codechef.com/users/${inputUsername}/edit`,
     codeforces: "https://codeforces.com/settings/social",
     gfg: "https://www.geeksforgeeks.org/edit-profile/",
-  }
+  };
 
   const platformNames = {
-    leetcode: "LeetCode",
+    leetCode: "LeetCode",
     codechef: "CodeChef",
     codeforces: "CodeForces",
     gfg: "GeeksForGeeks",
-  }
+  };
 
   const platformColors = {
-    leetcode: "#FFA116",
+    leetCode: "#FFA116",
     codechef: "#745D0B",
     codeforces: "#318CE7",
     gfg: "#2F8D46",
-  }
+  };
 
   useEffect(() => {
     if (isVerifying) {

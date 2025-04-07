@@ -31,7 +31,7 @@ export default function ProfilePage() {
   // const token = localStorage.getItem("token")
 
   interface ProfileUser {
-    leetcode?: { username?: string; solved?: number; rank?: number; rating?: number }
+    leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
     gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
     codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
     codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
@@ -212,8 +212,6 @@ export default function ProfilePage() {
     hard: hardCount,
   }
 
-  // Removed unused 'platforms' variable to resolve the error.
-
   interface GetDaysInMonthParams {
     month: number
     year: number
@@ -388,7 +386,7 @@ export default function ProfilePage() {
             {isOwnProfile ? (
               <PlatformManager
                 userPlatforms={{
-                  leetcode: profileUser.leetcode,
+                  leetCode: profileUser.leetCode,
                   gfg: profileUser.gfg,
                   codeforces: profileUser.codeforces,
                   codechef: profileUser.codechef,
@@ -406,8 +404,8 @@ export default function ProfilePage() {
                   {[
                     {
                       name: "LeetCode",
-                      handle: profileUser.leetcode?.username || "-",
-                      rating: profileUser.leetcode?.rating || 0,
+                      handle: profileUser.leetCode?.username || "-",
+                      rating: profileUser.leetCode?.rating || 0,
                       color: "#FFA116",
                     },
                     {

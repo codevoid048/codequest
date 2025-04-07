@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
       rank: { type: Number, default: 0, min: 0 },
       rating: { type: Number, default: 0, min: 0 },
     },
-    leetcode: {
+    leetCode: {
       username: { type: String, default: "", trim: true },
       solved: { type: Number, default: 0, min: 0 },
       rank: { type: Number, default: 0, min: 0 },

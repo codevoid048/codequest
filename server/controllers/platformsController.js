@@ -13,7 +13,7 @@ export const leetcodeData = async (req, res) => {
     const users = await User.find({ 'leetCode.username': { $exists: true, $ne: '' } });
 
     for (const user of users) {
-      const username = user.leetcode.username;
+      const username = user.leetCode.username;
       if (!username) continue;
 
       const query = JSON.stringify({
@@ -24,12 +24,6 @@ export const leetcodeData = async (req, res) => {
                 realName
                 ranking
                 starRating
-              }
-              submitStatsGlobal {
-                acSubmissionNum {
-                  difficulty
-                  count
-                }
               }
             }
             userContestRanking(username: "${username}") {
@@ -53,9 +47,9 @@ export const leetcodeData = async (req, res) => {
         user._id,
         {
           $set: {
-            'leetcode.solved': totalSolved,
-            'leetcode.rank': responseData?.data?.matchedUser?.profile?.ranking || -1,
-            'leetcode.rating': Math.floor(responseData?.data?.userContestRanking?.rating) || -1,
+            'leetCode.solved': totalSolved,
+            'leetCode.rank': responseData?.data?.matchedUser?.profile?.ranking || -1,
+            'leetCode.rating': Math.floor(responseData?.data?.userContestRanking?.rating) || -1,
           }
         }
       );

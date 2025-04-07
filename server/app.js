@@ -39,18 +39,18 @@ app.use('/platforms', platformRoute);
 app.use('/api/user', userRoutes);
 
 updateRanks();
-// fetchCodeforcesProfile();
-// fetchLeetCodeProfile();
-// fetchgfgProfile();
-// fetchCodeChefProfile();
+fetchCodeforcesProfile();
+fetchLeetCodeProfile();
+fetchgfgProfile();
+fetchCodeChefProfile();
 
 // Schedule leaderboard update every hour
 setInterval(() => {
   updateRanks();
-  // fetchCodeforcesProfile();
-  // fetchLeetCodeProfile();
-  // fetchgfgProfile();
-  // fetchCodeChefProfile();
+  fetchCodeforcesProfile();
+  fetchLeetCodeProfile();
+  fetchgfgProfile();
+  fetchCodeChefProfile();
 }, 300000);
 
 app.use((err, req, res, next) => {
