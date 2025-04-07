@@ -79,7 +79,7 @@ export const verifyProfiles = async (req, res) => {
             await user.updateOne({ $set: { 'leetCode.username': username } });
             return res.status(200).json({ message: 'Profile verified successfully' });
         } 
-        else if (normalizedPlatform === 'codechef') {
+        else if (normalizedPlatform === 'code chef') {
             const response = await axios.get(`https://codechef-api.vercel.app/handle/${username}`)
             if (response.error) {
                 return res.status(400).json({ error: response.error });
