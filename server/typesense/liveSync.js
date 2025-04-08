@@ -44,7 +44,6 @@ export const setupMongoChangeStream = async () => {
             rank: fullDocument.rank?.toString() || "0",
           })
         );
-        console.log("✅ Synced user to Typesense");
       } else if (operationType === "delete") {
         await withRetry(() =>
           client.collections("users").documents(documentKey._id.toString()).delete()
@@ -82,7 +81,6 @@ export const setupMongoChangeStream = async () => {
             problemLink: fullDocument.problemLink || "",
           })
         );
-        console.log("✅ Synced challenge to Typesense");
       } else if (operationType === "delete") {
         await withRetry(() =>
           client.collections("challenges").documents(documentKey._id.toString()).delete()
