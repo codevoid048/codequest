@@ -90,7 +90,7 @@ export const updateUserProfile = async (req, res) => {
                 const url = link.url
 
                 if (platform === "leetcode" && url) {
-                    user.leetCode = { ...user.leetCode, username: url }
+                    user.leetcode = { ...user.leetcode, username: url }
                 } else if (platform === "codeforces" && url) {
                     user.codeforces = { ...user.codeforces, username: url }
                 } else if (platform === "github" && url) {
@@ -119,7 +119,7 @@ export const updateUserProfile = async (req, res) => {
             collegeName: updatedUser.collegeName,
             profilePicture: updatedUser.profilePicture,
             isAffiliate: updatedUser.isAffiliate,
-            leetCode: updatedUser.leetCode,
+            leetcode: updatedUser.leetcode,
             codeforces: updatedUser.codeforces,
             codechef: updatedUser.codechef,
             gfg: updatedUser.gfg,
@@ -243,8 +243,6 @@ export const solvedChallenges = async (req, res) => {
     console.log("Request Body:", req.body); 
     const { problemId } = req.body;
     const userId = req.user.id;
-
-
     try {
         const user = await User.findById(userId);
         if (!user) {
@@ -288,9 +286,13 @@ export const solvedChallenges = async (req, res) => {
     }
 };
 
-export const updateUserStreak = async (req,res) => {
+// Removed duplicate declaration of updateUserStreak
+
+// Removed duplicate declaration of getUserById
+
+export const updateUserStreak = async (userId) => {
     try {
-        const user = req.user;
+        const user = await User.findById(userId);
         if (!user) {
             return { success: false, message: "User not found" };
         }
@@ -300,13 +302,11 @@ export const updateUserStreak = async (req,res) => {
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-        // // Convert `potdSolved` dates to string format for easy comparison
-        const solvedDates = user.potdSolved
-            .filter(entry => entry.timestamp && !isNaN(new Date(entry.timestamp))) // Filter out invalid timestamps
-            .map(entry => new Date(entry.timestamp).toISOString().split('T')[0]);
+        // Convert `potdSolved` dates to string format for easy comparison
+        const solvedDates = user.potdSolved.map(date => new Date(date).toISOString().split('T')[0]);
 
         if (solvedDates.includes(today)) {
-            return res.status(201).json({ success: false, message: "Already solved today's POTD" });
+            return { success: false, message: "Already solved today's POTD" };
         }
 
         // Check if yesterday's problem was solved
@@ -316,12 +316,13 @@ export const updateUserStreak = async (req,res) => {
             user.streak = 1; // Reset streak (new streak start)
         }
 
-        // // Store today's solved date
-        user.potdSolved.push({ timestamp: new Date() });
-     
+        // Store today's solved date
+        user.potdSolved.push(new Date());
+
         await user.save();
-        console.log("streak updated",user.streak);
-        return res.status(200).json({ success: true, streak: user.streak, message: "Streak updated successfully" });
+        // Update leaderboard
+        await updateRanks();
+        return { success: true, streak: user.streak, message: "Streak updated successfully" };
 
     } catch (error) {
         console.error("Error updating streak:", error);
@@ -350,3 +351,20 @@ export const getUserById = async (req, res) => {
     }
   };
 
+//   export const getUserById = async (req, res) => {
+//     try {
+//         const userId = req.params.id; // Get user ID from request parameters
+
+//         const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
+
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found" });
+//         }
+//         res.status(200).json({ user });
+
+//     } catch (error) {
+//         console.error("Error fetching user by ID:", error);
+//         res.status(500).json({ message: "Server error" });
+//     }
+// }
+  

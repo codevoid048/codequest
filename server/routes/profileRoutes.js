@@ -2,6 +2,7 @@ import express from "express";
 import { protect } from "../middleware/auth.js";
 import { getUserProfile, updateUserProfile, getUserActivity ,solvedChallenges,getUserById, updateUserStreak} from "../controllers/profileController.js";
 
+
 const router = express.Router();
 
 router.get('/me', getUserProfile);

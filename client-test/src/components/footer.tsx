@@ -15,7 +15,7 @@ const Footer = () => {
                     <div className="md:col-span-2">
                         <div className="flex items-center mb-4">
                             <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-600">
-                                SrkrCodingClub
+                                SRKRCodingClub
                             </span>
                         </div>
                         <p className="text-muted-500 text-sm mt-4 max-w-md">
@@ -51,8 +51,8 @@ const Footer = () => {
                                     <User className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h4 className="text-blue-700 font-medium">Dr. Ramakrishna</h4>
-                                    <p className="text-muted-500 text-sm">+91 98765 43210</p>
+                                    <h4 className="text-blue-700 font-medium">David Kuppala</h4>
+                                    <p className="text-muted-500 text-sm">+91 81217 02286</p>
                                 </div>
                             </li>
                             <li className="flex items-center group">
@@ -60,8 +60,8 @@ const Footer = () => {
                                     <User className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h4 className="text-blue-700 font-medium">Dr. Ramakrishna</h4>
-                                    <p className="text-muted-500 text-sm">+91 87654 32109</p>
+                                    <h4 className="text-blue-700 font-medium">Ankith Pissay</h4>
+                                    <p className="text-muted-500 text-sm">+91 91005 79797</p>
                                 </div>
                             </li>
                             <li className="flex items-center group">
@@ -82,7 +82,7 @@ const Footer = () => {
                     <div className="flex flex-col md:flex-row justify-between items-center">
                         <div className="flex items-center mb-4 md:mb-0">
                             <Mail className="w-6 h-6 text-blue-500 mr-2" />
-                            <span className="text-muted-500 text-sm">contact@srkrcodingclub.com</span>
+                            <span className="text-muted-500 text-sm">srkrcodingclubofficial@gmail.com</span>
                         </div>
                         <p className="text-muted-500 text-sm">
                             &copy; {new Date().getFullYear()} SrkrCodingClub. All rights reserved.

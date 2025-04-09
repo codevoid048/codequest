@@ -23,8 +23,26 @@ import {
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
-import { postPotdChallenge, streak } from "@/lib/potdchallenge";
+import { postPotdChallenge, solvedChallenges, streak  } from "@/lib/potdchallenge";
 import { useAuth } from "@/context/AuthContext";
+interface User {
+  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
+  gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
+  codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+  profilePicture?: string
+  name?: string
+  username?: string
+  rank?: number
+  collegeName?: string
+  branch?: string
+  RegistrationNumber?: string
+  otherLinks?: { platform: string; url: string }[]
+  solveChallenges?: Array<unknown>
+  potdSolved?: Array<unknown>
+  points?: number
+  streak?: number
+}
 
 interface User {
   leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
@@ -276,21 +294,10 @@ const Challenges: React.FC = () => {
         const leetCodeData = await fetchLeetCodeProfile(`${User?.leetCode?.username}`);
         if (leetCodeData?.recentSubmissions) {
           const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
-            const submissionDate = new Date(parseInt(submission.timestamp) * 1000);
-            const today = new Date();
-            const submissionUTC = new Date(Date.UTC(
-              submissionDate.getUTCFullYear(),
-              submissionDate.getUTCMonth(), 
-              submissionDate.getUTCDate()
-            ));
+            const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+            const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             
-            const todayUTC = new Date(Date.UTC(
-              today.getUTCFullYear(),
-              today.getUTCMonth(),
-              today.getUTCDate()
-            ));
-            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && 
-            submissionUTC.getTime() === todayUTC.getTime();
+            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && submissionDate === today;
           });
 
           
@@ -298,6 +305,7 @@ const Challenges: React.FC = () => {
             setIsSolved(true);
             postPotdChallenge();
             streak();
+            solvedChallenges();
             return;
           }
         }
@@ -306,30 +314,18 @@ const Challenges: React.FC = () => {
         const codeforcesData = await fetchCodeforcesProfile(`${User?.codeforces?.username}`);
         if (codeforcesData?.result) {
           const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string } ;verdict:string}) => {
-            const submissionDate = new Date(submission.creationTimeSeconds * 1000);
-            const today = new Date();
-            
-            // Convert both dates to UTC to avoid timezone issues
-            const submissionUTC = new Date(Date.UTC(
-              submissionDate.getUTCFullYear(),
-              submissionDate.getUTCMonth(), 
-              submissionDate.getUTCDate()
-            ));
-
-            const todayUTC = new Date(Date.UTC(
-              today.getUTCFullYear(),
-              today.getUTCMonth(),
-              today.getUTCDate()
-            ));
-            
+            const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+  
+            const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
-              submissionUTC.getTime() === todayUTC.getTime();
+              submissionDate === today;
           });
 
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
             streak();
+            solvedChallenges();
             return;
           }
         }
@@ -372,6 +368,7 @@ const Challenges: React.FC = () => {
     </div>
   </div>
 ) : null}
+
             <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
               <Clock className="h-5 w-5 mr-2 text-primary" />
               <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
