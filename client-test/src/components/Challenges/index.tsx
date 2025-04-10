@@ -25,6 +25,7 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchLeetCodeProfile, fetchCodeforcesProfile, slovedChallenges } from "@/platforms/leetcode";
 import { postPotdChallenge, solvedChallenges } from "@/lib/potdchallenge";
 import { useAuth } from "@/context/AuthContext";
+import toast from "react-hot-toast";
 
 interface challenge {
   id: number;
@@ -111,16 +112,15 @@ const Challenges: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchLeetCodeProfile("saiganeshambati").then((res) => {
-      // console.log(res);
-    });
-    fetchCodeforcesProfile("code__void").then((res) => {
-      // console.log(res);
-    });
-      // slovedChallenges().then((res) => {
-      //   console.log(res);
-      // });
-
+      const updatePlatforms = async () => {
+        console.log("updated platforms");
+        const leetcode = await axios.post('http://localhost:5000/platforms/leetcode',{username:"saiganeshambati"});
+        const codeforces = await axios.post('http://localhost:5000/platforms/codeforces',{username:"saiganeshambati000"});
+        const codechef = await axios.post('http://localhost:5000/platforms/codechef',{username:"saiganesh999"});
+        const gfg = await axios.post('http://localhost:5000/platforms/gfg',{username:"saiganeshafb97"});
+      }
+      toast.success("Data updated successfully");
+      updatePlatforms();
   }, []);
 
   useEffect(() => {
@@ -258,6 +258,7 @@ const Challenges: React.FC = () => {
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
+            slovedChallenges();
             return;
           }
         }
@@ -277,6 +278,7 @@ const Challenges: React.FC = () => {
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
+            slovedChallenges();
             return;
           }
         }

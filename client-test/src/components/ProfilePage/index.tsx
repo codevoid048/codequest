@@ -22,6 +22,7 @@ import {
   Twitter,
 } from "lucide-react"
 import { slovedChallenges } from "@/platforms/leetcode"
+import toast from "react-hot-toast"
 
 export default function ProfilePage() {
   const { username: routeUsername } = useParams()
@@ -45,6 +46,7 @@ export default function ProfilePage() {
     points?: number
     streak?: number
     potdSolved?: { timestamp: string }[]
+    heatmap?: { timestamp: string; _id: string }[]
   }
 
   interface Challenge {
@@ -59,6 +61,20 @@ export default function ProfilePage() {
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [rating, setRating] = useState([]);
+
+
+  //
+  useEffect(() => {
+    const updatePlatforms = async () => {
+      console.log("updated platforms");
+      const leetcode = await axios.post('http://localhost:5000/platforms/leetcode', { username: "saiganeshambati" });
+      const codeforces = await axios.post('http://localhost:5000/platforms/codeforces', { username: "saiganeshambati000" });
+      const codechef = await axios.post('http://localhost:5000/platforms/codechef', { username: "saiganesh999" });
+      const gfg = await axios.post('http://localhost:5000/platforms/gfg', { username: "saiganeshafb97" });
+    }
+    toast.success("Data updated successfully");
+    updatePlatforms();
+  }, []);
 
   // Fetch user details from backend using Axios
   useEffect(() => {
@@ -144,10 +160,10 @@ export default function ProfilePage() {
   let hardCount = 0;
 
   if (Array.isArray(challenges)) {
-    for(let i = 0; i < allSolved.length; i++) {
+    for (let i = 0; i < allSolved.length; i++) {
       const challenge = challenges.find((challenge: any) => challenge._id === allSolved[i]);
-      if(challenge) {
-        if(challenge.difficulty === 'Easy') {
+      if (challenge) {
+        if (challenge.difficulty === 'Easy') {
           easyCount++;
         } else if (challenge.difficulty === 'Medium') {
           mediumCount++;
@@ -283,6 +299,85 @@ export default function ProfilePage() {
   const twitterLink = findSocialLink("twitter")
   const linkedinLink = findSocialLink("linkedin")
   const githubLink = findSocialLink("github")
+
+  {/* Helper function to create the date-contributions mapping from heatmap data */ }
+  function createDateContributionsMap(heatmap: Array<{ timestamp: string; _id: string }>, year: number, monthIndex: number) {
+    if (!heatmap || !heatmap.length) return {};
+
+    // Create a map of dates to contribution counts
+    const dateContributionsMap: Record<string, number> = {};
+
+    // Format monthIndex to 2-digit string for comparison
+    const monthStr = String(monthIndex + 1).padStart(2, '0');
+
+    heatmap.forEach(item => {
+      try {
+        if (!item.timestamp) return;
+
+        // Convert Unix timestamp (seconds) to milliseconds for Date
+        const timestamp = parseInt(item.timestamp) * 1000;
+        const contributionDate = new Date(timestamp);
+
+        if (isNaN(contributionDate.getTime())) {
+          console.error("Invalid timestamp:", item.timestamp);
+          return;
+        }
+
+        // Convert to Indian timezone (UTC+5:30)
+        // First get the date in UTC
+        const utcYear = contributionDate.getUTCFullYear();
+        const utcMonth = contributionDate.getUTCMonth();
+        const utcDay = contributionDate.getUTCDate();
+        const utcHours = contributionDate.getUTCHours();
+        const utcMinutes = contributionDate.getUTCMinutes();
+
+        // Apply the India timezone offset (+5:30)
+        let indianHours = utcHours + 5;
+        let indianMinutes = utcMinutes + 30;
+
+        // Adjust minutes if they exceed 60
+        if (indianMinutes >= 60) {
+          indianHours += 1;
+          indianMinutes -= 60;
+        }
+
+        // Adjust date if needed based on hours
+        let indianDay = utcDay;
+        let indianMonth = utcMonth + 1; // Convert 0-indexed month to 1-indexed
+        let indianYear = utcYear;
+
+        if (indianHours >= 24) {
+          indianHours -= 24;
+          indianDay += 1;
+
+          // Handle month/year transitions
+          const lastDayOfMonth = new Date(indianYear, indianMonth - 1, 0).getDate();
+          if (indianDay > lastDayOfMonth) {
+            indianDay = 1;
+            indianMonth += 1;
+
+            if (indianMonth > 12) {
+              indianMonth = 1;
+              indianYear += 1;
+            }
+          }
+        }
+
+        // Format the contribution date as YYYY-MM-DD for comparison
+        const indianDateString = `${indianYear}-${String(indianMonth).padStart(2, '0')}-${String(indianDay).padStart(2, '0')}`;
+
+        // Check if this contribution belongs to the selected month and year
+        if (indianYear === year && String(indianMonth).padStart(2, '0') === monthStr) {
+          // Increment the counter for this date
+          dateContributionsMap[indianDateString] = (dateContributionsMap[indianDateString] || 0) + 1;
+        }
+      } catch (err) {
+        console.error("Error processing timestamp:", item.timestamp, err);
+      }
+    });
+
+    return dateContributionsMap;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -591,7 +686,7 @@ export default function ProfilePage() {
                 </div>
                 <CardDescription>Your coding activity for {selectedYear}</CardDescription>
               </CardHeader>
-              <CardContent>   
+              <CardContent>
                 <div className="overflow-x-auto pb-4">
                   <div className="min-w-[950px]">
                     <div className="flex gap-4">
@@ -600,19 +695,12 @@ export default function ProfilePage() {
                         const firstDayOfMonth = new Date(selectedYear, monthIndex, 1).getDay();
                         const numWeeks = Math.ceil((daysInMonth + firstDayOfMonth) / 7);
                         const monthNames = [
-                          "January",
-                          "February",
-                          "March",
-                          "April",
-                          "May",
-                          "June",
-                          "July",
-                          "August",
-                          "September",
-                          "October",
-                          "November",
-                          "December",
+                          "January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December",
                         ];
+
+                        // Create contributions map for the month using the heatmap data
+                        const dateContributionsMap = createDateContributionsMap(profileUser?.heatmap || [], selectedYear, monthIndex);
 
                         return (
                           <div key={monthIndex} className="flex-none">
@@ -626,36 +714,49 @@ export default function ProfilePage() {
                               }}
                             >
                               {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
+                                // Create date for this calendar cell (using local time)
                                 const date = new Date(selectedYear, monthIndex, dayIndex + 1);
                                 const dayOfWeek = date.getDay();
-                                const dateString = date.toISOString().split("T")[0];
-                                const isSolved = profileUser?.potdSolved?.some((contrib) => {
-                                  try {
-                                    // Make sure we have a valid timestamp
-                                    if (!contrib.timestamp) return false;
-                                    
-                                    const contributionDate = new Date(contrib.timestamp);
-                                    
-                                    // Check if date is valid
-                                    if (isNaN(contributionDate.getTime())) return false;
-                                    
-                                    const contribDate = contributionDate.toISOString().split("T")[0];
-                                    return contribDate === dateString;
-                                  } catch (err) {
-                                    console.error("Invalid date format in contribution:", contrib.timestamp);
-                                    return false;
-                                  }
+
+                                // Format the date as YYYY-MM-DD for comparison
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const dateString = `${selectedYear}-${month}-${day}`;
+
+                                // Get contribution count for this date
+                                const contributionCount = dateContributionsMap[dateString] || 0;
+
+                                // Determine intensity based on count
+                                const getIntensityColor = (count: number) => {
+                                  if (count === 0) return "bg-gray-300";
+                                  if (count === 1) return "bg-green-200";
+                                  if (count <= 3) return "bg-green-300";
+                                  if (count <= 5) return "bg-green-400";
+                                  return "bg-green-500";
+                                };
+
+                                const isSolved = contributionCount > 0;
+                                const today = new Date();
+                                const isToday =
+                                  today.getDate() === date.getDate() &&
+                                  today.getMonth() === date.getMonth() &&
+                                  today.getFullYear() === date.getFullYear();
+
+                                const inStreak = isPartOfStreak({
+                                  monthIndex,
+                                  dayIndex,
+                                  monthContribs: Object.keys(dateContributionsMap)
+                                    .filter(date => date.startsWith(`${selectedYear}-${month}`))
+                                    .map(date => ({ date, count: dateContributionsMap[date] }))
                                 });
-                                const isToday = dateString === new Date().toISOString().split("T")[0];
-                                const inStreak = isPartOfStreak({ monthIndex, dayIndex, monthContribs: contributionsByMonth[monthIndex] });
 
                                 return (
                                   <motion.div
                                     key={dayIndex}
-                                    className={`h-4 w-4 rounded-sm ${isSolved ? "bg-green-500" : "bg-gray-300"} ${isToday ? "ring-2 ring-black dark:ring-white" : ""
+                                    className={`h-4 w-4 rounded-sm ${getIntensityColor(contributionCount)} ${isToday ? "ring-2 ring-black dark:ring-white" : ""
                                       } ${inStreak && isSolved ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
                                     style={{ gridRow: dayOfWeek + 1, gridColumn: Math.floor((dayIndex + firstDayOfMonth) / 7) + 1 }}
-                                    title={`${date.toLocaleDateString()}: ${isSolved ? "Solved" : "Not Solved"}`}
+                                    title={`${date.toLocaleDateString()}: ${contributionCount > 0 ? `${contributionCount} contribution${contributionCount > 1 ? 's' : ''}` : "No contributions"}`}
                                     whileHover={{ scale: 1.5, zIndex: 10 }}
                                     transition={{ duration: 0.2 }}
                                   />
@@ -663,7 +764,7 @@ export default function ProfilePage() {
                               })}
                             </div>
                             <div className="text-xs text-muted-foreground text-center mt-1">
-                              {contributionsByMonth[monthIndex]?.length || 0} contributions
+                              {Object.values(dateContributionsMap).reduce((sum, count) => sum + count, 0)} contributions
                             </div>
                           </div>
                         );
@@ -673,7 +774,10 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-4">
                     <span>Less</span>
                     <div className="h-3 w-3 rounded-sm bg-gray-300"></div>
+                    <div className="h-3 w-3 rounded-sm bg-green-400"></div>
                     <div className="h-3 w-3 rounded-sm bg-green-500"></div>
+                    <div className="h-3 w-3 rounded-sm bg-green-600"></div>
+                    <div className="h-3 w-3 rounded-sm bg-green-700"></div>
                     <span>More</span>
                   </div>
                 </div>

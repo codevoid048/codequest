@@ -17,10 +17,11 @@ import axios from 'axios';
 export const postPotdChallenge = async () => {
   try {
     const today = new Date().toISOString();
+    console.log("today", today);
     const response = await axios.post('http://localhost:5000/api/profile/potd', {
       timestamp: today
     }, {
-      withCredentials: true // Add credentials to request
+      withCredentials: true 
     });
     console.log("posted potd challenge");
     return response.data;
