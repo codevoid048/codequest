@@ -5,8 +5,6 @@ import { User } from "../models/User.js";
 import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "../lib/leetcode.js";
 import { Challenge } from "../models/Challenge.js";
 import { getGFGName } from "../utils/gfgService.js";
-// import { fetchLeetCodeProfile } from "../utils/platforms.js";
-
 export const leetcodeData = async (req, res) => {
   try {
     const username = req.body.username; // Get username from request body
@@ -69,6 +67,7 @@ export const geeksforgeeksData = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+
       const response = await getGFGName(username);
       if (response.error) {
         console.error(`Error fetching GFG data for user ${username}: ${response.error}`);
@@ -228,28 +227,7 @@ export const solvedChallenges = async (req, res) => {
       }
     }
 
-    // Points calculation for Leetcode
-    const solvedProblemsleetcode = await Challenge.find({ _id: { $in: commonChallenges.map(ch => ch._id) } }).populate('difficulty');
-    let easy = 0, medium = 0, hard = 0;
-    for (const problem of solvedProblemsleetcode) {
-      if (problem.difficulty === "Easy") {
-        easy++;
-      } else if (problem.difficulty === "Medium") {
-        medium++;
-      } else if (problem.difficulty === "Hard") {
-        hard++;
-      }
-    }
-
-    const points = easy * 5 + medium * 10 + hard * 20;
-    await User.findByIdAndUpdate(
-      user._id,
-      {
-        $set: {
-          'points': points
-        }
-      }
-    );
+    
 
     // Fetch Codeforces data
     const codeforcesresponse = await fetchCodeforcesProfile(user.codeforces.username);
@@ -296,6 +274,29 @@ export const solvedChallenges = async (req, res) => {
       }
     }
 
+    // Points calculation for Leetcode
+    const solvedChallenges = user.solveChallenges.map(solve => solve.challengeId);
+    const solvedProblemsleetcode = await Challenge.find({ _id: { $in: solvedChallenges } }).populate('difficulty');
+    let easy = 0, medium = 0, hard = 0;
+    for (const problem of solvedProblemsleetcode) {
+      if (problem.difficulty === "Easy") {
+        easy++;
+      } else if (problem.difficulty === "Medium") {
+        medium++;
+      } else if (problem.difficulty === "Hard") {
+        hard++;
+      }
+    }
+
+    const points = easy * 5 + medium * 10 + hard * 20;
+    await User.findByIdAndUpdate(
+      user._id,
+      {
+        $set: {
+          'points': points
+        }
+      }
+    );
     await user.save();
     res.json({ success: true, message: "Data Added Successfully" });
   } catch (error) {

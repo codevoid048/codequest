@@ -46,24 +46,24 @@ interface User {
   streak?: number
 }
 
-interface User {
-  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
-  gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
-  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
-  codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
-  profilePicture?: string
-  name?: string
-  username?: string
-  rank?: number
-  collegeName?: string
-  branch?: string
-  RegistrationNumber?: string
-  otherLinks?: { platform: string; url: string }[]
-  solveChallenges?: Array<unknown>
-  potdSolved?: Array<unknown>
-  points?: number
-  streak?: number
-}
+// interface User {
+//   leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
+//   gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+//   codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
+//   codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+//   profilePicture?: string
+//   name?: string
+//   username?: string
+//   rank?: number
+//   collegeName?: string
+//   branch?: string
+//   RegistrationNumber?: string
+//   otherLinks?: { platform: string; url: string }[]
+//   solveChallenges?: Array<unknown>
+//   potdSolved?: Array<unknown>
+//   points?: number
+//   streak?: number
+// }
 
 interface challenge {
   id: number;
@@ -303,7 +303,7 @@ const Challenges: React.FC = () => {
     const checkIfProblemSolved = async () => {
       try {
         if(dailyProblem?.platform === "LeetCode"){
-        const leetCodeData = await fetchLeetCodeProfile("saiganeshambati");
+        const leetCodeData = await fetchLeetCodeProfile(`${User?.leetCode?.username}`);
         if (leetCodeData?.recentSubmissionList) {
           const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
             const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
@@ -377,20 +377,21 @@ const Challenges: React.FC = () => {
             </Button>
             {/* New components: Streak and POTD Solved */}
             {user ? (
-  <div className="flex items-center gap-4 mx-auto sm:mx-0">
-    {/* Streak with light bulb icon */}
-    <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
-      <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
-      <span className="font-semibold">{user?.streak} day streak</span>
-    </div>
+            <div className="flex items-center gap-4 mx-auto sm:mx-0">
+              {/* Streak with light bulb icon */}
+              <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+                <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
+                <span className="font-semibold">{user?.streak} day streak</span>
+              </div>
 
-    {/* POTD Solved counter */}
-    <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
-      <CheckCircle className="h-5 w-5 text-green-500" />
-      <span className="font-semibold">{user?.potdSolved?.length} solved</span>
-    </div>
-  </div>
-) : null}
+              {/* POTD Solved counter */}
+              <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="font-semibold">{user?.potdSolved?.length} solved</span>
+              </div>
+            </div>
+          ) : null}
+
             <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
               <Clock className="h-5 w-5 mr-2 text-primary" />
               <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">
