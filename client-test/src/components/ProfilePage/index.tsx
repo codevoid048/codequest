@@ -21,8 +21,10 @@ import {
   Trophy,
   Twitter,
 } from "lucide-react"
-import { PlatformManager } from "./platform-manager"
+import { slovedChallenges } from "@/platforms/leetcode"
 import toast from "react-hot-toast"
+import { solvedChallenges } from "@/lib/potdchallenge"
+import { PlatformManager } from "./platform-manager"
 
 export default function ProfilePage() {
   const { username: routeUsername } = useParams()
@@ -43,17 +45,18 @@ export default function ProfilePage() {
     branch?: string
     RegistrationNumber?: string
     otherLinks?: { platform: string; url: string }[]
-    solveChallenges?: Array<unknown>
+    solveChallenges?: { challengeId: string; timestamp: string }[]
     points?: number
     streak?: number
     potdSolved?: { timestamp: string }[]
+    heatmap?: { timestamp: string; _id: string }[]
   }
 
   interface Challenge {
     challengeid: string
     platform: string
     difficulty: string
-    id?: string
+    _id: string
   }
 
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
@@ -61,8 +64,20 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [rating, setRating] = useState([])
-  const isOwnProfile = profileUser?.username === user?.username
+  const [rating, setRating] = useState([]);
+  useEffect(() => {
+    const updatePlatforms = async () => {
+      console.log("updated platforms");
+      await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
+      await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
+      await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
+      await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
+      const response = await axios.get('http://localhost:5000/platforms/solveChallenges', { withCredentials: true });
+      console.log(response.data);
+    }
+    toast.success("Data updated successfully");
+    updatePlatforms();
+  }, [profileUser]);
 
   useEffect(() => {
     const fetchChallenges = async () => {
@@ -98,9 +113,28 @@ export default function ProfilePage() {
         setLoading(false)
       }
     }
-    
+    const fetchChallenges = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/challenges");
+        console.log("Challenges:", response.data)
+        // Ensure challenges data is an array
+        if (Array.isArray(response.data)) {
+          setChallenges(response.data)
+        } else if (response.data && Array.isArray(response.data.challenges)) {
+          // If the API returns {challenges: [...]}
+          setChallenges(response.data.challenges)
+        } else {
+          // If data is not in expected format, set as empty array
+          console.error("Challenges data is not an array:", response.data)
+          setChallenges([])
+        }
+      } catch (err: any) {
+        console.error("Error fetching challenges:", err)
+      }
+    }
     fetchChallenges()
     fetchProfileUser()
+    slovedChallenges();
   }, [routeUsername, user?.username])
 
   // Handle platform verification
@@ -183,34 +217,57 @@ export default function ProfilePage() {
     )
   }
 
-  // Calculate the number of problems solved in each difficulty
+  // Calculate the number of problems solved in each difficulty using the solveChallenges object
   const allSolved = profileUser?.solveChallenges || [];
   let easyCount = 0;
   let mediumCount = 0;
   let hardCount = 0;
-
-  if (Array.isArray(challenges)) {
-    for (let i = 0; i < allSolved.length; i++) {
-      const challenge = challenges.find((challenge) => challenge.challengeid === allSolved[i])
-      if (challenge) {
-        if (challenge.difficulty === "Easy") {
-          easyCount++
-        } else if (challenge.difficulty === "Medium") {
-          mediumCount++
-        } else if (challenge.difficulty === "Hard") {
-          hardCount++
-        }
+  allSolved.forEach((solved) => {
+    const challenge = challenges.find(challenge => challenge._id === solved.challengeId);
+    if (challenge) {
+      if (challenge.difficulty === "Easy") {
+        easyCount += 1;
+      } else if (challenge.difficulty === "Medium") {
+        mediumCount += 1;
+      } else if (challenge.difficulty === "Hard") {
+        hardCount += 1;
       }
     }
-  }
-
-  console.log(easyCount, mediumCount, hardCount)
+  });
   const problemsSolved = {
-    total: allSolved.length,
+    total: allSolved?.length || 0,
     easy: easyCount,
     medium: mediumCount,
     hard: hardCount,
   }
+  console.log(problemsSolved,"problemsSolved");
+
+  const platforms = [
+    {
+      name: "LeetCode",
+      handle: profileUser.leetCode?.username || "-",
+      rating: profileUser.leetCode?.rating || 0,
+      color: "#FFA116",
+    },
+    {
+      name: "GeeksForGeeks",
+      handle: profileUser.gfg?.username || "-",
+      rating: profileUser.gfg?.rating || 0,
+      color: "#2F8D46",
+    },
+    {
+      name: "CodeForces",
+      handle: profileUser.codeforces?.username || "-",
+      rating: profileUser.codeforces?.rating || 0,
+      color: "#318CE7",
+    },
+    {
+      name: "CodeChef",
+      handle: profileUser.codechef?.username || "-",
+      rating: profileUser.codechef?.rating || 0,
+      color: "#745D0B",
+    },
+  ]
 
   interface GetDaysInMonthParams {
     month: number
@@ -289,6 +346,98 @@ export default function ProfilePage() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   }
 
+  // Determine if the logged-in user is viewing their own profile
+  const isOwnProfile = user?.username === routeUsername
+
+  // Find social links from otherLinks array
+  const findSocialLink = (platform: string) => {
+    if (!profileUser.otherLinks) return null
+    const link = profileUser.otherLinks.find((link) => link.platform.toLowerCase() === platform.toLowerCase())
+    return link ? link.url : null
+  }
+
+  const twitterLink = findSocialLink("twitter")
+  const linkedinLink = findSocialLink("linkedin")
+  const githubLink = findSocialLink("github")
+
+  {/* Helper function to create the date-contributions mapping from heatmap data */ }
+  function createDateContributionsMap(heatmap: Array<{ timestamp: string; _id: string }>, year: number, monthIndex: number) {
+    if (!heatmap || !heatmap.length) return {};
+
+    // Create a map of dates to contribution counts
+    const dateContributionsMap: Record<string, number> = {};
+
+    // Format monthIndex to 2-digit string for comparison
+    const monthStr = String(monthIndex + 1).padStart(2, '0');
+
+    heatmap.forEach(item => {
+      try {
+        if (!item.timestamp) return;
+
+        // Convert Unix timestamp (seconds) to milliseconds for Date
+        const timestamp = parseInt(item.timestamp) * 1000;
+        const contributionDate = new Date(timestamp);
+
+        if (isNaN(contributionDate.getTime())) {
+          console.error("Invalid timestamp:", item.timestamp);
+          return;
+        }
+
+        // Convert to Indian timezone (UTC+5:30)
+        // First get the date in UTC
+        const utcYear = contributionDate.getUTCFullYear();
+        const utcMonth = contributionDate.getUTCMonth();
+        const utcDay = contributionDate.getUTCDate();
+        const utcHours = contributionDate.getUTCHours();
+        const utcMinutes = contributionDate.getUTCMinutes();
+
+        // Apply the India timezone offset (+5:30)
+        let indianHours = utcHours + 5;
+        let indianMinutes = utcMinutes + 30;
+
+        // Adjust minutes if they exceed 60
+        if (indianMinutes >= 60) {
+          indianHours += 1;
+          indianMinutes -= 60;
+        }
+
+        // Adjust date if needed based on hours
+        let indianDay = utcDay;
+        let indianMonth = utcMonth + 1; // Convert 0-indexed month to 1-indexed
+        let indianYear = utcYear;
+
+        if (indianHours >= 24) {
+          indianHours -= 24;
+          indianDay += 1;
+
+          // Handle month/year transitions
+          const lastDayOfMonth = new Date(indianYear, indianMonth - 1, 0).getDate();
+          if (indianDay > lastDayOfMonth) {
+            indianDay = 1;
+            indianMonth += 1;
+
+            if (indianMonth > 12) {
+              indianMonth = 1;
+              indianYear += 1;
+            }
+          }
+        }
+
+        // Format the contribution date as YYYY-MM-DD for comparison
+        const indianDateString = `${indianYear}-${String(indianMonth).padStart(2, '0')}-${String(indianDay).padStart(2, '0')}`;
+
+        // Check if this contribution belongs to the selected month and year
+        if (indianYear === year && String(indianMonth).padStart(2, '0') === monthStr) {
+          // Increment the counter for this date
+          dateContributionsMap[indianDateString] = (dateContributionsMap[indianDateString] || 0) + 1;
+        }
+      } catch (err) {
+        console.error("Error processing timestamp:", item.timestamp, err);
+      }
+    });
+
+    return dateContributionsMap;
+  }
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <motion.div
@@ -642,20 +791,12 @@ export default function ProfilePage() {
                         const firstDayOfMonth = new Date(selectedYear, monthIndex, 1).getDay();
                         const numWeeks = Math.ceil((daysInMonth + firstDayOfMonth) / 7);
                         const monthNames = [
-                          "January",
-                          "February",
-                          "March",
-                          "April",
-                          "May",
-                          "June",
-                          "July",
-                          "August",
-                          "September",
-                          "October",
-                          "November",
-                          "December",
+                          "January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December",
                         ];
 
+                        // Create contributions map for the month using the heatmap data
+                        const dateContributionsMap = createDateContributionsMap(profileUser?.heatmap || [], selectedYear, monthIndex);
                         return (
                           <div key={monthIndex} className="flex-none">
                             <div className="text-xs text-muted-foreground text-center mb-2">
@@ -668,36 +809,49 @@ export default function ProfilePage() {
                               }}
                             >
                               {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
+                                // Create date for this calendar cell (using local time)
                                 const date = new Date(selectedYear, monthIndex, dayIndex + 1);
                                 const dayOfWeek = date.getDay();
-                                const dateString = date.toISOString().split("T")[0];
-                                const isSolved = profileUser?.potdSolved?.some((contrib) => {
-                                  try {
-                                    // Make sure we have a valid timestamp
-                                    if (!contrib.timestamp) return false;
-                                    
-                                    const contributionDate = new Date(contrib.timestamp);
-                                    
-                                    // Check if date is valid
-                                    if (isNaN(contributionDate.getTime())) return false;
-                                    
-                                    const contribDate = contributionDate.toISOString().split("T")[0];
-                                    return contribDate === dateString;
-                                  } catch (err) {
-                                    console.error("Invalid date format in contribution:", contrib.timestamp);
-                                    return false;
-                                  }
+
+                                // Format the date as YYYY-MM-DD for comparison
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const dateString = `${selectedYear}-${month}-${day}`;
+
+                                // Get contribution count for this date
+                                const contributionCount = dateContributionsMap[dateString] || 0;
+
+                                // Determine intensity based on count
+                                const getIntensityColor = (count: number) => {
+                                  if (count === 0) return "bg-gray-300";
+                                  if (count === 1) return "bg-green-200";
+                                  if (count <= 3) return "bg-green-300";
+                                  if (count <= 5) return "bg-green-400";
+                                  return "bg-green-500";
+                                };
+
+                                const isSolved = contributionCount > 0;
+                                const today = new Date();
+                                const isToday =
+                                  today.getDate() === date.getDate() &&
+                                  today.getMonth() === date.getMonth() &&
+                                  today.getFullYear() === date.getFullYear();
+
+                                const inStreak = isPartOfStreak({
+                                  monthIndex,
+                                  dayIndex,
+                                  monthContribs: Object.keys(dateContributionsMap)
+                                    .filter(date => date.startsWith(`${selectedYear}-${month}`))
+                                    .map(date => ({ date, count: dateContributionsMap[date] }))
                                 });
-                                const isToday = dateString === new Date().toISOString().split("T")[0];
-                                const inStreak = isPartOfStreak({ monthIndex, dayIndex, monthContribs: contributionsByMonth[monthIndex] });
 
                                 return (
                                   <motion.div
                                     key={dayIndex}
-                                    className={`h-4 w-4 rounded-sm ${isSolved ? "bg-green-500" : "bg-gray-300"} ${isToday ? "ring-2 ring-black dark:ring-white" : ""
+                                    className={`h-4 w-4 rounded-sm ${getIntensityColor(contributionCount)} ${isToday ? "ring-2 ring-black dark:ring-white" : ""
                                       } ${inStreak && isSolved ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
                                     style={{ gridRow: dayOfWeek + 1, gridColumn: Math.floor((dayIndex + firstDayOfMonth) / 7) + 1 }}
-                                    title={`${date.toLocaleDateString()}: ${isSolved ? "Solved" : "Not Solved"}`}
+                                    title={`${date.toLocaleDateString()}: ${contributionCount > 0 ? `${contributionCount} contribution${contributionCount > 1 ? 's' : ''}` : "No contributions"}`}
                                     whileHover={{ scale: 1.5, zIndex: 10 }}
                                     transition={{ duration: 0.2 }}
                                   />
@@ -705,7 +859,7 @@ export default function ProfilePage() {
                               })}
                             </div>
                             <div className="text-xs text-muted-foreground text-center mt-1">
-                              {contributionsByMonth[monthIndex]?.length || 0} contributions
+                              {Object.values(dateContributionsMap).reduce((sum, count) => sum + count, 0)} contributions
                             </div>
                           </div>
                         );
@@ -715,7 +869,10 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-4">
                     <span>Less</span>
                     <div className="h-3 w-3 rounded-sm bg-gray-300"></div>
+                    <div className="h-3 w-3 rounded-sm bg-green-400"></div>
                     <div className="h-3 w-3 rounded-sm bg-green-500"></div>
+                    <div className="h-3 w-3 rounded-sm bg-green-600"></div>
+                    <div className="h-3 w-3 rounded-sm bg-green-700"></div>
                     <span>More</span>
                   </div>
                 </div>

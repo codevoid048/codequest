@@ -16,15 +16,17 @@ import {
   Code,
   Filter,
   Flame,
+  RefreshCw,
   Lightbulb,
   Search,
   Tag,
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
-import { postPotdChallenge, solvedChallenges, streak  } from "@/lib/potdchallenge";
+import { fetchLeetCodeProfile, fetchCodeforcesProfile, slovedChallenges } from "@/platforms/leetcode";
 import { useAuth } from "@/context/AuthContext";
+import toast from "react-hot-toast";
+import { postPotdChallenge, solvedChallenges, streak  } from "@/lib/potdchallenge";
 interface User {
   leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
   gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
@@ -44,24 +46,24 @@ interface User {
   streak?: number
 }
 
-interface User {
-  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
-  gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
-  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
-  codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
-  profilePicture?: string
-  name?: string
-  username?: string
-  rank?: number
-  collegeName?: string
-  branch?: string
-  RegistrationNumber?: string
-  otherLinks?: { platform: string; url: string }[]
-  solveChallenges?: Array<unknown>
-  potdSolved?: Array<unknown>
-  points?: number
-  streak?: number
-}
+// interface User {
+//   leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
+//   gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+//   codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
+//   codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+//   profilePicture?: string
+//   name?: string
+//   username?: string
+//   rank?: number
+//   collegeName?: string
+//   branch?: string
+//   RegistrationNumber?: string
+//   otherLinks?: { platform: string; url: string }[]
+//   solveChallenges?: Array<unknown>
+//   potdSolved?: Array<unknown>
+//   points?: number
+//   streak?: number
+// }
 
 interface challenge {
   id: number;
@@ -292,8 +294,8 @@ const Challenges: React.FC = () => {
       try {
         if(dailyProblem?.platform === "LeetCode"){
         const leetCodeData = await fetchLeetCodeProfile(`${User?.leetCode?.username}`);
-        if (leetCodeData?.recentSubmissions) {
-          const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
+        if (leetCodeData?.recentSubmissionList) {
+          const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
             const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             
@@ -338,6 +340,10 @@ const Challenges: React.FC = () => {
     checkIfProblemSolved();
   }, [dailyProblem]);
 
+  const handleRerender = () => {
+    window.location.reload();
+  };
+
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Problem of the Day Section */}
@@ -352,22 +358,29 @@ const Challenges: React.FC = () => {
                 Daily Challenge
               </h2>
             </div>
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 text-sm py-2 px-4 border-border text-foreground"
+              onClick={handleRerender}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
             {/* New components: Streak and POTD Solved */}
             {user ? (
-  <div className="flex items-center gap-4 mx-auto sm:mx-0">
-    {/* Streak with light bulb icon */}
-    <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
-      <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
-      <span className="font-semibold">{user?.streak} day streak</span>
-    </div>
+            <div className="flex items-center gap-4 mx-auto sm:mx-0">
+              {/* Streak with light bulb icon */}
+              <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+                <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
+                <span className="font-semibold">{user?.streak} day streak</span>
+              </div>
 
-    {/* POTD Solved counter */}
-    <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
-      <CheckCircle className="h-5 w-5 text-green-500" />
-      <span className="font-semibold">{user?.potdSolved?.length} solved</span>
-    </div>
-  </div>
-) : null}
+              {/* POTD Solved counter */}
+              <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="font-semibold">{user?.potdSolved?.length} solved</span>
+              </div>
+            </div>
+          ) : null}
 
             <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
               <Clock className="h-5 w-5 mr-2 text-primary" />
