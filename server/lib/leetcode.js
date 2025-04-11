@@ -1,6 +1,4 @@
 import axios from "axios";
-
-
 export const fetchLeetCodeProfile = async (username) => {
   const query = `
   {
@@ -124,7 +122,4 @@ export const fetchCodeforcesProfile = async (username) => {
     console.error('Error fetching user data:', error);
   }
 };
-
-
-
 

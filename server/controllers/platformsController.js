@@ -4,6 +4,8 @@ import axios from "axios";
 import { User } from "../models/User.js";
 import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "../lib/leetcode.js";
 import { Challenge } from "../models/Challenge.js";
+import { getGFGName } from "../utils/gfgService.js";
+// import { fetchLeetCodeProfile } from "../utils/platforms.js";
 
 export const leetcodeData = async (req, res) => {
   try {
@@ -40,14 +42,14 @@ export const leetcodeData = async (req, res) => {
     const responseData = await response.json();
     const stats = responseData?.data?.matchedUser?.submitStatsGlobal?.acSubmissionNum || [];
     const totalSolved = stats.find((item) => item.difficulty === "All")?.count || 0;
-
-    await User.findByIdAndUpdate(
-      user._id,
-      {
-        $set: {
-          'leetCode.solved': totalSolved,
-          'leetCode.rank': responseData?.data?.matchedUser?.profile?.ranking || -1,
-          'leetCode.rating': Math.floor(responseData?.data?.userContestRanking?.rating) || -1,
+      await User.findByIdAndUpdate(
+        user._id,
+        {
+          $set: {
+            'leetCode.solved': totalSolved,
+            'leetCode.rank': responseData?.data?.matchedUser?.profile?.ranking || -1,
+            'leetCode.rating': Math.floor(responseData?.data?.userContestRanking?.rating) || -1,
+          }
         }
       }
     );
@@ -67,16 +69,23 @@ export const geeksforgeeksData = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+      const response = await getGFGName(username);
+      if (response.error) {
+        console.error(`Error fetching GFG data for user ${username}: ${response.error}`);
+        continue;
+      }
+      const totalSolved = response.total_problems_solved;
+      const instituteRank = response.institute_rank || -1;
+      const rating = response.rating || -1;
 
-    const response = await axios.get(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`);
-    const totalSolved = response.data.data;
-
-    await User.findByIdAndUpdate(
-      user._id,
-      {
-        $set: {
-          'gfg.solved': totalSolved.total_problems_solved,
-          'gfg.rank': totalSolved.institute_rank
+      await User.findByIdAndUpdate(
+        user._id,
+        {
+          $set: {
+            'gfg.solved': totalSolved,
+            'gfg.rank': instituteRank,
+            'gfg.rating': rating
+          }
         }
       }
     );
@@ -159,7 +168,6 @@ export const codechefData = async (req, res) => {
     return res.status(500).json({ error: `Failed to fetch data` });  
   }
 };
-
 
 export const solvedChallenges = async (req, res) => {
   try {

@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import axios from "axios";
 // Define the user type
@@ -16,18 +18,11 @@ interface AuthContextType {
   logout: () => Promise<void>;
   token: string | null;
   fetchUser: () => Promise<void>; // Export fetchUser to allow manual refresh
+  verificationString: string;
+  setVerificationString: (verificationString: string) => void;
 }
 
-// Create the AuthContext with a default undefined value
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
-// export const AuthContext = createContext<AuthContextType>({
-//   user: null,
-//   isAuthenticated: false,
-//   login: async () => {},
-//   logout: async () => {},
-//   token: null,
-//   fetchUser: async () => {},
-// })
 
 // AuthProvider component
 const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -35,6 +30,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+    const [verificationString, setVerificationString] = useState("")
   // Function to fetch user data from the backend
   const fetchUser = async () => {
     try {
@@ -42,14 +38,13 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       //   withCredentials: true 
       // });
       const storedToken = localStorage.getItem("auth_token");
-
-      const res = await axios.get("http://localhost:5000/api/auth/me", {
-        withCredentials: true,
-        headers: { Authorization: `Bearer ${storedToken}` }, // Ensure token is sent
-      });
-
-      console.log("API response:", res.data); // Log full response
-      console.log("Token from API:", res.data.token);
+    const res = await axios.get("http://localhost:5000/api/auth/me", {
+      withCredentials: true,
+      headers: { Authorization: `Bearer ${storedToken}` }, // Ensure token is sent
+    });
+      
+    // console.log("API response:", res.data); // Log full response
+    // console.log("Token from API:", res.data.token);
 
       if (res.data && res.data.user) {
         setUser(res.data.user);
@@ -66,6 +61,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
         console.log("Token set in context:", authToken);
       }
+      console.log("user after login:", user);
     } catch (error) {
       console.error("Authentication check failed:", error);
       setUser(null);
@@ -88,7 +84,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   // Login function
   const login = async () => {
-    await fetchUser(); // Calls fetchUser to update auth state
+    await fetchUser();
   };
 
   // Logout function
@@ -116,6 +112,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     login,
     logout,
     token,
+    verificationString,
+    setVerificationString,
     fetchUser
   };
 

@@ -11,7 +11,4 @@ router.get('/solvedChallenges',protect,solvedChallenges);
 router.post('/leetcode/graphql',fetchLeetCodeGraphql);
 router.post('/heatmap',heatmap);
 
-
-
-
 export default router;

@@ -16,6 +16,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import platformRoute from "./routes/platformsRoute.js";
 import axios from "axios";
 import userRoutes from "./routes/userRoutes.js";
+import typeSenseRoutes from "./routes/typeSenseRoutes.js";
 dotenv.config();
 const app = express();
 
@@ -36,6 +37,7 @@ app.use('/auth/admin', adminAuthRoutes);
 app.use('/admin', adminRoutes);
 app.use('/platforms', platformRoute);
 app.use('/api/user', userRoutes);
+app.use('/api', typeSenseRoutes);
 
 updateRanks();
 

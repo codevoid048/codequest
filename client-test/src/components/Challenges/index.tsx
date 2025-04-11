@@ -17,15 +17,53 @@ import {
   Filter,
   Flame,
   RefreshCw,
+  Lightbulb,
   Search,
   Tag,
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { fetchLeetCodeProfile, fetchCodeforcesProfile, slovedChallenges } from "@/platforms/leetcode";
-import { postPotdChallenge, solvedChallenges } from "@/lib/potdchallenge";
 import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
+import { postPotdChallenge, solvedChallenges, streak  } from "@/lib/potdchallenge";
+interface User {
+  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
+  gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
+  codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+  profilePicture?: string
+  name?: string
+  username?: string
+  rank?: number
+  collegeName?: string
+  branch?: string
+  RegistrationNumber?: string
+  otherLinks?: { platform: string; url: string }[]
+  solveChallenges?: Array<unknown>
+  potdSolved?: Array<unknown>
+  points?: number
+  streak?: number
+}
+
+interface User {
+  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
+  gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
+  codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+  profilePicture?: string
+  name?: string
+  username?: string
+  rank?: number
+  collegeName?: string
+  branch?: string
+  RegistrationNumber?: string
+  otherLinks?: { platform: string; url: string }[]
+  solveChallenges?: Array<unknown>
+  potdSolved?: Array<unknown>
+  points?: number
+  streak?: number
+}
 
 interface challenge {
   id: number;
@@ -69,8 +107,9 @@ const Challenges: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
+  const [User, setUser] = useState<User | null>(null);
   const itemsPerPage = 5;
-
+  const { user } = useAuth() ;
 
 
   function convertTimestampToDate(timestamp: number) {
@@ -110,7 +149,7 @@ const Challenges: React.FC = () => {
     // console.log("user",user);
 
   }, []);
-
+  
   useEffect(() => {
       const updatePlatforms = async () => {
         console.log("updated platforms");
@@ -122,6 +161,24 @@ const Challenges: React.FC = () => {
       toast.success("Data updated successfully");
       updatePlatforms();
   }, []);
+    const fetchUserData = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/profile/getUser", {
+          params: {
+            userId: user?._id, // sending only the userId
+          },
+        });
+        console.log("Complete user data:", res.data);
+        setUser(res.data.user); // or setUserData if you rename the state
+      } catch (error) {
+        console.error("Failed to fetch complete user data", error);
+      }
+    };
+  
+    if (user) {
+      fetchUserData();
+    }
+  }, [user]);
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -242,6 +299,7 @@ const Challenges: React.FC = () => {
   const openProblemLink = (url?: string) => url && window.open(url, "_blank");
 
   useEffect(() => {
+    console.log(User?.leetCode?.username)
     const checkIfProblemSolved = async () => {
       try {
         if(dailyProblem?.platform === "LeetCode"){
@@ -258,19 +316,19 @@ const Challenges: React.FC = () => {
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
-            slovedChallenges();
+            streak();
+            solvedChallenges();
             return;
           }
         }
       }
       else if(dailyProblem?.platform === "Codeforces"){
-        const codeforcesData = await fetchCodeforcesProfile("saiganeshambati000"); 
+        const codeforcesData = await fetchCodeforcesProfile(`${User?.codeforces?.username}`);
         if (codeforcesData?.result) {
           const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string } ;verdict:string}) => {
             const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
   
             const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-            
             return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
               submissionDate === today;
           });
@@ -278,7 +336,8 @@ const Challenges: React.FC = () => {
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge();
-            slovedChallenges();
+            streak();
+            solvedChallenges();
             return;
           }
         }
@@ -316,6 +375,22 @@ const Challenges: React.FC = () => {
             >
               <RefreshCw className="h-4 w-4" />
             </Button>
+            {/* New components: Streak and POTD Solved */}
+            {user ? (
+  <div className="flex items-center gap-4 mx-auto sm:mx-0">
+    {/* Streak with light bulb icon */}
+    <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+      <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
+      <span className="font-semibold">{user?.streak} day streak</span>
+    </div>
+
+    {/* POTD Solved counter */}
+    <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+      <CheckCircle className="h-5 w-5 text-green-500" />
+      <span className="font-semibold">{user?.potdSolved?.length} solved</span>
+    </div>
+  </div>
+) : null}
             <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
               <Clock className="h-5 w-5 mr-2 text-primary" />
               <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">

@@ -1,6 +1,5 @@
 import { User } from "../models/User.js"
 import NodeCache from "node-cache"
-
 const leaderBoardCache = new NodeCache({ stdTTL: 600 });
 
 export const updateRanks = async () => {
@@ -57,3 +56,5 @@ export const getLeaderBoard = async (page = 1, limit = 10) => {
     await updateRanks();
     return getLeaderBoard(page, limit);
 }
+
+

@@ -29,11 +29,10 @@ export default function Leaderboard() {
   const [hoveredUser, setHoveredUser] = useState<number | null>(null);
   const confettiRef = useRef(null);
   const controls = useAnimationControls();
-
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [usernameHovered, setUsernameHovered] = useState<number | null>(null);
-
   // Calculate total pages
   const totalPages = Math.ceil(users.length / USERS_PER_PAGE);
 
@@ -406,7 +405,7 @@ export default function Leaderboard() {
                               : "" // Change text to blue when row is hovered
                           )}
                         >
-                          {user.solveChallenges? user.solveChallenges.length : 0}
+                          {user.solveChallenges? user.solveChallenges.length: 0}
                         </div>
                       </div>
 
