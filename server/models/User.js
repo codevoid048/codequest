@@ -60,12 +60,9 @@ const userSchema = new mongoose.Schema(
     // All challenges solved (non-POTD)
     solveChallenges: [
       {
-        challengeId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Challenge",
-        },
-        timestamp: { type: String },
-      }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Challenge",
+      },
     ],
 
     // POTD solved: store dates (unique per day)
@@ -79,12 +76,6 @@ const userSchema = new mongoose.Schema(
       {
         platform: String, // The name of the social platform, e.g., 'twitter', 'linkedin', 'github'
         url: String, // The URL of the user's profile on that platform
-      },
-    ],
-
-    heatmap: [
-      {
-        timestamp: { type: String },
       },
     ],
   },
