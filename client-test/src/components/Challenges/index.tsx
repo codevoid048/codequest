@@ -112,18 +112,6 @@ const Challenges: React.FC = () => {
   }, []);
 
   useEffect(() => {
-      const updatePlatforms = async () => {
-        console.log("updated platforms");
-        const leetcode = await axios.post('http://localhost:5000/platforms/leetcode',{username:"saiganeshambati"});
-        const codeforces = await axios.post('http://localhost:5000/platforms/codeforces',{username:"saiganeshambati000"});
-        const codechef = await axios.post('http://localhost:5000/platforms/codechef',{username:"saiganesh999"});
-        const gfg = await axios.post('http://localhost:5000/platforms/gfg',{username:"saiganeshafb97"});
-      }
-      toast.success("Data updated successfully");
-      updatePlatforms();
-  }, []);
-
-  useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
       const midnight = new Date(now);

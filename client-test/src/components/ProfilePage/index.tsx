@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { slovedChallenges } from "@/platforms/leetcode"
 import toast from "react-hot-toast"
+import { solvedChallenges } from "@/lib/potdchallenge"
 
 export default function ProfilePage() {
   const { username: routeUsername } = useParams()
@@ -42,7 +43,7 @@ export default function ProfilePage() {
     branch?: string
     RegistrationNumber?: string
     otherLinks?: { platform: string; url: string }[]
-    solveChallenges?: Array<unknown>
+    solveChallenges?: { challengeId: string; timestamp: string }[]
     points?: number
     streak?: number
     potdSolved?: { timestamp: string }[]
@@ -53,6 +54,7 @@ export default function ProfilePage() {
     challengeid: string
     platform: string
     difficulty: string
+    _id: string
   }
 
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
@@ -67,14 +69,16 @@ export default function ProfilePage() {
   useEffect(() => {
     const updatePlatforms = async () => {
       console.log("updated platforms");
-      const leetcode = await axios.post('http://localhost:5000/platforms/leetcode', { username: "saiganeshambati" });
-      const codeforces = await axios.post('http://localhost:5000/platforms/codeforces', { username: "saiganeshambati000" });
-      const codechef = await axios.post('http://localhost:5000/platforms/codechef', { username: "saiganesh999" });
-      const gfg = await axios.post('http://localhost:5000/platforms/gfg', { username: "saiganeshafb97" });
+      await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
+      await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
+      await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
+      await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
+      const response = await axios.get('http://localhost:5000/platforms/solveChallenges', { withCredentials: true });
+      console.log(response.data);
     }
     toast.success("Data updated successfully");
     updatePlatforms();
-  }, []);
+  }, [profileUser]);
 
   // Fetch user details from backend using Axios
   useEffect(() => {
@@ -153,34 +157,30 @@ export default function ProfilePage() {
     )
   }
 
-  // Calculate the number of problems solved in each difficulty
+  // Calculate the number of problems solved in each difficulty using the solveChallenges object
   const allSolved = profileUser?.solveChallenges || [];
   let easyCount = 0;
   let mediumCount = 0;
   let hardCount = 0;
-
-  if (Array.isArray(challenges)) {
-    for (let i = 0; i < allSolved.length; i++) {
-      const challenge = challenges.find((challenge: any) => challenge._id === allSolved[i]);
-      if (challenge) {
-        if (challenge.difficulty === 'Easy') {
-          easyCount++;
-        } else if (challenge.difficulty === 'Medium') {
-          mediumCount++;
-        } else if (challenge.difficulty === 'Hard') {
-          hardCount++;
-        }
+  allSolved.forEach((solved) => {
+    const challenge = challenges.find(challenge => challenge._id === solved.challengeId);
+    if (challenge) {
+      if (challenge.difficulty === "Easy") {
+        easyCount += 1;
+      } else if (challenge.difficulty === "Medium") {
+        mediumCount += 1;
+      } else if (challenge.difficulty === "Hard") {
+        hardCount += 1;
       }
     }
-  }
-
-  console.log(easyCount, mediumCount, hardCount)
+  });
   const problemsSolved = {
     total: allSolved?.length || 0,
     easy: easyCount,
     medium: mediumCount,
     hard: hardCount,
   }
+  console.log(problemsSolved,"problemsSolved");
 
   const platforms = [
     {
