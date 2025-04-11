@@ -8,14 +8,14 @@ export const protect = async (req, res, next) => {
     try {
 
         token = req.cookies.jwt;
-        console.log("Token from cookies:", token);
+        // console.log("Token from cookies:", token);
 
         if (!token) {
             return res.status(401).json({ message: 'No token, authorization denied' });
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log("Decoded token:", decoded.id);
+        // console.log("Decoded token:", decoded.id);
 
         req.user = await User.findById(decoded.id).select('-password');
 

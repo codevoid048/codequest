@@ -24,11 +24,13 @@ import {
 import { slovedChallenges } from "@/platforms/leetcode"
 import toast from "react-hot-toast"
 import { solvedChallenges } from "@/lib/potdchallenge"
+import { PlatformManager } from "./platform-manager"
 
 export default function ProfilePage() {
   const { username: routeUsername } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, verificationString } = useAuth()
+  // const token = localStorage.getItem("token")
 
   interface ProfileUser {
     leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
@@ -63,9 +65,6 @@ export default function ProfilePage() {
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [rating, setRating] = useState([]);
-
-
-  //
   useEffect(() => {
     const updatePlatforms = async () => {
       console.log("updated platforms");
@@ -80,13 +79,28 @@ export default function ProfilePage() {
     updatePlatforms();
   }, [profileUser]);
 
-  // Fetch user details from backend using Axios
   useEffect(() => {
-    const fetchProfileUser = async () => {
-      setLoading(true)
-      setError(null)
+    const fetchChallenges = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/challenges")
+        console.log("Challenges:", response.data)
+        if (Array.isArray(response.data)) {
+          setChallenges(response.data)
+        } else if (response.data && Array.isArray(response.data.challenges)) {
+          setChallenges(response.data.challenges)
+        } else {
+          console.error("Challenges data is not an array:", response.data)
+          setChallenges([])
+        }
+      } catch (err) {
+        console.error("Error fetching challenges:", err)
+      }
+    }
 
-      const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
+  const fetchProfileUser = async () => {
+    setLoading(true)
+    setError(null)
+    const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
 
       try {
         const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
@@ -123,6 +137,52 @@ export default function ProfilePage() {
     slovedChallenges();
   }, [routeUsername, user?.username])
 
+  // Handle platform verification
+  const handleVerifyPlatform = async (platform: string, username: string): Promise<boolean> => {
+    console.log("Verifying platform:", platform, username, verificationString, user?._id);
+    if (!verificationString) {
+      console.warn("Verification string is undefined or empty.");
+    }
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/verifyacc",
+        {
+          platform,
+          username,
+          verificationString,
+          userId: user?._id,
+        },
+        { withCredentials: true }
+      );
+
+      if (response.status === 200) {
+        toast.success(response.data.message);
+        // Update the local state with the new platform data
+        setProfileUser((prev) => {
+          if (!prev) return prev;
+
+          return {
+            ...prev,
+            [platform]: {
+              username,
+              solved: response.data.platformData?.solved || prev[platform]?.solved,
+              rank: response.data.platformData?.rank || prev[platform]?.rank,
+              rating: response.data.platformData?.rating || prev[platform]?.rating,
+            },
+          };
+        });
+      } else {
+        const errorMessage = (response.data as { error?: string })?.error;
+        toast.error(errorMessage || "An unexpected error occurred.");
+      }
+
+      return true;
+    } catch (error: any) {
+      console.error("Error verifying platform:", error.response?.data?.message || error.message);
+      toast.error("Verification failed, try again");
+      return false;
+    }
+  };
 
   // Handle loading and error states
   if (loading) {
@@ -378,7 +438,6 @@ export default function ProfilePage() {
 
     return dateContributionsMap;
   }
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <motion.div
@@ -434,21 +493,21 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="mt-6 flex justify-center gap-3">
-                  {twitterLink && (
+                  {profileUser.otherLinks?.find((link) => link.platform === "Twitter")?.url && (
                     <Button variant="outline" size="icon" className="rounded-full" asChild>
                       <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
                         <Twitter className="h-4 w-4 text-sky-500" />
                       </Link>
                     </Button>
                   )}
-                  {linkedinLink && (
+                  {profileUser.otherLinks?.find((link) => link.platform === "LinkedIn")?.url && (
                     <Button variant="outline" size="icon" className="rounded-full" asChild>
                       <Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
                         <Linkedin className="h-4 w-4 text-blue-600" />
                       </Link>
                     </Button>
                   )}
-                  {githubLink && (
+                  {profileUser.otherLinks?.find((link) => link.platform === "GitHub")?.url && (
                     <Button variant="outline" size="icon" className="rounded-full" asChild>
                       <Link to={githubLink} target="_blank" rel="noopener noreferrer">
                         <Github className="h-4 w-4" />
@@ -473,37 +532,74 @@ export default function ProfilePage() {
 
           {/* Coding Platforms */}
           <motion.div variants={cardVariants} className="mt-6">
-            <Card className="shadow-lg border-0">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center text-lg">
-                  <Github className="mr-2 h-5 w-5 text-gray-500" /> Coding Platforms
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {platforms.map((platform) => (
-                  <motion.div
-                    key={platform.name}
-                    whileHover={{ scale: 1.02 }}
-                    className="border-l-4 rounded-lg shadow-sm p-3"
-                    style={{ borderLeftColor: platform.color }}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium">{platform.name}</div>
-                        <div className="text-sm text-muted-foreground">@{platform.handle}</div>
+            {isOwnProfile ? (
+              <PlatformManager
+                userPlatforms={{
+                  leetCode: profileUser.leetCode,
+                  gfg: profileUser.gfg,
+                  codeforces: profileUser.codeforces,
+                  codechef: profileUser.codechef,
+                }}
+                onVerifyPlatform={handleVerifyPlatform}
+              />
+            ) : (
+              <Card className="shadow-lg border-0">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center text-lg">
+                    <Github className="mr-2 h-5 w-5 text-gray-500" /> Coding Platforms
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[
+                    {
+                      name: "LeetCode",
+                      handle: profileUser.leetCode?.username || "-",
+                      rating: profileUser.leetCode?.rating || 0,
+                      color: "#FFA116",
+                    },
+                    {
+                      name: "GeeksForGeeks",
+                      handle: profileUser.gfg?.username || "-",
+                      rating: profileUser.gfg?.rating || 0,
+                      color: "#2F8D46",
+                    },
+                    {
+                      name: "CodeForces",
+                      handle: profileUser.codeforces?.username || "-",
+                      rating: profileUser.codeforces?.rating || 0,
+                      color: "#318CE7",
+                    },
+                    {
+                      name: "CodeChef",
+                      handle: profileUser.codechef?.username || "-",
+                      rating: profileUser.codechef?.rating || 0,
+                      color: "#745D0B",
+                    },
+                  ].map((platform) => (
+                    <motion.div
+                      key={platform.name}
+                      whileHover={{ scale: 1.02 }}
+                      className="border-l-4 rounded-lg shadow-sm p-3"
+                      style={{ borderLeftColor: platform.color }}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">{platform.name}</div>
+                          <div className="text-sm text-muted-foreground">@{platform.handle}</div>
+                        </div>
+                        <div className="text-lg font-bold" style={{ color: platform.color }}>
+                          {platform.rating}
+                        </div>
                       </div>
-                      <div className="text-lg font-bold" style={{ color: platform.color }}>
-                        {platform.rating}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </CardContent>
-            </Card>
+                    </motion.div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </motion.div>
         </motion.div>
 
-        {/* Main Content */}
+        {/* Main Content - Keeping the rest of the component unchanged */}
         <motion.div className="lg:col-span-3" variants={cardVariants}>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -686,7 +782,7 @@ export default function ProfilePage() {
                 </div>
                 <CardDescription>Your coding activity for {selectedYear}</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent>   
                 <div className="overflow-x-auto pb-4">
                   <div className="min-w-[950px]">
                     <div className="flex gap-4">
@@ -701,7 +797,6 @@ export default function ProfilePage() {
 
                         // Create contributions map for the month using the heatmap data
                         const dateContributionsMap = createDateContributionsMap(profileUser?.heatmap || [], selectedYear, monthIndex);
-
                         return (
                           <div key={monthIndex} className="flex-none">
                             <div className="text-xs text-muted-foreground text-center mb-2">

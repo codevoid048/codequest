@@ -33,10 +33,10 @@ export const addChallenge = async (req, res) => {
             difficulty,
             points,
             problemLink,
-            createdAt: new Date(createdAt),
+            createdAt: createdAt ? new Date(createdAt) : new Date(), // Use current date if not provided
             platform
         });
-
+        
         const result = await newChallenge.save();
 
         return res.status(201).json({
@@ -49,5 +49,4 @@ export const addChallenge = async (req, res) => {
         console.error(error);
         res.status(500).json({ success: false, message: "Server error" });
     }
-
 };
