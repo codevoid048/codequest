@@ -16,15 +16,17 @@ import {
   Code,
   Filter,
   Flame,
+  RefreshCw,
   Lightbulb,
   Search,
   Tag,
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
-import { postPotdChallenge, solvedChallenges, streak  } from "@/lib/potdchallenge";
+import { fetchLeetCodeProfile, fetchCodeforcesProfile, slovedChallenges } from "@/platforms/leetcode";
 import { useAuth } from "@/context/AuthContext";
+import toast from "react-hot-toast";
+import { postPotdChallenge, solvedChallenges, streak  } from "@/lib/potdchallenge";
 interface User {
   leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
   gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
@@ -149,6 +151,16 @@ const Challenges: React.FC = () => {
   }, []);
   
   useEffect(() => {
+      const updatePlatforms = async () => {
+        console.log("updated platforms");
+        const leetcode = await axios.post('http://localhost:5000/platforms/leetcode',{username:"saiganeshambati"});
+        const codeforces = await axios.post('http://localhost:5000/platforms/codeforces',{username:"saiganeshambati000"});
+        const codechef = await axios.post('http://localhost:5000/platforms/codechef',{username:"saiganesh999"});
+        const gfg = await axios.post('http://localhost:5000/platforms/gfg',{username:"saiganeshafb97"});
+      }
+      toast.success("Data updated successfully");
+      updatePlatforms();
+  }, []);
     const fetchUserData = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/profile/getUser", {
@@ -291,9 +303,9 @@ const Challenges: React.FC = () => {
     const checkIfProblemSolved = async () => {
       try {
         if(dailyProblem?.platform === "LeetCode"){
-        const leetCodeData = await fetchLeetCodeProfile(`${User?.leetCode?.username}`);
-        if (leetCodeData?.recentSubmissions) {
-          const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
+        const leetCodeData = await fetchLeetCodeProfile("saiganeshambati");
+        if (leetCodeData?.recentSubmissionList) {
+          const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
             const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             
@@ -338,6 +350,10 @@ const Challenges: React.FC = () => {
     checkIfProblemSolved();
   }, [dailyProblem]);
 
+  const handleRerender = () => {
+    window.location.reload();
+  };
+
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Problem of the Day Section */}
@@ -352,6 +368,13 @@ const Challenges: React.FC = () => {
                 Daily Challenge
               </h2>
             </div>
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 text-sm py-2 px-4 border-border text-foreground"
+              onClick={handleRerender}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
             {/* New components: Streak and POTD Solved */}
             {user ? (
   <div className="flex items-center gap-4 mx-auto sm:mx-0">
@@ -368,7 +391,6 @@ const Challenges: React.FC = () => {
     </div>
   </div>
 ) : null}
-
             <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary dark:bg-muted px-3 py-2 rounded-lg">
               <Clock className="h-5 w-5 mr-2 text-primary" />
               <span className="bg-card text-foreground px-3 py-1 rounded shadow-sm">

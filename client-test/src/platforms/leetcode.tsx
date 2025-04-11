@@ -401,7 +401,27 @@ import axios from "axios";
 
 
 
+ export const fetchLeetCodeProfile = async (username: string) => {
+  try {
+    console.log("username",username);
+    const response = await axios.post('http://localhost:5000/platforms/leetcode/graphql', { username });
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching LeetCode data:', error);
+    return null;
+  }
+ };
 
- 
- 
- 
+  export const slovedChallenges = async () => {
+  try {
+      const response = await axios.get(`http://localhost:5000/platforms/solvedChallenges`, {
+        withCredentials: true
+      });
+      console.log("response",response.data);
+      return response.data;
+  } catch (error) {
+      console.error("Error fetching LeetCode data:", error);
+  }
+};
+
