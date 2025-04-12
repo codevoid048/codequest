@@ -20,20 +20,23 @@ import {
   Flame,
   Search,
   Tag,
-} from "lucide-react"
-import type React from "react"
-import { useEffect, useMemo, useState } from "react"
+} from "lucide-react";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { fetchLeetCodeProfile, fetchCodeforcesProfile } from "@/platforms/leetcode";
+import { postPotdChallenge } from "@/lib/potdchallenge";
+import { useAuth } from "@/context/AuthContext";
 
 interface challenge {
-  id: number
-  date: string
-  title: string
-  categories: string[]
-  difficulty: "Easy" | "Medium" | "Hard"
-  platform: "LeetCode" | "GFG" | "CodeChef"
-  status: "Solved" | "Unsolved"
-  description: string
-  problemUrl?: string
+  id: number;
+  date: string;
+  title: string;
+  categories: string[];
+  difficulty: "Easy" | "Medium" | "Hard";
+  platform: "LeetCode" | "GFG" | "CodeChef" | "Codeforces";
+  status: "Solved" | "Unsolved";
+  description: string;
+  problemUrl?: string;
 }
 
 interface ProblemStatusProps {
@@ -46,26 +49,34 @@ interface ProblemStatusProps {
   viewSolution: (id: string) => void
 }
 
+// const { user } = useAuth();
+
+
+
+
 type FilterTab = "all" | "solved" | "unsolved"
 type SortOption = "date" | "difficulty" | "status"
 
 const Challenges: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<FilterTab>("all")
-  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([])
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" })
-  const [problemsList, setProblemsList] = useState<challenge[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [sortOption, setSortOption] = useState<SortOption>("date")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const itemsPerPage = 5
+  const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" });
+  const [problemsList, setProblemsList] = useState<challenge[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOption, setSortOption] = useState<SortOption>("date");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSolved, setIsSolved] = useState(false);
+  const itemsPerPage = 5;
 
-  // Partial rendering states
-  const { isReady: dailyChallengeReady } = usePartialRendering(200)
-  const { isReady: filtersReady } = usePartialRendering(400)
-  const { isReady: problemsListReady } = usePartialRendering(600)
+
+
+  function convertTimestampToDate(timestamp: number) {
+    const date = new Date(timestamp * 1000); 
+    return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
+}
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -86,17 +97,30 @@ const Challenges: React.FC = () => {
             status: "Unsolved",
             description: challenge.description,
             problemUrl: challenge.problemLink,
-          }))
-          setProblemsList(data)
-          setIsLoading(false)
+          }));
+          setProblemsList(data);
+          // console.log("Problems List:", problemsList);
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Failed to fetch problems", error)
         setIsLoading(false)
       }
-    }
-    fetchProblems()
-  }, [])
+    };
+    fetchProblems();
+    // console.log("user",user);
+
+  }, []);
+
+  useEffect(() => {
+    fetchLeetCodeProfile("saiganeshambati").then((res) => {
+      // console.log(res);
+    });
+    fetchCodeforcesProfile("code__void").then((res) => {
+      // console.log(res);
+    });
+    
+  }, []);
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -119,17 +143,21 @@ const Challenges: React.FC = () => {
   }, [])
 
   const dailyProblem = useMemo(() => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0) // Normalize time to midnight
+    if (problemsList.length === 0) return null; // Handle empty list
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize time to midnight
+  
     const todayProblem = problemsList.find((problem) => {
       const problemDate = new Date(problem.date)
       problemDate.setHours(0, 0, 0, 0)
       return problemDate.getTime() === today.getTime()
     })
 
-    return todayProblem || problemsList[0] // Default to first problem if no match found
-  }, [problemsList])
+    return todayProblem || problemsList[0]; // Default to first problem if no match found
+  }, [problemsList]);
+
+  // console.log("dailyProblem",dailyProblem);
 
   const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList])
   const difficultyLevels = ["Easy", "Medium", "Hard"]
@@ -210,11 +238,78 @@ const Challenges: React.FC = () => {
     )
   }
 
-  const openProblemLink = (url?: string) => url && window.open(url, "_blank")
+  const openProblemLink = (url?: string) => url && window.open(url, "_blank");
 
-  if (isLoading) {
-    return <ChallengesSkeleton />
-  }
+  useEffect(() => {
+    const checkIfProblemSolved = async () => {
+      try {
+        if(dailyProblem?.platform === "LeetCode"){
+        const leetCodeData = await fetchLeetCodeProfile("saiganeshambati");
+        if (leetCodeData?.recentSubmissions) {
+          const solvedProblem = leetCodeData.recentSubmissions.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
+            const submissionDate = new Date(parseInt(submission.timestamp) * 1000);
+            const today = new Date();
+            const submissionUTC = new Date(Date.UTC(
+              submissionDate.getUTCFullYear(),
+              submissionDate.getUTCMonth(), 
+              submissionDate.getUTCDate()
+            ));
+            
+            const todayUTC = new Date(Date.UTC(
+              today.getUTCFullYear(),
+              today.getUTCMonth(),
+              today.getUTCDate()
+            ));
+            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && 
+            submissionUTC.getTime() === todayUTC.getTime();
+          });
+
+          
+          if (solvedProblem) {
+            setIsSolved(true);
+            postPotdChallenge();
+            return;
+          }
+        }
+      }
+      else if(dailyProblem?.platform === "Codeforces"){
+        const codeforcesData = await fetchCodeforcesProfile("saiganeshambati000"); 
+        if (codeforcesData?.result) {
+          const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string } ;verdict:string}) => {
+            const submissionDate = new Date(submission.creationTimeSeconds * 1000);
+            const today = new Date();
+            
+            // Convert both dates to UTC to avoid timezone issues
+            const submissionUTC = new Date(Date.UTC(
+              submissionDate.getUTCFullYear(),
+              submissionDate.getUTCMonth(), 
+              submissionDate.getUTCDate()
+            ));
+            
+            const todayUTC = new Date(Date.UTC(
+              today.getUTCFullYear(),
+              today.getUTCMonth(),
+              today.getUTCDate()
+            ));
+            
+            return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
+              submissionUTC.getTime() === todayUTC.getTime();
+          });
+
+          if (solvedProblem) {
+            setIsSolved(true);
+            postPotdChallenge();
+            return;
+          }
+        }
+      }
+      } catch (error) {
+        console.error("Error checking problem status:", error);
+      }
+    };
+
+    checkIfProblemSolved();
+  }, [dailyProblem]);
 
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
@@ -265,20 +360,26 @@ const Challenges: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex flex-col gap-4 justify-center">
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
-                      Solve Now
-                    </Button>
+                    {isSolved ? (
+                      <Button className="bg-green-600 hover:bg-green-700 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
+                        Solved
+                      </Button>
+                    ) : (
+                      <Button className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6">
+                        Solve Now
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-4 text-sm">
-                  <span
+                  {/* <span
                     className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${getDifficultyStyle(
                       dailyProblem?.difficulty,
                     )}`}
                   >
                     {getDifficultyIcon(dailyProblem?.difficulty)}
                     {dailyProblem?.difficulty}
-                  </span>
+                  </span> */}
                   <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-3 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
                     <Code className="h-4 w-4 text-primary" />
                     {dailyProblem?.platform}
@@ -534,61 +635,57 @@ const Challenges: React.FC = () => {
                           </div>
                         </div>
 
-                        <ProblemStatus
-                          problem={{
-                            id: problem.id,
-                            status: problem.status as "Solved" | "Unsolved",
-                            createdAt: new Date(problem.date),
-                          }}
-                          markSolved={markSolved}
-                          viewSolution={(id) => {
-                            // Implement your view solution logic
-                            console.log(`Viewing solution for problem ${id}`)
-                          }}
-                        />
+                          <ProblemStatus
+                            problem={{
+                              id: problem.id,
+                              status: problem.status as "Solved" | "Unsolved",
+                              createdAt: new Date(problem.date)
+                            }}
+                            markSolved={markSolved}
+                            viewSolution={(id) => {
+                              // Implement your view solution logic
+                              // console.log(`Viewing solution for problem ${id}`);
+                            }}
+                          />
+
+                          {/* <div className="flex flex-col gap-2 self-start sm:self-center min-w-[100px]">
+                            {problem.status === "Solved" ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-emerald-900/5 dark:bg-emerald-100 text-emerald-400 dark:text-emerald-800 text-xs py-1 px-2 w-full text-center flex items-center justify-center border-emerald-200 dark:border-emerald-800"
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" /> Solved
+                              </Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs py-1 px-2 w-full border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markSolved(problem.id);
+                                }}
+                              >
+                                Mark Solved
+                              </Button>
+                            )}
+                          </div> */}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <Card className="shadow-lg border-0 bg-card">
+                    <CardContent className="p-12 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <Search className="h-12 w-12 text-muted-foreground" />
+                        <p className="text-muted-foreground text-lg">No problems found</p>
+                        <p className="text-muted-foreground text-sm">Try adjusting your filters</p>
                       </div>
                     </CardContent>
                   </Card>
-                ))
-              ) : (
-                <Card className="shadow-lg border-0 bg-card">
-                  <CardContent className="p-12 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <Search className="h-12 w-12 text-muted-foreground" />
-                      <p className="text-muted-foreground text-lg">No problems found</p>
-                      <p className="text-muted-foreground text-sm">Try adjusting your filters</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Card key={i} className="border-1 bg-card overflow-hidden">
-                  <CardContent>
-                    <div className="flex flex-col sm:flex-row justify-between gap-6">
-                      <div className="space-y-2 flex-1">
-                        <div className="h-4 w-24 bg-muted animate-pulse rounded"></div>
-                        <div className="h-6 w-full max-w-md bg-muted animate-pulse rounded"></div>
-                        <div className="h-4 w-full bg-muted animate-pulse rounded"></div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {Array.from({ length: 3 }).map((_, j) => (
-                            <div key={j} className="h-5 w-16 bg-muted animate-pulse rounded"></div>
-                          ))}
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                          <div className="h-6 w-20 bg-muted animate-pulse rounded-full"></div>
-                          <div className="h-6 w-24 bg-muted animate-pulse rounded-full"></div>
-                        </div>
-                      </div>
-                      <div className="h-10 w-24 bg-muted animate-pulse rounded self-start sm:self-center"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                )}
+              </div>
 
           {/* Pagination Controls */}
           {totalPages > 1 && (

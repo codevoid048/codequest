@@ -28,8 +28,26 @@ export default function ProfilePage() {
   const { username: routeUsername } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { username: routeUsername } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
 
   interface ProfileUser {
+    leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
+    gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+    codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
+    codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+    profilePicture?: string
+    name?: string
+    username?: string
+    rank?: number
+    collegeName?: string
+    branch?: string
+    RegistrationNumber?: string
+    otherLinks?: { platform: string; url: string }[]
+    solveChallenges?: Array<unknown>
+    points?: number
+    streak?: number
     leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
     gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
     codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
@@ -63,7 +81,10 @@ export default function ProfilePage() {
     const fetchProfileUser = async () => {
       setLoading(true)
       setError(null)
+      setLoading(true)
+      setError(null)
 
+      const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
       const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
 
       try {
@@ -73,11 +94,21 @@ export default function ProfilePage() {
       } catch (err: any) {
         console.error("Error fetching user:", err)
         setError(err.response?.data?.message || "User not found")
+        const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
+        console.log("Fetched user data:", response.data)
+        setProfileUser(response.data.user)
+      } catch (err: any) {
+        console.error("Error fetching user:", err)
+        setError(err.response?.data?.message || "User not found")
       } finally {
+        setLoading(false)
         setLoading(false)
       }
     }
+    }
 
+    fetchProfileUser()
+  }, [routeUsername, user?.username])
     fetchProfileUser()
   }, [routeUsername, user?.username])
 
@@ -96,9 +127,27 @@ export default function ProfilePage() {
         </Button>
       </div>
     )
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="text-2xl font-bold text-red-500 mb-2">Error</div>
+        <div className="text-muted-foreground text-center">{error}</div>
+        <Button className="mt-4" onClick={() => navigate("/")}>
+          Go Home
+        </Button>
+      </div>
+    )
   }
 
   if (!profileUser) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="text-2xl font-bold mb-2">No User Data</div>
+        <div className="text-muted-foreground text-center">No user data available</div>
+        <Button className="mt-4" onClick={() => navigate("/")}>
+          Go Home
+        </Button>
+      </div>
+    )
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <div className="text-2xl font-bold mb-2">No User Data</div>
@@ -144,16 +193,47 @@ export default function ProfilePage() {
       color: "#745D0B",
     },
   ]
+    {
+      name: "LeetCode",
+      handle: profileUser.leetCode?.username || "-",
+      rating: profileUser.leetCode?.rating || 0,
+      color: "#FFA116",
+    },
+    {
+      name: "GeeksForGeeks",
+      handle: profileUser.gfg?.username || "-",
+      rating: profileUser.gfg?.rating || 0,
+      color: "#2F8D46",
+    },
+    {
+      name: "CodeForces",
+      handle: profileUser.codeforces?.username || "-",
+      rating: profileUser.codeforces?.rating || 0,
+      color: "#318CE7",
+    },
+    {
+      name: "CodeChef",
+      handle: profileUser.codechef?.username || "-",
+      rating: profileUser.codechef?.rating || 0,
+      color: "#745D0B",
+    },
+  ]
 
   interface GetDaysInMonthParams {
+    month: number
+    year: number
     month: number
     year: number
   }
 
   const getDaysInMonth = (month: GetDaysInMonthParams["month"], year: GetDaysInMonthParams["year"]): number =>
     new Date(year, month + 1, 0).getDate()
+  const getDaysInMonth = (month: GetDaysInMonthParams["month"], year: GetDaysInMonthParams["year"]): number =>
+    new Date(year, month + 1, 0).getDate()
 
   interface Contribution {
+    date: string
+    count: number
     date: string
     count: number
   }
@@ -162,27 +242,47 @@ export default function ProfilePage() {
     const contributions: Contribution[] = []
     const startDate = new Date(year, 0, 1)
     const endDate = new Date(year, 11, 31)
+    const contributions: Contribution[] = []
+    const startDate = new Date(year, 0, 1)
+    const endDate = new Date(year, 11, 31)
     for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+      const count = Math.random() > 0.6 ? Math.floor(Math.random() * 10) : 0
+      contributions.push({ date: date.toISOString().split("T")[0], count })
       const count = Math.random() > 0.6 ? Math.floor(Math.random() * 10) : 0
       contributions.push({ date: date.toISOString().split("T")[0], count })
     }
     return contributions
   }
+    return contributions
+  }
 
+  const contributions = generateContributions(selectedYear)
   const contributions = generateContributions(selectedYear)
 
   const contributionsByMonth = Array.from({ length: 12 }, (_, month) => {
+    const daysInMonth = getDaysInMonth(month, selectedYear)
     const daysInMonth = getDaysInMonth(month, selectedYear)
     return contributions
       .filter((contrib) => {
         const contribDate = new Date(contrib.date)
         return contribDate.getMonth() === month && contribDate.getFullYear() === selectedYear
+        const contribDate = new Date(contrib.date)
+        return contribDate.getMonth() === month && contribDate.getFullYear() === selectedYear
       })
+      .slice(0, daysInMonth)
+  })
       .slice(0, daysInMonth)
   })
 
   const yearOptions = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2]
+  const yearOptions = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2]
 
+  const getColor = (count: number): string => {
+    if (count === 0) return "bg-gray-300"
+    if (count <= 3) return "bg-green-200"
+    if (count <= 6) return "bg-green-400"
+    return "bg-green-500"
+  }
   const getColor = (count: number): string => {
     if (count === 0) return "bg-gray-300"
     if (count <= 3) return "bg-green-200"
@@ -194,9 +294,16 @@ export default function ProfilePage() {
     monthIndex: number
     dayIndex: number
     monthContribs: Contribution[]
+    monthIndex: number
+    dayIndex: number
+    monthContribs: Contribution[]
   }
 
   const isPartOfStreak = ({ monthIndex, dayIndex, monthContribs }: StreakParams): boolean => {
+    const currentDate = new Date(selectedYear, monthIndex, dayIndex + 1)
+    const currentContrib = monthContribs.find((c) => c.date === currentDate.toISOString().split("T")[0])
+    const currentCount = currentContrib ? currentContrib.count : 0
+    if (currentCount === 0) return false
     const currentDate = new Date(selectedYear, monthIndex, dayIndex + 1)
     const currentContrib = monthContribs.find((c) => c.date === currentDate.toISOString().split("T")[0])
     const currentCount = currentContrib ? currentContrib.count : 0
@@ -208,7 +315,15 @@ export default function ProfilePage() {
     const nextDate = new Date(currentDate)
     nextDate.setDate(nextDate.getDate() + 1)
     const nextContrib = contributions.find((c) => c.date === nextDate.toISOString().split("T")[0])
+    const prevDate = new Date(currentDate)
+    prevDate.setDate(prevDate.getDate() - 1)
+    const prevContrib = contributions.find((c) => c.date === prevDate.toISOString().split("T")[0])
+    const nextDate = new Date(currentDate)
+    nextDate.setDate(nextDate.getDate() + 1)
+    const nextContrib = contributions.find((c) => c.date === nextDate.toISOString().split("T")[0])
 
+    return (prevContrib?.count ?? 0) > 0 || (nextContrib?.count ?? 0) > 0
+  }
     return (prevContrib?.count ?? 0) > 0 || (nextContrib?.count ?? 0) > 0
   }
 
@@ -216,8 +331,13 @@ export default function ProfilePage() {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
   }
+    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
+  }
 
   const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  }
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   }
@@ -235,10 +355,24 @@ export default function ProfilePage() {
   const twitterLink = findSocialLink("twitter")
   const linkedinLink = findSocialLink("linkedin")
   const githubLink = findSocialLink("github")
+  const isOwnProfile = user?.username === routeUsername
+
+  // Find social links from otherLinks array
+  const findSocialLink = (platform: string) => {
+    if (!profileUser.otherLinks) return null
+    const link = profileUser.otherLinks.find((link) => link.platform.toLowerCase() === platform.toLowerCase())
+    return link ? link.url : null
+  }
+
+  const twitterLink = findSocialLink("twitter")
+  const linkedinLink = findSocialLink("linkedin")
+  const githubLink = findSocialLink("github")
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <motion.div
+        className="grid grid-cols-1 lg:grid-cols-4 gap-6"
         className="grid grid-cols-1 lg:grid-cols-4 gap-6"
         variants={containerVariants}
         initial="hidden"
@@ -658,7 +792,11 @@ export default function ProfilePage() {
           </motion.div>
         </motion.div>
       </motion.div>
+      <RatingChart ratingData={rating} />
     </div>
   )
+  )
 }
+
+
 
