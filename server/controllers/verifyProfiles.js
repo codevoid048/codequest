@@ -5,7 +5,6 @@ import { User } from '../models/User.js';
 export const verifyProfiles = async (req, res) => {
     try {
         const { platform, username, verificationString, userId } = req.body;
-        //console.log('Received data:', { platform, username, verificationString, userId });
         if (!platform || !username || !userId || !verificationString) {
             return res.status(400).json({ error: 'Platform, username, userId, and verificationString are required' });
         }
@@ -13,21 +12,18 @@ export const verifyProfiles = async (req, res) => {
         const normalizedPlatform = platform.trim().toLowerCase();
 
         if (normalizedPlatform === 'gfg') {
-            const response = await axios.get(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`);
-            
+            //const response = await axios.get(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`);
+            const response = await getGFGName(username);
             if (response.data.message === 'User not found!') {
                 return res.status(400).json({ error: 'User not found on GFG' });
             }
     
-            const profile = response.data.data;
+            const { name, total_problems_solved, institute_rank, rating } = response;
     
-            if (!profile || !profile.name) {
+            if (!name) {
                 return res.status(400).json({ error: 'Name not found in GFG profile' });
             }
-    
-            //console.log("GFG Name:", profile.name, "Expected:", verificationString);
-    
-            if (profile.name.trim() !== verificationString.trim()) {
+            if (name.trim() !== verificationString.trim()) {
                 return res.status(400).json({ error: 'Verification string does not match' });
             }
     
@@ -36,7 +32,7 @@ export const verifyProfiles = async (req, res) => {
                 return res.status(404).json({ error: 'User not found' });
             }
     
-            await user.updateOne({ $set: { 'gfg.username': username } });
+            await user.updateOne({ $set: { 'gfg.username': username, 'gfg.solved': total_problems_solved, 'gfg.rating': rating } });
             return res.status(200).json({ message: 'GFG Profile verified successfully' });
         }
         else if (normalizedPlatform === 'codeforces') {
@@ -49,17 +45,38 @@ export const verifyProfiles = async (req, res) => {
             if (name.trim() !== verificationString.trim()) {
                 return res.status(400).json({ error: 'Verification string does not match' });
             }
+            const rating = response.data.result[0].rating || 0;
+            const rank = response.data.result[0].rank || 0;
             const user = await User.findById(userId);
+            console.log("codeforce data:", username, rating, rank);
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }
-            await user.updateOne({ $set: { 'codeforces.username': username } });
+            await user.updateOne({ $set: { 'codeforces.username': username, 'codeforces.rating': rating, 'codeforces.rank': rank.toString() } });
             return res.status(200).json({ message: 'Profile verified successfully' });
-        } 
+        }
         else if (normalizedPlatform === 'leetcode') {
             const url = `https://leetcode.com/graphql`;
             const query = {
-                query: `query getName($username: String!) { matchedUser(username: $username) { profile { realName } } }`,
+                query: `query getUserData($username: String!) {
+                    matchedUser(username: $username) {
+                        profile {
+                        realName
+                        ranking
+                        starRating
+                        }
+                    }
+                    submitStats: submitStatsGlobal {
+                        acSubmissionNum {
+                        difficulty
+                        count
+                        submissions
+                        }
+                    }
+                    userContestRanking(username: $username) {
+                        rating
+                    }
+                    }`,
                 variables: { username }
             };
             const response = await axios.post(url, query, { headers: { 'Content-Type': 'application/json' } });
@@ -67,8 +84,8 @@ export const verifyProfiles = async (req, res) => {
             if (!response.data.data.matchedUser) {
                 return res.status(400).json({ error: 'Invalid LeetCode username' });
             }
-
-            const name = response.data.data.matchedUser.profile.realName;
+            const responseData = response.data.data;
+            const name = responseData?.matchedUser?.profile?.realName;
             if (name.trim() !== verificationString.trim()) {
                 return res.status(400).json({ error: 'Verification string does not match' });
             }
@@ -76,7 +93,11 @@ export const verifyProfiles = async (req, res) => {
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }
-            await user.updateOne({ $set: { 'leetCode.username': username } });
+            const rating = Math.floor(responseData?.userContestRanking?.rating) || 0;
+            const rank = responseData?.matchedUser?.profile?.ranking || 0;
+            const stats = responseData?.matchedUser?.submitStatsGlobal?.acSubmissionNum || [];
+            const totalSolved = stats.find((item) => item.difficulty === "All")?.count || 0;
+            await user.updateOne({ $set: { 'leetCode.username': username, 'leetCode.rating': rating, 'leetCode.rank': rank, 'leetCode.solved': totalSolved } });
             return res.status(200).json({ message: 'Profile verified successfully' });
         } 
         else if (normalizedPlatform === 'codechef') {
@@ -84,7 +105,7 @@ export const verifyProfiles = async (req, res) => {
             if (response.error) {
                 return res.status(400).json({ error: response.error });
             }
-            const name = response.data.name;
+            const { name, currentRating, globalRank, stars } = response.data;
             if (name.trim() !== verificationString.trim()) {
                 return res.status(400).json({ error: 'Verification string does not match' });
             }
@@ -92,7 +113,7 @@ export const verifyProfiles = async (req, res) => {
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }
-            await user.updateOne({ $set: { 'codechef.username': username } });
+            await user.updateOne({ $set: { 'codechef.username': username, 'codechef.rating': currentRating, 'codechef.rank': globalRank, 'codechef.stars': stars } });
             return res.status(200).json({ message: 'Profile verified successfully' });
         } 
         else {

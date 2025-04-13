@@ -49,7 +49,6 @@ export const leetcodeData = async (req, res) => {
             'leetCode.rating': Math.floor(responseData?.data?.userContestRanking?.rating) || -1,
           }
         }
-      }
     );
 
     return res.json({ success: true, message: "LeetCode data updated successfully" });
@@ -71,7 +70,7 @@ export const geeksforgeeksData = async (req, res) => {
       const response = await getGFGName(username);
       if (response.error) {
         console.error(`Error fetching GFG data for user ${username}: ${response.error}`);
-        continue;
+        return res.status(500).json({ error: `Failed to fetch GFG data` });
       }
       const totalSolved = response.total_problems_solved;
       const instituteRank = response.institute_rank || -1;
@@ -86,7 +85,6 @@ export const geeksforgeeksData = async (req, res) => {
             'gfg.rating': rating
           }
         }
-      }
     );
 
     return res.json({ success: true, message: "GFG data updated successfully" });
@@ -164,7 +162,7 @@ export const codechefData = async (req, res) => {
     return res.json({ success: true, message: "Codechef data updated successfully" });
   } catch (error) {
     console.error("Codechef API Error:", error.message);
-    return res.status(500).json({ error: `Failed to fetch data` });  
+    return res.status(500).json({ error: `Failed to fetch data` });
   }
 };
 
