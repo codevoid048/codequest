@@ -43,10 +43,10 @@ export default function Admin() {
   const currentDate = new Date();
   const [formData, setFormData] = useState({
     title: "",
-    description: "",
+    description: "", 
     category: [] as string[],
     difficulty: "Easy",
-    points: 100,
+    points: 5, // Default points for Easy difficulty
     problemLink: "",
     createdAt: currentDate,
     platform: "" as string,
@@ -410,14 +410,12 @@ export default function Admin() {
                       >
                         {difficultyOptions.map((difficulty) => (
                           <div key={difficulty} className="flex items-center">
-                            <motion.div
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              className={`flex cursor-pointer items-center gap-2 rounded-full border-2 px-4 py-2 ${formData.difficulty === difficulty
+                            <div
+                              className={`flex cursor-pointer items-center gap-2 rounded-full border-2 px-4 py-2 ${
+                                formData.difficulty === difficulty
                                   ? getDifficultyColor(difficulty) + " bg-secondary/20"
                                   : "border-gray-600"
-                                }`}
-                              onClick={() => handleDifficultyChange(difficulty)}
+                              }`}
                             >
                               <RadioGroupItem
                                 value={difficulty}
@@ -426,14 +424,15 @@ export default function Admin() {
                               />
                               <Label
                                 htmlFor={`difficulty-${difficulty.toLowerCase()}`}
-                                className={`cursor-pointer font-medium ${formData.difficulty === difficulty
+                                className={`cursor-pointer font-medium ${
+                                  formData.difficulty === difficulty
                                     ? getDifficultyColor(difficulty)
                                     : ""
-                                  }`}
+                                }`}
                               >
                                 {difficulty}
                               </Label>
-                            </motion.div>
+                            </div>
                           </div>
                         ))}
                       </RadioGroup>
@@ -453,9 +452,9 @@ export default function Admin() {
                       name="points"
                       type="number"
                       min="1"
-                      value={formData.points}
+                      value={formData.difficulty === "Easy" ? 5 : formData.difficulty === "Medium" ? 10 : 15}
                       onChange={handleChange}
-                      required
+                      disabled
                       className="border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
                     />
                   </motion.div>

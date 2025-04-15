@@ -22,7 +22,6 @@ import {
   Trophy,
   Twitter,
 } from "lucide-react"
-// import { slovedChallenges } from "@/platforms/leetcode"
 import toast from "react-hot-toast"
 import { solvedChallenges } from "@/lib/potdchallenge"
 import { PlatformManager } from "./platform-manager"
@@ -127,10 +126,30 @@ export default function ProfilePage() {
         setLoading(false)
       }
     }
+    const fetchChallenges = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/challenges");
+        // console.log("Challenges:", response.data)
+        // Ensure challenges data is an array
+        if (Array.isArray(response.data)) {
+          setChallenges(response.data)
+        } else if (response.data && Array.isArray(response.data.challenges)) {
+          // If the API returns {challenges: [...]}
+          setChallenges(response.data.challenges)
+        } else {
+          // If data is not in expected format, set as empty array
+          console.error("Challenges data is not an array:", response.data)
+          setChallenges([])
+        }
+      } catch (err: any) {
+        console.error("Error fetching challenges:", err)
+      }
+    }
     fetchChallenges()
     fetchProfileUser()
-    //slovedChallenges();
+    //solvedChallenges(routeUsername || "");
   }, [routeUsername, user?.username])
+
 
   // Handle platform verification
   const handleVerifyPlatform = async (platform: string, username: string): Promise<boolean> => {
@@ -235,7 +254,7 @@ export default function ProfilePage() {
     medium: mediumCount,
     hard: hardCount,
   }
-  console.log(problemsSolved, "problemsSolved");
+  // console.log(problemsSolved,"problemsSolved");
 
   const platforms = [
     {
