@@ -52,7 +52,7 @@ export const verifyProfiles = async (req, res) => {
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }
-            await user.updateOne({ $set: { 'codeforces.username': username, 'codeforces.rating': rating, 'codeforces.rank': rank.toString() } });
+            await user.updateOne({ $set: { 'codeforces.username': username, 'codeforces.rating': rating, 'codeforces.rank': rank } });
             return res.status(200).json({ message: 'Profile verified successfully' });
         }
         else if (normalizedPlatform === 'leetcode') {

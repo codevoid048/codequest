@@ -7,6 +7,7 @@ import { motion } from "framer-motion"
 import { useAuth } from "@/context/AuthContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { updatePlatformCacheTimestamp, isPlatformDataStale } from "./platformCache"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Calendar,
@@ -21,7 +22,7 @@ import {
   Trophy,
   Twitter,
 } from "lucide-react"
-import { slovedChallenges } from "@/platforms/leetcode"
+// import { slovedChallenges } from "@/platforms/leetcode"
 import toast from "react-hot-toast"
 import { solvedChallenges } from "@/lib/potdchallenge"
 import { PlatformManager } from "./platform-manager"
@@ -65,19 +66,32 @@ export default function ProfilePage() {
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [rating, setRating] = useState([]);
+
   useEffect(() => {
     const updatePlatforms = async () => {
-      console.log("updated platforms");
-      await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
-      await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
-      await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
-      await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
-      const response = await axios.get('http://localhost:5000/platforms/solveChallenges', { withCredentials: true });
-      console.log(response.data);
-    }
-    toast.success("Data updated successfully");
+      if (!profileUser || !profileUser.username) return;
+      // Check if the platforms data is stale (older than 30 minutes)
+      if (!isPlatformDataStale(profileUser.username, 5)) {
+        console.log("Platforms data is fresh; skipping update.");
+        return;
+      }
+
+      try {
+        console.log("Updating platforms...");
+        await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
+        await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
+        await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
+        await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
+        await axios.post('http://localhost:5000/platforms/solvedChallenges', { user: profileUser });
+        toast.success("Data updated successfully");
+        updatePlatformCacheTimestamp(profileUser.username);
+      } catch (error) {
+        console.error("Error updating platforms:", error);
+      }
+    };
     updatePlatforms();
   }, [profileUser]);
+
 
   useEffect(() => {
     const fetchChallenges = async () => {
@@ -97,10 +111,10 @@ export default function ProfilePage() {
       }
     }
 
-  const fetchProfileUser = async () => {
-    setLoading(true)
-    setError(null)
-    const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
+    const fetchProfileUser = async () => {
+      setLoading(true)
+      setError(null)
+      const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
 
       try {
         const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
@@ -115,7 +129,7 @@ export default function ProfilePage() {
     }
     fetchChallenges()
     fetchProfileUser()
-    slovedChallenges();
+    //slovedChallenges();
   }, [routeUsername, user?.username])
 
   // Handle platform verification
@@ -221,7 +235,7 @@ export default function ProfilePage() {
     medium: mediumCount,
     hard: hardCount,
   }
-  console.log(problemsSolved,"problemsSolved");
+  console.log(problemsSolved, "problemsSolved");
 
   const platforms = [
     {
@@ -763,7 +777,7 @@ export default function ProfilePage() {
                 </div>
                 <CardDescription>Your coding activity for {selectedYear}</CardDescription>
               </CardHeader>
-              <CardContent>   
+              <CardContent>
                 <div className="overflow-x-auto pb-4">
                   <div className="min-w-[950px]">
                     <div className="flex gap-4">

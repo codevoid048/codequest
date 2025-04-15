@@ -196,7 +196,7 @@ export const solvedChallenges = async (req, res) => {
 
     // Update heatmap for Leetcode
     purified_one.forEach(lc => {
-      if (!user.heatmap.find(entry => String(entry.timestamp) == String(lc.timestamp))) {
+      if(!user.heatmap.find(entry => String(entry.timestamp) == String(lc.timestamp))) {
         console.log(String(lc.timestamp), "lc.timestamp");
         user.heatmap.push({ timestamp: String(lc.timestamp) });
       }
@@ -273,28 +273,28 @@ export const solvedChallenges = async (req, res) => {
     }
 
     // Points calculation for Leetcode
-    const solvedChallenges = user.solveChallenges.map(solve => solve.challengeId);
-    const solvedProblemsleetcode = await Challenge.find({ _id: { $in: solvedChallenges } }).populate('difficulty');
-    let easy = 0, medium = 0, hard = 0;
-    for (const problem of solvedProblemsleetcode) {
-      if (problem.difficulty === "Easy") {
-        easy++;
-      } else if (problem.difficulty === "Medium") {
-        medium++;
-      } else if (problem.difficulty === "Hard") {
-        hard++;
-      }
-    }
+    // const solvedChallenges = user.solveChallenges.map(solve => solve.challengeId);
+    // const solvedProblemsleetcode = await Challenge.find({ _id: { $in: solvedChallenges } }).populate('difficulty');
+    // let easy = 0, medium = 0, hard = 0;
+    // for (const problem of solvedProblemsleetcode) {
+    //   if (problem.difficulty === "Easy") {
+    //     easy++;
+    //   } else if (problem.difficulty === "Medium") {
+    //     medium++;
+    //   } else if (problem.difficulty === "Hard") {
+    //     hard++;
+    //   }
+    // }
 
-    const points = easy * 5 + medium * 10 + hard * 20;
-    await User.findByIdAndUpdate(
-      user._id,
-      {
-        $set: {
-          'points': points
-        }
-      }
-    );
+    // const points = easy * 5 + medium * 10 + hard * 20;
+    // await User.findByIdAndUpdate(
+    //   user._id,
+    //   {
+    //     $set: {
+    //       'points': points
+    //     }
+    //   }
+    // );
     await user.save();
     res.json({ success: true, message: "Data Added Successfully" });
   } catch (error) {
@@ -312,12 +312,8 @@ export const fetchLeetCodeGraphql = async (req, res) => {
       username
       profile {
         realName
-        userAvatar
         ranking
-        reputation
         starRating
-        aboutMe
-        skillTags
       }
       submitStats: submitStatsGlobal {
         acSubmissionNum {
@@ -331,34 +327,6 @@ export const fetchLeetCodeGraphql = async (req, res) => {
           submissions
         }
       }
-      badges {
-        id
-        displayName
-        icon
-        creationDate
-      }
-      upcomingBadges {
-        name
-        icon
-      }
-      activeBadge {
-        displayName
-        icon
-      }
-    }
-    userContestRanking(username: "${username}") {
-      attendedContestsCount
-      rating
-      globalRanking
-      totalParticipants
-      topPercentage
-    }
-    recentSubmissionList(username: "${username}", limit: 5) {
-      title
-      titleSlug
-      timestamp
-      statusDisplay
-      lang
     }
   }
 `;

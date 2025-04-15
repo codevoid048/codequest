@@ -5,50 +5,8 @@ export const fetchLeetCodeProfile = async (username) => {
   {
     matchedUser(username: "${username}") {
       username
-      profile {
-        realName
-        userAvatar
-        ranking
-        reputation
-        starRating
-        aboutMe
-        skillTags
-      }
-      submitStats: submitStatsGlobal {
-        acSubmissionNum {
-          difficulty
-          count
-          submissions
-        }
-        totalSubmissionNum {
-          difficulty
-          count
-          submissions
-        }
-      }
-      badges {
-        id
-        displayName
-        icon
-        creationDate
-      }
-      upcomingBadges {
-        name
-        icon
-      }
-      activeBadge {
-        displayName
-        icon
-      }
     }
-    userContestRanking(username: "${username}") {
-      attendedContestsCount
-      rating
-      globalRanking
-      totalParticipants
-      topPercentage
-    }
-    recentSubmissionList(username: "${username}", limit: 5) {
+    recentSubmissionList(username: "${username}", limit: 20) {
       title
       titleSlug
       timestamp
@@ -71,8 +29,8 @@ export const fetchLeetCodeProfile = async (username) => {
 
 export const fetchCodeforcesProfile = async (username) => {
   try {
-    const response = await axios.get(`https://codeforces.com/api/user.status?handle=${username}`);
-    const submissions = response.data;
+    const response = await axios.get(`https://codeforces.com/api/user.status?handle=${username}&from=1&count=50`);
+    const submissions = response.data.result;
     //  console.log(submissions)
 
 
