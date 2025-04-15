@@ -113,7 +113,7 @@ export default function ProfilePage() {
     }
     fetchChallenges()
     fetchProfileUser()
-    solvedChallenges(routeUsername || "");
+    //solvedChallenges(routeUsername || "");
   }, [routeUsername, user?.username])
 
 

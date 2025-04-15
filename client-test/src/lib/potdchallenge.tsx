@@ -61,5 +61,3 @@ export const streak = async () => {
     return null;
   }
 }
-
-
