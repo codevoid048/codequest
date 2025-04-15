@@ -192,51 +192,21 @@ export const getUserActivity = async (req, res) => {
 }
 export const postPotdChallenge = async (req, res) => {
     try {
-        const userId = req.user._id;
-        const { timestamp } = req.body;
-        
-        // Parse the UTC timestamp
-        const date = new Date(timestamp);
-        
-        // Format as YYYY-MM-DD
-        const dateString = date.getFullYear() + '-' + 
-          String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-          String(date.getDate()).padStart(2, '0');
-        
-        // For debugging
-        console.log("Original timestamp:", timestamp);
-        console.log("Date string:", dateString);
-        
-        const user = await User.findById(userId);
+        const { username, timestamp } = req.body;
+        const date = new Date(timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+        const user = await User.findOne({ username });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        
-        // Check if the POTD is already solved for this date
-        const potdExists = user.potdSolved.some(potd => {
-            const potdDate = new Date(potd.timestamp);
-            
-            // Format as YYYY-MM-DD
-            const potdDateString = potdDate.getFullYear() + '-' + 
-              String(potdDate.getMonth() + 1).padStart(2, '0') + '-' + 
-              String(potdDate.getDate()).padStart(2, '0');
-            
-            return potdDateString === dateString;
-        });
-        
+        const potdExists = user.potdSolved.some(potd => new Date(potd.timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-') === date);
         if (potdExists) {
             return res.status(200).json({ message: 'POTD challenge already solved for today' });
         }
 
-        // Store the original timestamp
         user.potdSolved.push({ timestamp: timestamp });
         await user.save();
 
-        res.status(200).json({ 
-            message: 'POTD challenge recorded successfully',
-            date: dateString,
-            originalTimestamp: timestamp
-        });
+        res.status(200).json({ message: 'POTD challenge recorded successfully' });
     } catch (error) {
         console.error('POTD challenge update error:', error);
         res.status(500).json({ 
@@ -244,6 +214,7 @@ export const postPotdChallenge = async (req, res) => {
             error: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
+
     }
 };
 
@@ -267,94 +238,57 @@ export const getUserByUsername = async (req, res) => {
         res.status(500).json({ message: "Server error" })
     }
 }
-export const solvedChallenges = async (req, res) => {
-    console.log("Request Body:", req.body); 
-    const { problemId } = req.body;
-    const userId = req.user.id;
-    try {
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
 
-        // Adding problemId to solvedChallenges if not already present
-        if (!user.solveChallenges.includes(problemId)) {
-            user.solveChallenges.push(problemId);
-        }
-
-        const problem = await Challenge.findById(problemId);
-        console.log("Problem found:", problem);
-        if (!problem) {
-            return res.status(404).json({ error: "Problem not found" });
-        }
-
-        const problemDate = new Date(problem.createdAt);
-        problemDate.setHours(0, 0, 0, 0);
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (problemDate.getTime() === today.getTime()) {
-            const solvedDates = user.potdSolved.map(date => 
-                new Date(date).setHours(0, 0, 0, 0)
-            );
-
-            if (!solvedDates.includes(today.getTime())) {
-                user.potdSolved.push(today);
-            }
-        }
-
-        // Save the user document
-        await user.save();
-
-        res.status(200).json({ message: "Problem marked as solved and stored in DB" });
-    } catch (err) {
-        console.error("Error in solvedChallenges:", err);
-        res.status(500).json({ message: "Server error", error: err.message });
-    }
-};
-
-// Removed duplicate declaration of updateUserStreak
 
 // Removed duplicate declaration of getUserById
 
-export const updateUserStreak = async (userId) => {
+export const updateUserStreak = async (req, res) => {
     try {
+        const userId = req.user._id;
         const user = await User.findById(userId);
         if (!user) {
-            return { success: false, message: "User not found" };
+            return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        const yesterdayStr = yesterday.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
 
-        // Convert `potdSolved` dates to string format for easy comparison
-        const solvedDates = user.potdSolved.map(date => new Date(date).toISOString().split('T')[0]);
+        // Check if today's problem was already solved
+        const solvedDates = user.potdSolved.map(potd => 
+            new Date(potd.timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-')
+        );
 
         if (solvedDates.includes(today)) {
-            return { success: false, message: "Already solved today's POTD" };
+            return res.status(200).json({ success: false, message: "Already solved today's POTD", streak: user.streak });
         }
 
         // Check if yesterday's problem was solved
-        if (solvedDates.includes(yesterdayStr)) {
-            user.streak += 1; // Continue streak
-        } else {
-            user.streak = 1; // Reset streak (new streak start)
-        }
+        user.streak = solvedDates.includes(yesterdayStr) ? user.streak + 1 : 1;
 
         // Store today's solved date
-        user.potdSolved.push(new Date());
+        user.potdSolved.push({ timestamp: new Date().toISOString() });
 
         await user.save();
+        
         // Update leaderboard
         await updateRanks();
-        return { success: true, streak: user.streak, message: "Streak updated successfully" };
+        
+        return res.status(200).json({ 
+            success: true, 
+            streak: user.streak, 
+            message: "Streak updated successfully" 
+        });
 
     } catch (error) {
         console.error("Error updating streak:", error);
-        return { success: false, message: "An error occurred" };
+        return res.status(500).json({ 
+            success: false, 
+            message: "An error occurred",
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 

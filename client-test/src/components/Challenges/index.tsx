@@ -13,7 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  Code,
+  Code,             
   Filter,
   Flame,
   RefreshCw,
@@ -23,10 +23,11 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { fetchLeetCodeProfile, fetchCodeforcesProfile, slovedChallenges } from "@/platforms/leetcode";
+import { fetchLeetCodeProfile, fetchCodeforcesProfile} from "@/platforms/leetcode";
 import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
 import { postPotdChallenge, solvedChallenges, streak  } from "@/lib/potdchallenge";
+
 interface User {
   leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
   gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
@@ -45,25 +46,6 @@ interface User {
   points?: number
   streak?: number
 }
-
-// interface User {
-//   leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
-//   gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
-//   codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
-//   codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
-//   profilePicture?: string
-//   name?: string
-//   username?: string
-//   rank?: number
-//   collegeName?: string
-//   branch?: string
-//   RegistrationNumber?: string
-//   otherLinks?: { platform: string; url: string }[]
-//   solveChallenges?: Array<unknown>
-//   potdSolved?: Array<unknown>
-//   points?: number
-//   streak?: number
-// }
 
 interface challenge {
   id: number;
@@ -87,11 +69,6 @@ interface ProblemStatusProps {
   viewSolution: (id: string) => void;
 }
 
-// const { user } = useAuth();
-
-
-
-
 type FilterTab = "all" | "solved" | "unsolved";
 type SortOption = "date" | "difficulty" | "status";
 
@@ -109,13 +86,12 @@ const Challenges: React.FC = () => {
   const [isSolved, setIsSolved] = useState(false);
   const [User, setUser] = useState<User | null>(null);
   const itemsPerPage = 5;
-  const { user } = useAuth() ;
-
+  const { user } = useAuth();
 
   function convertTimestampToDate(timestamp: number) {
     const date = new Date(timestamp * 1000); 
     return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
-}
+  }
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -138,7 +114,6 @@ const Challenges: React.FC = () => {
             problemUrl: challenge.problemLink,
           }));
           setProblemsList(data);
-          // console.log("Problems List:", problemsList);
           setIsLoading(false);
         }
       } catch (error) {
@@ -146,30 +121,26 @@ const Challenges: React.FC = () => {
       }
     };
     fetchProblems();
-    // console.log("user",user);
-
   }, []);
   
   useEffect(() => {
-      const updatePlatforms = async () => {
-        console.log("updated platforms");
-        const leetcode = await axios.post('http://localhost:5000/platforms/leetcode',{username:"saiganeshambati"});
-        const codeforces = await axios.post('http://localhost:5000/platforms/codeforces',{username:"saiganeshambati000"});
-        const codechef = await axios.post('http://localhost:5000/platforms/codechef',{username:"saiganesh999"});
-        const gfg = await axios.post('http://localhost:5000/platforms/gfg',{username:"saiganeshafb97"});
-      }
+    const updatePlatforms = async () => {
+      await Promise.all([
+        axios.post('http://localhost:5000/platforms/leetcode', { username: user?.leetCode?.username }),
+        axios.post('http://localhost:5000/platforms/codeforces', { username: user?.codeforces?.username }),
+        axios.post('http://localhost:5000/platforms/codechef', { username: user?.codechef?.username }),
+        axios.post('http://localhost:5000/platforms/gfg', { username: user?.gfg?.username }),
+      ]);
       toast.success("Data updated successfully");
-      updatePlatforms();
-  }, []);
+    }
     const fetchUserData = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/profile/getUser", {
           params: {
-            userId: user?._id, // sending only the userId
+            userId: user?._id,
           },
         });
-        console.log("Complete user data:", res.data);
-        setUser(res.data.user); // or setUserData if you rename the state
+        setUser(res.data.user);
       } catch (error) {
         console.error("Failed to fetch complete user data", error);
       }
@@ -177,6 +148,7 @@ const Challenges: React.FC = () => {
   
     if (user) {
       fetchUserData();
+      updatePlatforms();
     }
   }, [user]);
 
@@ -200,15 +172,11 @@ const Challenges: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // const dailyProblem = useMemo(
-  //   () => problemsList[new Date().getDate() % (problemsList.length || 1)] || problemsList[0],
-  //   [problemsList]
-  // );
   const dailyProblem = useMemo(() => {
-    if (problemsList.length === 0) return null; // Handle empty list
+    if (problemsList.length === 0) return null;
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize time to midnight
+    today.setHours(0, 0, 0, 0);
   
     const todayProblem = problemsList.find((problem) => {
       const problemDate = new Date(problem.date);
@@ -216,20 +184,19 @@ const Challenges: React.FC = () => {
       return problemDate.getTime() === today.getTime();
     });
 
-    return todayProblem || problemsList[0]; // Default to first problem if no match found
+    return todayProblem || problemsList[0];
   }, [problemsList]);
-
-  // console.log("dailyProblem",dailyProblem);
 
   const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList]);
   const difficultyLevels = ["Easy", "Medium", "Hard"];
 
   const filteredProblems = useMemo(() => {
     const today = new Date();
+    today.setDate(today.getDate() - 1);
     today.setHours(0, 0, 0, 0);
     const result = problemsList.filter((problem) => {
       const problemDate = new Date(problem.date);
-      problemDate.setHours(0, 0, 0, 0); // Normalize time
+      problemDate.setHours(0, 0, 0, 0);
 
       const isPastOrToday = problemDate <= today;
       const matchesTab = activeTab === "all" || problem.status.toLowerCase() === activeTab;
@@ -299,55 +266,68 @@ const Challenges: React.FC = () => {
   const openProblemLink = (url?: string) => url && window.open(url, "_blank");
 
   useEffect(() => {
-    console.log(User?.leetCode?.username)
     const checkIfProblemSolved = async () => {
       try {
         if(dailyProblem?.platform === "LeetCode"){
-        const leetCodeData = await fetchLeetCodeProfile(`${User?.leetCode?.username}`);
-        if (leetCodeData?.recentSubmissionList) {
-          const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
-            const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-            const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-            
-            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && submissionDate === today;
-          });
+          const leetCodeData = await fetchLeetCodeProfile(`${user?.leetCode?.username}`);
+          if (leetCodeData?.recentSubmissionList) {
+            const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
+              const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+              const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+              
+              return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && submissionDate === today;
+            });
 
-          
-          if (solvedProblem) {
-            setIsSolved(true);
-            postPotdChallenge();
-            streak();
-            solvedChallenges();
-            return;
+            if (solvedProblem) {
+              setIsSolved(true);
+              postPotdChallenge(user?.username);
+              streak();
+              solvedChallenges(user?.username);
+              localStorage.setItem('potdSolvedDate', new Date().toISOString().split('T')[0]); // Store today's date
+              return;
+            }
+          }
+        } else if(dailyProblem?.platform === "Codeforces"){
+          const codeforcesData = await fetchCodeforcesProfile(`${user?.codeforces?.username}`);
+          if (codeforcesData?.result) {
+            const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string } ;verdict:string}) => {
+              const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+              const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+              return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
+                submissionDate === today;
+            });
+
+            if (solvedProblem) {
+              setIsSolved(true);
+              postPotdChallenge(user?.username);
+              streak();
+              solvedChallenges(user?.username);
+              localStorage.setItem('potdSolvedDate', new Date().toISOString().split('T')[0]); // Store today's date
+              return;
+            }
           }
         }
-      }
-      else if(dailyProblem?.platform === "Codeforces"){
-        const codeforcesData = await fetchCodeforcesProfile(`${User?.codeforces?.username}`);
-        if (codeforcesData?.result) {
-          const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string } ;verdict:string}) => {
-            const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-  
-            const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-            return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
-              submissionDate === today;
-          });
-
-          if (solvedProblem) {
-            setIsSolved(true);
-            postPotdChallenge();
-            streak();
-            solvedChallenges();
-            return;
-          }
-        }
-      }
       } catch (error) {
         console.error("Error checking problem status:", error);
       }
     };
 
-    checkIfProblemSolved();
+    const checkPotdSolved = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+        const storedDate = localStorage.getItem('potdSolvedDate');
+        
+        if (storedDate === today) {
+          setIsSolved(true);
+        } else {
+          await checkIfProblemSolved();
+        }
+      } catch (error) {
+        console.error("Error checking POTD solved:", error);
+      }
+    }
+
+    checkPotdSolved();
   }, [dailyProblem]);
 
   const handleRerender = () => {
@@ -387,7 +367,7 @@ const Challenges: React.FC = () => {
               {/* POTD Solved counter */}
               <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span className="font-semibold">{user?.potdSolved?.length} solved</span>
+                <span className="font-semibold">{user?.solveChallenges?.length} solved</span>
               </div>
             </div>
           ) : null}
@@ -454,14 +434,6 @@ const Challenges: React.FC = () => {
                   </div>
                 </div>
                 <div className="mt-6 pt-4 border-t border-border flex flex-wrap gap-4 text-sm">
-                  {/* <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${getDifficultyStyle(
-                      dailyProblem?.difficulty
-                    )}`}
-                  >
-                    {getDifficultyIcon(dailyProblem?.difficulty)}
-                    {dailyProblem?.difficulty}
-                  </span> */}
                   <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-3 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
                     <Code className="h-4 w-4 text-primary" />
                     {dailyProblem?.platform}
@@ -680,7 +652,6 @@ const Challenges: React.FC = () => {
                             </div>
                           </div>
 
-
                           <ProblemStatus
                             problem={{
                               id: problem.id,
@@ -690,32 +661,8 @@ const Challenges: React.FC = () => {
                             markSolved={markSolved}
                             viewSolution={(id) => {
                               // Implement your view solution logic
-                              // console.log(`Viewing solution for problem ${id}`);
                             }}
                           />
-
-                          {/* <div className="flex flex-col gap-2 self-start sm:self-center min-w-[100px]">
-                            {problem.status === "Solved" ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-emerald-900/5 dark:bg-emerald-100 text-emerald-400 dark:text-emerald-800 text-xs py-1 px-2 w-full text-center flex items-center justify-center border-emerald-200 dark:border-emerald-800"
-                              >
-                                <CheckCircle className="h-3 w-3 mr-1" /> Solved
-                              </Badge>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs py-1 px-2 w-full border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  markSolved(problem.id);
-                                }}
-                              >
-                                Mark Solved
-                              </Button>
-                            )}
-                          </div> */}
                         </div>
                       </CardContent>
                     </Card>
