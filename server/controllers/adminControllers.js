@@ -33,7 +33,7 @@ export const addChallenge = async (req, res) => {
             difficulty,
             points,
             problemLink,
-            createdAt: createdAt ? new Date(createdAt) : new Date(), // Use current date if not provided
+            createdAt: createdAt ? new Date(createdAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-') : new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'),
             platform
         });
         

@@ -58,6 +58,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         if (authToken) {
           localStorage.setItem('auth_token', authToken);
         }
+
+        console.log("Token set in context:", authToken);
       }
       console.log("user after login:", user);
     } catch (error) {

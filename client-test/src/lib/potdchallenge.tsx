@@ -14,11 +14,12 @@ import axios from 'axios';
 //   }
 // };
 
-export const postPotdChallenge = async () => {
+export const postPotdChallenge = async (username:string) => {
   try {
-    const today = new Date().toISOString();
+    const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
     console.log("today", today);
     const response = await axios.post('http://localhost:5000/api/profile/potd', {
+      username: username,
       timestamp: today
     }, {
       withCredentials: true 
@@ -32,9 +33,10 @@ export const postPotdChallenge = async () => {
 };
 
 
-export const solvedChallenges = async () => {
+export const solvedChallenges = async (username:string) => {
   try {
-    const response = await axios.get('http://localhost:5000/platforms/solvedChallenges', {
+    const response = await axios.post('http://localhost:5000/platforms/solvedChallenges', {
+      username: username,
       withCredentials: true
     });
     return response.data;
@@ -46,11 +48,16 @@ export const solvedChallenges = async () => {
 export const streak = async () => {
   try {
     const response = await axios.get('http://localhost:5000/api/profile/streak', {
-            withCredentials: true
+      withCredentials: true
     });
-    return response.data;
+    if (response.data.success) {
+      return response.data;
+    } else {
+      console.error('Streak update failed:', response.data.message);
+      return null;
+    }
   } catch (error) {
-     console.error('Error fetching streak:', error);
+    console.error('Error fetching streak:', error);
     return null;
   }
-} 
+}
