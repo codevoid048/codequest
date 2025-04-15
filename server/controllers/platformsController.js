@@ -49,6 +49,7 @@ export const leetcodeData = async (req, res) => {
           'leetCode.rank': responseData?.data?.matchedUser?.profile?.ranking || 0,
           'leetCode.rating': Math.floor(responseData?.data?.userContestRanking?.rating) || 0,
         }
+      }
     );
 
     return res.json({ success: true, message: "LeetCode data updated successfully" });
@@ -83,6 +84,7 @@ export const geeksforgeeksData = async (req, res) => {
           'gfg.rank': instituteRank,
           'gfg.rating': rating
         }
+      }
     );
 
     return res.json({ success: true, message: "GFG data updated successfully" });
