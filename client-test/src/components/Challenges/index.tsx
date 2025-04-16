@@ -47,8 +47,8 @@ interface User {
   streak?: number
 }
 
-interface challenge {
-  id: number;
+interface Challenge {
+  id: string;
   date: string;
   title: string;
   categories: string[];
@@ -77,7 +77,7 @@ const Challenges: React.FC = () => {
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" });
-  const [problemsList, setProblemsList] = useState<challenge[]>([]);
+  const [problemsList, setProblemsList] = useState<Challenge[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("date");
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,6 +92,7 @@ const Challenges: React.FC = () => {
     const date = new Date(timestamp * 1000); 
     return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
   }
+
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -243,10 +244,6 @@ const Challenges: React.FC = () => {
     );
   };
 
-  const markSolved = (id: number) => {
-    setProblemsList((prev) => prev.map((p) => (p.id === id ? { ...p, status: "Solved" } : p)));
-  };
-
   const getDifficultyStyle = (difficulty: string) => {
     return {
       Easy: "text-emerald-400 bg-emerald-900/50 dark:text-emerald-600 dark:bg-emerald-100",
@@ -280,9 +277,7 @@ const Challenges: React.FC = () => {
 
             if (solvedProblem) {
               setIsSolved(true);
-              postPotdChallenge(user?.username);
-              streak();
-              solvedChallenges(user?.username);
+              postPotdChallenge(user?.username, dailyProblem?.id, dailyProblem?.difficulty);
               localStorage.setItem('potdSolvedDate', new Date().toISOString().split('T')[0]); // Store today's date
               return;
             }
@@ -299,9 +294,7 @@ const Challenges: React.FC = () => {
 
             if (solvedProblem) {
               setIsSolved(true);
-              postPotdChallenge(user?.username);
-              streak();
-              solvedChallenges(user?.username);
+              postPotdChallenge(user?.username, dailyProblem?.id, dailyProblem?.difficulty);
               localStorage.setItem('potdSolvedDate', new Date().toISOString().split('T')[0]); // Store today's date
               return;
             }

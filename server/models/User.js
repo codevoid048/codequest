@@ -64,16 +64,11 @@ const userSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "Challenge",
         },
+        easy: { type: mongoose.Schema.Types.ObjectId, ref: "Challenge" },
+        medium: { type: mongoose.Schema.Types.ObjectId, ref: "Challenge" },
+        hard: { type: mongoose.Schema.Types.ObjectId, ref: "Challenge" },
         timestamp: { type: String },
       }
-    ],
-
-    // POTD solved: store dates (unique per day)
-    potdSolved: [
-      {
-        timestamp: { type: String }, // ISO date string format
-      },
-
     ],
     otherLinks: [
       {
