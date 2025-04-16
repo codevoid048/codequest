@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+
 import ChallengePopup from "./ChallengePopup";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ import {
   Search,
   Tag,
 } from "lucide-react";
+import toast from "react-hot-toast";
+
 
 // Define interfaces for type safety
 interface User {
@@ -56,24 +59,27 @@ type FilterTab = "all" | "solved" | "unsolved";
 
 // Main Challenges component
 const Challenges: React.FC = () => {
-  // State declarations
-  const [activeTab, setActiveTab] = useState<FilterTab>("all"); // Filter by all, solved, or unsolved
-  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]); // Selected difficulty filters
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // Selected category filters
-  const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" }); // Countdown to midnight
-  const [problemsList, setProblemsList] = useState<Challenge[]>([]); // List of challenges
-  const [searchTerm, setSearchTerm] = useState(""); // Search query
-  const [currentPage, setCurrentPage] = useState(1); // Current pagination page
-  const [isLoading, setIsLoading] = useState(true); // Loading state for challenges
-  const [isFilterOpen, setIsFilterOpen] = useState(false); // Mobile filter visibility
-  const [isSolved, setIsSolved] = useState(false); // Daily challenge solved status
-  const [userData, setUserData] = useState<User | null>(null); // User profile data
+  const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" });
+  const [problemsList, setProblemsList] = useState<challenge[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOption, setSortOption] = useState<SortOption>("date");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSolved, setIsSolved] = useState(false);
+  const [User, setUser] = useState<User | null>(null);
   const [showPopup, setShowPopup] = useState(false); // Popup for solved challenge
+  const itemsPerPage = 5;
+  const { user } = useAuth();
 
-  const itemsPerPage = 5; // Number of challenges per page
-  const { user } = useAuth(); // Auth context for user data
+  function convertTimestampToDate(timestamp: number) {
+    const date = new Date(timestamp * 1000);
+    return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
+  }
 
-  // Fetch challenges from backend on component mount
   useEffect(() => {
     const fetchProblems = async () => {
       try {
@@ -106,18 +112,33 @@ const Challenges: React.FC = () => {
 
   // Fetch user profile data when user is authenticated
   useEffect(() => {
+    const updatePlatforms = async () => {
+      await Promise.all([
+        axios.post('http://localhost:5000/platforms/leetcode', { username: user?.leetCode?.username }),
+        axios.post('http://localhost:5000/platforms/codeforces', { username: user?.codeforces?.username }),
+        axios.post('http://localhost:5000/platforms/codechef', { username: user?.codechef?.username }),
+        axios.post('http://localhost:5000/platforms/gfg', { username: user?.gfg?.username }),
+      ]);
+      toast.success("Data updated successfully");
+    }
     const fetchUserData = async () => {
       if (!user?._id) return;
       try {
         const res = await axios.get("http://localhost:5000/api/profile/getUser", {
-          params: { userId: user._id },
+          params: {
+            userId: user?._id,
+          },
         });
-        setUserData(res.data.user);
+        setUser(res.data.user);
+
       } catch (error) {
         console.error("Failed to fetch user data:", error);
       }
     };
-    fetchUserData();
+    if (user) {
+      fetchUserData();
+      updatePlatforms();
+    }
   }, [user]);
 
   // Update countdown timer every second
@@ -141,66 +162,62 @@ const Challenges: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Select daily problem (yesterday's challenge or first problem if none for yesterday)
   const dailyProblem = useMemo(() => {
     if (problemsList.length === 0) return null;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    today.setDate(today.getDate() - 1);
+
     const todayProblem = problemsList.find((problem) => {
       const problemDate = new Date(problem.date);
       problemDate.setHours(0, 0, 0, 0);
       return problemDate.getTime() === today.getTime();
     });
+
     return todayProblem || problemsList[0];
   }, [problemsList]);
 
-  // Get unique categories and difficulty levels for filters
-  const uniqueCategories = useMemo(
-    () => [...new Set(problemsList.flatMap((p) => p.categories))],
-    [problemsList]
-  );
+  const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList]);
+
   const difficultyLevels = ["Easy", "Medium", "Hard"];
 
   // Filter and sort problems based on user selections
   const filteredProblems = useMemo(() => {
     const today = new Date();
+    today.setDate(today.getDate() - 1);
     today.setHours(0, 0, 0, 0);
-    return problemsList
-      .filter((problem) => {
-        const problemDate = new Date(problem.date);
-        problemDate.setHours(0, 0, 0, 0);
-        const isPastOrToday = problemDate <= today;
-        const matchesTab =
-          activeTab === "all" || problem.status.toLowerCase() === activeTab;
-        const matchesDifficulty =
-          selectedDifficulties.length === 0 ||
-          selectedDifficulties.includes(problem.difficulty);
-        const matchesCategory =
-          selectedCategories.length === 0 ||
-          problem.categories.some((cat) => selectedCategories.includes(cat));
-        const matchesSearch =
-          !searchTerm ||
-          problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          problem.description.toLowerCase().includes(searchTerm.toLowerCase());
-        return (
-          isPastOrToday &&
-          matchesTab &&
-          matchesDifficulty &&
-          matchesCategory &&
-          matchesSearch
-        );
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [
-    problemsList,
-    activeTab,
-    selectedDifficulties,
-    selectedCategories,
-    searchTerm,
-  ]);
+    const result = problemsList.filter((problem) => {
+      const problemDate = new Date(problem.date);
+      problemDate.setHours(0, 0, 0, 0);
 
-  // Pagination logic
+      const isPastOrToday = problemDate <= today;
+      const matchesTab = activeTab === "all" || problem.status.toLowerCase() === activeTab;
+      const matchesDifficulty = selectedDifficulties.length === 0 || selectedDifficulties.includes(problem.difficulty);
+      const matchesCategory =
+        selectedCategories.length === 0 || problem.categories.some((cat) => selectedCategories.includes(cat));
+      const matchesSearch =
+        !searchTerm ||
+        problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        problem.description.toLowerCase().includes(searchTerm.toLowerCase());
+      return isPastOrToday && matchesTab && matchesDifficulty && matchesCategory && matchesSearch;
+    });
+
+    result.sort((a, b) => {
+      switch (sortOption) {
+        case "date":
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case "difficulty":
+          return ["Easy", "Medium", "Hard"].indexOf(a.difficulty) - ["Easy", "Medium", "Hard"].indexOf(b.difficulty);
+        case "status":
+          return a.status.localeCompare(b.status);
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [problemsList, activeTab, selectedDifficulties, selectedCategories, searchTerm, sortOption]);
+
   const lastItemIndex = currentPage * itemsPerPage;
   const firstItemIndex = lastItemIndex - itemsPerPage;
   const currentItems = filteredProblems.slice(firstItemIndex, lastItemIndex);
@@ -238,82 +255,41 @@ const Challenges: React.FC = () => {
   useEffect(() => {
     const checkIfProblemSolved = async () => {
       try {
-        if (
-          !dailyProblem ||
-          (!userData?.leetCode?.username && !userData?.codeforces?.username)
-        )
-          return;
+        if (dailyProblem?.platform === "LeetCode") {
+          const leetCodeData = await fetchLeetCodeProfile(`${user?.leetCode?.username}`);
+          if (leetCodeData?.recentSubmissionList) {
+            const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string; statusDisplay: string }) => {
+              const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+              const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
 
-        if (dailyProblem.platform === "LeetCode" && userData?.leetCode?.username) {
-          const leetCodeData = await fetchLeetCodeProfile(userData.leetCode.username);
-          if (leetCodeData?.recentSubmissions) {
-            const solvedProblem = leetCodeData.recentSubmissions.find(
-              (submission: {
-                title: string;
-                timestamp: string;
-                statusDisplay: string;
-              }) => {
-                const submissionDate = new Date(parseInt(submission.timestamp) * 1000)
-                  .toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" })
-                  .split("/")
-                  .reverse()
-                  .join("-");
-                const today = new Date()
-                  .toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" })
-                  .split("/")
-                  .reverse()
-                  .join("-");
-                return (
-                  submission.title === dailyProblem.title &&
-                  submission.statusDisplay === "Accepted" &&
-                  submissionDate === today
-                );
-              }
-            );
+              return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && submissionDate === today;
+            });
+
             if (solvedProblem) {
               setIsSolved(true);
-              postPotdChallenge();
+              postPotdChallenge(user?.username);
               streak();
-              solvedChallenges();
-              setShowPopup(true);
+              solvedChallenges(user?.username);
+              localStorage.setItem('potdSolvedDate', new Date().toISOString().split('T')[0]); // Store today's date
               return;
             }
           }
-        } else if (
-          dailyProblem.platform === "Codeforces" &&
-          userData?.codeforces?.username
-        ) {
-          const codeforcesData = await fetchCodeforcesProfile(userData.codeforces.username);
+        } else if (dailyProblem?.platform === "Codeforces") {
+          const codeforcesData = await fetchCodeforcesProfile(`${user?.codeforces?.username}`);
           if (codeforcesData?.result) {
-            const solvedProblem = codeforcesData.result.find(
-              (submission: {
-                creationTimeSeconds: number;
-                problem: { name: string };
-                verdict: string;
-              }) => {
-                const submissionDate = new Date(submission.creationTimeSeconds * 1000)
-                  .toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" })
-                  .split("/")
-                  .reverse()
-                  .join("-");
-                const today = new Date()
-                  .toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" })
-                  .split("/")
-                  .reverse()
-                  .join("-");
-                return (
-                  submission.problem.name === dailyProblem.title &&
-                  submission.verdict === "OK" &&
-                  submissionDate === today
-                );
-              }
-            );
+            const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string }; verdict: string }) => {
+              const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+              const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+              return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" &&
+                submissionDate === today;
+            });
+
             if (solvedProblem) {
               setIsSolved(true);
-              postPotdChallenge();
+              postPotdChallenge(user?.username);
               streak();
-              solvedChallenges();
-              setShowPopup(true);
+              solvedChallenges(user?.username);
+              localStorage.setItem('potdSolvedDate', new Date().toISOString().split('T')[0]);
               return;
             }
           }
@@ -323,7 +299,22 @@ const Challenges: React.FC = () => {
       }
     };
 
-    checkIfProblemSolved();
+    const checkPotdSolved = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+        const storedDate = localStorage.getItem('potdSolvedDate');
+
+        if (storedDate === today) {
+          setIsSolved(true);
+        } else {
+          await checkIfProblemSolved();
+        }
+      } catch (error) {
+        console.error("Error checking POTD solved:", error);
+      }
+    }
+
+    checkPotdSolved();
   }, [dailyProblem, userData]);
 
   // Styling for difficulty levels
@@ -343,7 +334,7 @@ const Challenges: React.FC = () => {
       {
         Easy: <Award className="h-4 w-4 text-emerald-400 dark:text-emerald-600" />,
         Medium: <Flame className="h-4 w-4 text-amber-400 dark:text-amber-600" />,
-        Hard: <Award className="h-4 w-4 text-rose-400 dark:text-rose-600" />,
+        Hard: <Lightbulb className="h-4 w-4 text-rose-400 dark:text-rose-600" />,
       }[difficulty] || null
     );
   };
@@ -373,94 +364,93 @@ const Challenges: React.FC = () => {
             </div>
             {user ? (
               <div className="flex items-center gap-4 mx-auto sm:mx-0">
-                <div className="flex items-center gap-2 bg-secondary/60 dark:bg-muted/60 px-3 py-1 rounded-lg">
-                  <Lightbulb className="h-5 w-5 text-yellow-400 dark:text-yellow-600 animate-pulse" />
-                  <span className="font-semibold text-gray-300 dark:text-gray-700">
-                    {user?.streak} day streak
-                  </span>
+                {/* Streak with light bulb icon */}
+                <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+                  <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
+                  <span className="font-semibold">{user?.streak} day streak</span>
                 </div>
-                <div className="flex items-center gap-2 bg-secondary/60 dark:bg-muted/60 px-3 py-1 rounded-lg">
-                  <CheckCircle className="h-5 w-5 text-green-400 dark:text-green-600" />
-                  <span className="font-semibold text-gray-300 dark:text-gray-700">
-                    {user?.potdSolved?.length} solved
-                  </span>
+
+                {/* POTD Solved counter */}
+                <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="font-semibold">{user?.solveChallenges?.length} solved</span>
                 </div>
-              </div>
+                </div>
             ) : null}
-            <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary/60 dark:bg-muted/60 px-3 py-2 rounded-lg">
-              <Clock className="h-5 w-5 mr-2 text-primary" />
-              <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
-                {countdown.hours}
-              </span>
-              <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
-              <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
-                {countdown.minutes}
-              </span>
-              <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
-              <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
-                {countdown.seconds}
-              </span>
-            </div>
-          </div>
+                <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary/60 dark:bg-muted/60 px-3 py-2 rounded-lg">
+                  <Clock className="h-5 w-5 mr-2 text-primary" />
+                  <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
+                    {countdown.hours}
+                  </span>
+                  <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
+                  <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
+                    {countdown.minutes}
+                  </span>
+                  <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
+                  <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
+                    {countdown.seconds}
+                  </span>
+                </div>
+              </div>
           {isLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <div
-              className="mt-6 bg-gray-800 dark:bg-muted rounded-xl p-4 sm:p-6 cursor-pointer"
-              onClick={() => openProblemLink(dailyProblem?.problemUrl)}
-            >
-              <div className="flex flex-col sm:flex-row justify-between gap-6">
-                <div className="space-y-3 flex-1">
-                  <div className="flex items-center text-sm text-gray-400 dark:text-gray-600">
-                    <Calendar className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-600" />
-                    {dailyProblem?.date}
+              <div className="flex justify-center items-center h-40">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <div
+                className="mt-6 bg-gray-800 dark:bg-muted rounded-xl p-4 sm:p-6 cursor-pointer"
+                onClick={() => openProblemLink(dailyProblem?.problemUrl)}
+              >
+                <div className="flex flex-col sm:flex-row justify-between gap-6">
+                  <div className="space-y-3 flex-1">
+                    <div className="flex items-center text-sm text-gray-400 dark:text-gray-600">
+                      <Calendar className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-600" />
+                      {dailyProblem?.date}
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-200 dark:text-gray-800 line-clamp-1">
+                      {dailyProblem?.title}
+                    </h3>
+                    <p className="text-gray-400 dark:text-gray-600 text-sm line-clamp-2">
+                      {dailyProblem?.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {dailyProblem?.categories.map((cat) => (
+                        <Badge
+                          key={cat}
+                          variant="secondary"
+                          className="text-xs py-1 px-2 bg-secondary dark:bg-white text-gray-300 dark:text-gray-700 rounded-full"
+                        >
+                          {cat}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-200 dark:text-gray-800 line-clamp-1">
-                    {dailyProblem?.title}
-                  </h3>
-                  <p className="text-gray-400 dark:text-gray-600 text-sm line-clamp-2">
-                    {dailyProblem?.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {dailyProblem?.categories.map((cat) => (
-                      <Badge
-                        key={cat}
-                        variant="secondary"
-                        className="text-xs py-1 px-2 bg-secondary dark:bg-white text-gray-300 dark:text-gray-700 rounded-full"
+                  <div className="flex flex-col gap-4 justify-center">
+                    {isSolved ? (
+                      <Button className="bg-green-600 hover:bg-green-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full">
+                        Solved
+                      </Button>
+                    ) : (
+                      <Button
+                        className="bg-primary hover:bg-primary/90 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openProblemLink(dailyProblem?.problemUrl);
+                        }}
                       >
-                        {cat}
-                      </Badge>
-                    ))}
+                        Solve Now
+                      </Button>
+                    )}
                   </div>
                 </div>
-                <div className="flex flex-col gap-4 justify-center">
-                  {isSolved ? (
-                    <Button className="bg-green-600 hover:bg-green-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full">
-                      Solved
-                    </Button>
-                  ) : (
-                    <Button
-                      className="bg-primary hover:bg-primary/90 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openProblemLink(dailyProblem?.problemUrl);
-                      }}
-                    >
-                      Solve Now
-                    </Button>
-                  )}
+                <div className="mt-4 pt-4 border-t border-gray-700 dark:border-gray-300 flex flex-wrap gap-3 text-sm">
+                  <span className="flex items-center gap-2 bg-secondary dark:bg-white px-2 py-1 rounded-full text-gray-300 dark:text-gray-700">
+                    <Code className="h-4 w-4 text-primary" />
+                    {dailyProblem?.platform}
+                  </span>
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t border-gray-700 dark:border-gray-300 flex flex-wrap gap-3 text-sm">
-                <span className="flex items-center gap-2 bg-secondary dark:bg-white px-2 py-1 rounded-full text-gray-300 dark:text-gray-700">
-                  <Code className="h-4 w-4 text-primary" />
-                  {dailyProblem?.platform}
-                </span>
-              </div>
-            </div>
-          )}
+            )}
         </CardContent>
       </Card>
 
@@ -491,9 +481,8 @@ const Challenges: React.FC = () => {
                     <div key={level} className="flex items-center gap-3">
                       <button
                         onClick={() => toggleDifficulty(level)}
-                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
-                          selectedDifficulties.includes(level) ? "bg-primary border-primary" : "border-border"
-                        }`}
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedDifficulties.includes(level) ? "bg-primary border-primary" : "border-border"
+                          }`}
                       >
                         {selectedDifficulties.includes(level) && (
                           <svg
@@ -531,9 +520,8 @@ const Challenges: React.FC = () => {
                     <div key={cat} className="flex items-center gap-3">
                       <button
                         onClick={() => toggleCategory(cat)}
-                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${
-                          selectedCategories.includes(cat) ? "bg-primary border-primary" : "border-border"
-                        }`}
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedCategories.includes(cat) ? "bg-primary border-primary" : "border-border"
+                          }`}
                       >
                         {selectedCategories.includes(cat) && (
                           <svg
@@ -574,11 +562,10 @@ const Challenges: React.FC = () => {
                   key={tab}
                   variant={activeTab === tab ? "default" : "outline"}
                   onClick={() => setActiveTab(tab as FilterTab)}
-                  className={`text-sm py-2 px-4 w-full sm:w-auto transition-all duration-300 ${
-                    activeTab === tab
+                  className={`text-sm py-2 px-4 w-full sm:w-auto transition-all duration-300 ${activeTab === tab
                       ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md"
                       : "border-border hover:border-primary text-foreground"
-                  }`}
+                    }`}
                 >
                   {tab === "all" ? (
                     <span className="flex items-center gap-2">
@@ -670,7 +657,6 @@ const Challenges: React.FC = () => {
                             }}
                             markSolved={() => markSolved(problem.id)}
                             viewSolution={(id) => {
-                              // Implement view solution logic
                             }}
                           />
                         </div>
@@ -707,9 +693,8 @@ const Challenges: React.FC = () => {
                         key={page}
                         variant={currentPage === page ? "default" : "outline"}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 p-0 ${
-                          currentPage === page ? "bg-primary text-primary-foreground" : "border-border text-foreground"
-                        }`}
+                        className={`w-8 h-8 p-0 ${currentPage === page ? "bg-primary text-primary-foreground" : "border-border text-foreground"
+                          }`}
                       >
                         {page}
                       </Button>
