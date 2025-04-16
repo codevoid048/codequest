@@ -4,6 +4,7 @@
 
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useMemo, useState } from "react";
 import axios from "axios";
+
 import ChallengePopup from "./ChallengePopup";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,6 @@ const Challenges: React.FC = () => {
         console.error("Failed to fetch user data:", error);
       }
     };
-
     if (user) {
       fetchUserData();
       updatePlatforms();
@@ -165,6 +165,7 @@ const Challenges: React.FC = () => {
   }, [problemsList]);
 
   const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList]);
+
   const difficultyLevels = ["Easy", "Medium", "Hard"];
 
   // Filter and sort problems based on user selections
@@ -300,7 +301,7 @@ const Challenges: React.FC = () => {
     }
 
     checkPotdSolved();
-  }, [dailyProblem]);
+  }, [dailyProblem, userData]);
 
   // Styling for difficulty levels
   const getDifficultyStyle = (difficulty: string) => {
