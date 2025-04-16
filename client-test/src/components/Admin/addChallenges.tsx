@@ -1,17 +1,23 @@
-import React from "react";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Plus, X, Calendar, Link2, Award, BarChart3, Tag, PenLine } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  Award,
+  BarChart3,
+  Calendar,
+  ChevronDown,
+  Link2,
+  PenLine,
+  Plus,
+  Tag,
+  X,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
 
+import DatePicker from "@/components/Admin/datepicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import axios from "axios";
 import {
   Select,
   SelectContent,
@@ -19,7 +25,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import DatePicker from "@/components/Admin/datepicker";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import axios from "axios";
 
 const difficultyOptions = ["Easy", "Medium", "Hard"];
 const categoryOptions = [
@@ -49,7 +63,13 @@ export default function Admin() {
     points: 5, // Default points for Easy difficulty
     problemLink: "",
     createdAt: currentDate,
-    platform: "" as string,
+    platform: "",
+    solutions: {
+      c: "",
+      cpp: "",
+      java: "",
+      python: "",
+    },
   });
   const [newCategory, setNewCategory] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,7 +80,7 @@ export default function Admin() {
   // Calculate form completion progress
   useEffect(() => {
     let completed = 0;
-    const totalFields = 7; // Total number of required fields
+    const totalFields = 7; // Total number of required fields (excluding solutions)
 
     if (formData.title) completed++;
     if (formData.description) completed++;
@@ -78,6 +98,16 @@ export default function Admin() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSolutionChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    language: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      solutions: { ...prev.solutions, [language]: e.target.value },
+    }));
   };
 
   const handleDifficultyChange = (value: string) => {
@@ -156,8 +186,10 @@ export default function Admin() {
 
       // Success notification
       alert(
-        `Challenge created! Successfully created "${formData.title
-        }" on ${formData.createdAt.toLocaleDateString()} from ${formData.platform
+        `Challenge created! Successfully created "${
+          formData.title
+        }" on ${formData.createdAt.toLocaleDateString()} from ${
+          formData.platform
         }`
       );
     } catch (error) {
@@ -222,22 +254,44 @@ export default function Admin() {
                     transition={{ type: "spring", stiffness: 50 }}
                   />
                 </div>
-                <p className="text-sm text-muted-foreground">{formProgress}% completed</p>
+                <p className="text-sm text-muted-foreground">
+                  {formProgress}% completed
+                </p>
               </div>
             )}
           </motion.div>
         </CardHeader>
 
         <CardContent className="p-0">
-          <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="details" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+          <Tabs
+            defaultValue="details"
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger
+                value="details"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
                 Details
               </TabsTrigger>
-              <TabsTrigger value="categorization" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+              <TabsTrigger
+                value="categorization"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
                 Categorization
               </TabsTrigger>
-              <TabsTrigger value="publish" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+              <TabsTrigger
+                value="Solutions"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
+                Solutions
+              </TabsTrigger>
+              <TabsTrigger
+                value="publish"
+                className="data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
                 Publish
               </TabsTrigger>
             </TabsList>
@@ -333,13 +387,18 @@ export default function Admin() {
                               <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() => setShowCategories(!showCategories)}
+                                onClick={() =>
+                                  setShowCategories(!showCategories)
+                                }
                                 className="flex w-full items-center justify-between border-gray-600 bg-card text-foreground hover:bg-muted hover:text-foreground"
                               >
-                                {formData.category.length > 0 ? `${formData.category.length} Categories Selected` : "Select Categories"}
+                                {formData.category.length > 0
+                                  ? `${formData.category.length} Categories Selected`
+                                  : "Select Categories"}
                                 <ChevronDown
-                                  className={`h-4 w-4 transition-transform ${showCategories ? "rotate-180" : ""
-                                    }`}
+                                  className={`h-4 w-4 transition-transform ${
+                                    showCategories ? "rotate-180" : ""
+                                  }`}
                                 />
                               </Button>
                             </TooltipTrigger>
@@ -365,10 +424,11 @@ export default function Admin() {
                                   type="button"
                                   variant="ghost"
                                   onClick={() => addCategory(category)}
-                                  className={`justify-start text-left text-sm ${formData.category.includes(category)
+                                  className={`justify-start text-left text-sm ${
+                                    formData.category.includes(category)
                                       ? "bg-primary/20 text-foreground"
                                       : "text-muted-foreground hover:bg-muted"
-                                    }`}
+                                  }`}
                                 >
                                   {category}
                                 </Button>
@@ -470,6 +530,94 @@ export default function Admin() {
                     </Button>
                     <Button
                       type="button"
+                      onClick={() => setActiveTab("Solutions")}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      Next Step
+                    </Button>
+                  </div>
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="Solutions">
+                <motion.div className="space-y-6" variants={containerVariants}>
+                  <motion.div variants={itemVariants} className="space-y-4">
+                    <motion.div variants={itemVariants} className="space-y-2">
+                      <Label
+                        htmlFor="c-solution"
+                        className="flex items-center text-lg font-medium text-foreground"
+                      >
+                        <BarChart3 className="mr-2 h-5 w-5" />C Solution
+                      </Label>
+                      <Textarea
+                        id="c-solution"
+                        name="c-solution"
+                        value={formData.solutions.c}
+                        onChange={(e) => handleSolutionChange(e, "c")}
+                        required
+                        placeholder="Provide a solution in C"
+                        className="min-h-[150px] border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
+                      />
+                    </motion.div>
+                    <motion.div variants={itemVariants} className="space-y-2">
+                      <Label
+                        htmlFor="cpp-solution"
+                        className="flex items-center text-lg font-medium text-foreground"
+                      >
+                        <BarChart3 className="mr-2 h-5 w-5" />
+                        C++ Solution
+                      </Label>
+                      <Textarea
+                        id="cpp-solution"
+                        name="cpp-solution"
+                        value={formData.solutions.cpp}
+                        onChange={(e) => handleSolutionChange(e, "cpp")}
+                        required
+                        placeholder="Provide a solution in C++"
+                        className="min-h-[150px] border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
+                      />
+                    </motion.div>
+                    <motion.div variants={itemVariants} className="space-y-2">
+                      <Label
+                        htmlFor="java-solution"
+                        className="flex items-center text-lg font-medium text-foreground"
+                      >
+                        <BarChart3 className="mr-2 h-5 w-5" />
+                        Java Solution
+                      </Label>
+                      <Textarea
+                        id="java-solution"
+                        name="java-solution"
+                        value={formData.solutions.java}
+                        onChange={(e) => handleSolutionChange(e, "java")}
+                        required
+                        placeholder="Provide a solution in Java"
+                        className="min-h-[150px] border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
+                      />
+                    </motion.div>
+                    <motion.div variants={itemVariants} className="space-y-2">
+                      <Label
+                        htmlFor="python-solution"
+                        className="flex items-center text-lg font-medium text-foreground"
+                      >
+                        <BarChart3 className="mr-2 h-5 w-5" />
+                        Python Solution
+                      </Label>
+                      <Textarea
+                        id="python-solution"
+                        name="python-solution"
+                        value={formData.solutions.python}
+                        onChange={(e) => handleSolutionChange(e, "python")}
+                        required
+                        placeholder="Provide a solution in Python"
+                        className="min-h-[150px] border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
+                      />
+                    </motion.div>
+                  </motion.div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
                       onClick={() => setActiveTab("publish")}
                       className="bg-primary text-primary-foreground hover:bg-primary/90"
                     >
@@ -486,7 +634,9 @@ export default function Admin() {
                       id="createdAt"
                       label="Creation Date"
                       selectedDate={formData.createdAt}
-                      onChange={(date) => setFormData((prev) => ({ ...prev, createdAt: date }))}
+                      onChange={(date) =>
+                        setFormData((prev) => ({ ...prev, createdAt: date }))
+                      }
                     />
                   </motion.div>
 
@@ -547,7 +697,9 @@ export default function Admin() {
                       whileTap={{ scale: 0.98 }}
                       className="rounded-lg bg-card/20 p-4 shadow"
                     >
-                      <h3 className="mb-2 text-lg font-semibold">Challenge Summary</h3>
+                      <h3 className="mb-2 text-lg font-semibold">
+                        Challenge Summary
+                      </h3>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex items-center gap-2">
                           <PenLine className="h-4 w-4 text-muted-foreground" />
@@ -557,17 +709,31 @@ export default function Admin() {
 
                         <div className="flex items-center gap-2">
                           <Award className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Difficulty:</span>
+                          <span className="text-muted-foreground">
+                            Difficulty:
+                          </span>
                         </div>
-                        <div className={getDifficultyColor(formData.difficulty).split(' ')[0]}>
+                        <div
+                          className={
+                            getDifficultyColor(formData.difficulty).split(
+                              " "
+                            )[0]
+                          }
+                        >
                           {formData.difficulty}
                         </div>
 
                         <div className="flex items-center gap-2">
                           <Tag className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Categories:</span>
+                          <span className="text-muted-foreground">
+                            Categories:
+                          </span>
                         </div>
-                        <div>{formData.category.length ? formData.category.join(", ") : "None"}</div>
+                        <div>
+                          {formData.category.length
+                            ? formData.category.join(", ")
+                            : "None"}
+                        </div>
 
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -581,7 +747,7 @@ export default function Admin() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setActiveTab("categorization")}
+                        onClick={() => setActiveTab("Solutions")}
                         className="border-gray-600 bg-card"
                       >
                         Previous

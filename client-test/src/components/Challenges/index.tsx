@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-//import ChallengePopup from "./ChallengePopup";
+
+import ChallengePopup from "./ChallengePopup";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,6 +28,8 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+
+// Define interfaces for type safety
 interface User {
   leetCode?: { username?: string; solved?: number; rank?: number; rating?: number };
   codeforces?: { username?: string; solved?: number; rank?: string; rating?: number };
@@ -127,11 +130,11 @@ const Challenges: React.FC = () => {
           },
         });
         setUser(res.data.user);
+
       } catch (error) {
         console.error("Failed to fetch user data:", error);
       }
     };
-
     if (user) {
       fetchUserData();
       updatePlatforms();
@@ -175,6 +178,7 @@ const Challenges: React.FC = () => {
   }, [problemsList]);
 
   const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList]);
+
   const difficultyLevels = ["Easy", "Medium", "Hard"];
 
   // Filter and sort problems based on user selections
@@ -213,6 +217,7 @@ const Challenges: React.FC = () => {
 
     return result;
   }, [problemsList, activeTab, selectedDifficulties, selectedCategories, searchTerm, sortOption]);
+
   const lastItemIndex = currentPage * itemsPerPage;
   const firstItemIndex = lastItemIndex - itemsPerPage;
   const currentItems = filteredProblems.slice(firstItemIndex, lastItemIndex);
@@ -310,7 +315,7 @@ const Challenges: React.FC = () => {
     }
 
     checkPotdSolved();
-  }, [dailyProblem]);
+  }, [dailyProblem, userData]);
 
   // Styling for difficulty levels
   const getDifficultyStyle = (difficulty: string) => {

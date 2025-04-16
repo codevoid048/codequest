@@ -9,7 +9,6 @@ const withRetry = async (fn, retries = 5, delay = 500) => {
     } catch (err) {
       const is503 = err.message.includes("Not Ready or Lagging") || err.message.includes("503");
       if (i === retries - 1 || !is503) throw err;
-
       await new Promise((res) => setTimeout(res, delay * (i + 1)));
     }
   }
