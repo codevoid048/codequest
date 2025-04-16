@@ -14,7 +14,7 @@ import axios from 'axios';
 //   }
 // };
 
-export const postPotdChallenge = async (username:string, challengeId:string , difficulty:string) => {
+export const postPotdChallenge = async (username:string) => {
   try {
     const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
     console.log("today", today);
@@ -61,5 +61,3 @@ export const streak = async () => {
     return null;
   }
 }
-
-

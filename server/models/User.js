@@ -82,6 +82,12 @@ const userSchema = new mongoose.Schema(
         timestamp: { type: String },
       },
     ],
+
+    heatmap: [
+      {
+        timestamp: { type: String },
+      },
+    ],
   },
   { timestamps: true },
 )

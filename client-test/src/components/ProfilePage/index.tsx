@@ -7,6 +7,7 @@ import { motion } from "framer-motion"
 import { useAuth } from "@/context/AuthContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { updatePlatformCacheTimestamp, isPlatformDataStale } from "./platformCache"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Calendar,
@@ -22,7 +23,7 @@ import {
   Twitter,
 } from "lucide-react"
 import toast from "react-hot-toast"
-import { solvedChallenges } from "@/lib/potdchallenge"
+//import { solvedChallenges } from "@/lib/potdchallenge"
 import { PlatformManager } from "./platform-manager"
 
 export default function ProfilePage() {
@@ -63,57 +64,75 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [rating, setRating] = useState([]);
+  //const [rating, setRating] = useState([]);
+
   useEffect(() => {
     const updatePlatforms = async () => {
-      await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
-      await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
-      await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
-      await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
-    }
-    toast.success("Data updated successfully");
+      if (!profileUser || !profileUser.username) return;
+      // Check if the platforms data is stale (older than 30 minutes)
+      if (!isPlatformDataStale(profileUser.username, 5)) {
+        console.log("Platforms data is fresh; skipping update.");
+        return;
+      }
+
+      try {
+        console.log("Updating platforms...");
+        await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
+        await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
+        await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
+        await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
+        await axios.post('http://localhost:5000/platforms/solvedChallenges', { user: profileUser });
+        toast.success("Data updated successfully");
+        updatePlatformCacheTimestamp(profileUser.username);
+      } catch (error) {
+        console.error("Error updating platforms:", error);
+      }
+    };
     updatePlatforms();
   }, [profileUser]);
 
+
   useEffect(() => {
-  const fetchProfileUser = async () => {
-    setLoading(true)
-    setError(null)
-    const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
+    const fetchChallenges = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/challenges")
+        console.log("Challenges:", response.data)
+        if (Array.isArray(response.data)) {
+          setChallenges(response.data)
+        } else if (response.data && Array.isArray(response.data.challenges)) {
+          setChallenges(response.data.challenges)
+        } else {
+          console.error("Challenges data is not an array:", response.data)
+          setChallenges([])
+        }
+      } catch (err) {
+        console.error("Error fetching challenges:", err)
+      }
+    }
+
+    const fetchProfileUser = async () => {
+      setLoading(true)
+      setError(null)
+      const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
 
       try {
         const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
         console.log("Fetched user data:", response.data)
         setProfileUser(response.data.user)
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error fetching user:", err)
-        setError(err.response?.data?.message || "User not found")
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.message || "User not found");
+        } else {
+          toast.error("An unexpected error occurred");
+        }
       } finally {
         setLoading(false)
       }
     }
-    const fetchChallenges = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/challenges");
-        // console.log("Challenges:", response.data)
-        // Ensure challenges data is an array
-        if (Array.isArray(response.data)) {
-          setChallenges(response.data)
-        } else if (response.data && Array.isArray(response.data.challenges)) {
-          // If the API returns {challenges: [...]}
-          setChallenges(response.data.challenges)
-        } else {
-          // If data is not in expected format, set as empty array
-          console.error("Challenges data is not an array:", response.data)
-          setChallenges([])
-        }
-      } catch (err: any) {
-        console.error("Error fetching challenges:", err)
-      }
-    }
     fetchChallenges()
     fetchProfileUser()
-    solvedChallenges(routeUsername || "");
+    //solvedChallenges(routeUsername || "");
   }, [routeUsername, user?.username])
 
 
@@ -157,8 +176,12 @@ export default function ProfilePage() {
       }
 
       return true;
-    } catch (error: any) {
-      console.error("Error verifying platform:", error.response?.data?.message || error.message);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("Error verifying platform:", error.response?.data?.message || error.message);
+      } else {
+        console.error("Error verifying platform:", error);
+      }
       toast.error("Verification failed, try again");
       return false;
     }
@@ -222,33 +245,6 @@ export default function ProfilePage() {
   }
   // console.log(problemsSolved,"problemsSolved");
 
-  const platforms = [
-    {
-      name: "LeetCode",
-      handle: profileUser.leetCode?.username || "-",
-      rating: profileUser.leetCode?.rating || 0,
-      color: "#FFA116",
-    },
-    {
-      name: "GeeksForGeeks",
-      handle: profileUser.gfg?.username || "-",
-      rating: profileUser.gfg?.rating || 0,
-      color: "#2F8D46",
-    },
-    {
-      name: "CodeForces",
-      handle: profileUser.codeforces?.username || "-",
-      rating: profileUser.codeforces?.rating || 0,
-      color: "#318CE7",
-    },
-    {
-      name: "CodeChef",
-      handle: profileUser.codechef?.username || "-",
-      rating: profileUser.codechef?.rating || 0,
-      color: "#745D0B",
-    },
-  ]
-
   interface GetDaysInMonthParams {
     month: number
     year: number
@@ -275,24 +271,24 @@ export default function ProfilePage() {
 
   const contributions = generateContributions(selectedYear)
 
-  const contributionsByMonth = Array.from({ length: 12 }, (_, month) => {
-    const daysInMonth = getDaysInMonth(month, selectedYear)
-    return contributions
-      .filter((contrib) => {
-        const contribDate = new Date(contrib.date)
-        return contribDate.getMonth() === month && contribDate.getFullYear() === selectedYear
-      })
-      .slice(0, daysInMonth)
-  })
+  // const contributionsByMonth = Array.from({ length: 12 }, (_, month) => {
+  //   const daysInMonth = getDaysInMonth(month, selectedYear)
+  //   return contributions
+  //     .filter((contrib) => {
+  //       const contribDate = new Date(contrib.date)
+  //       return contribDate.getMonth() === month && contribDate.getFullYear() === selectedYear
+  //     })
+  //     .slice(0, daysInMonth)
+  // })
 
   const yearOptions = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2]
 
-  const getColor = (count: number): string => {
-    if (count === 0) return "bg-gray-300"
-    if (count <= 3) return "bg-green-200"
-    if (count <= 6) return "bg-green-400"
-    return "bg-green-500"
-  }
+  // const getColor = (count: number): string => {
+  //   if (count === 0) return "bg-gray-300"
+  //   if (count <= 3) return "bg-green-200"
+  //   if (count <= 6) return "bg-green-400"
+  //   return "bg-green-500"
+  // }
 
   interface StreakParams {
     monthIndex: number
@@ -475,23 +471,27 @@ export default function ProfilePage() {
                 <div className="mt-6 flex justify-center gap-3">
                   {profileUser.otherLinks?.find((link) => link.platform === "Twitter")?.url && (
                     <Button variant="outline" size="icon" className="rounded-full" asChild>
-                      <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
-                        <Twitter className="h-4 w-4 text-sky-500" />
-                      </Link>
+                      {twitterLink && (
+                        <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
+                            <Twitter className="h-4 w-4 text-sky-500" />
+                        </Link>
+                      )}
                     </Button>
                   )}
                   {profileUser.otherLinks?.find((link) => link.platform === "LinkedIn")?.url && (
                     <Button variant="outline" size="icon" className="rounded-full" asChild>
-                      <Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
+                      {linkedinLink && (<Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
                         <Linkedin className="h-4 w-4 text-blue-600" />
                       </Link>
+                      )}
                     </Button>
                   )}
                   {profileUser.otherLinks?.find((link) => link.platform === "GitHub")?.url && (
                     <Button variant="outline" size="icon" className="rounded-full" asChild>
-                      <Link to={githubLink} target="_blank" rel="noopener noreferrer">
+                      {githubLink && (<Link to={githubLink} target="_blank" rel="noopener noreferrer">
                         <Github className="h-4 w-4" />
                       </Link>
+                      )}
                     </Button>
                   )}
                 </div>
@@ -762,7 +762,7 @@ export default function ProfilePage() {
                 </div>
                 <CardDescription>Your coding activity for {selectedYear}</CardDescription>
               </CardHeader>
-              <CardContent>   
+              <CardContent>
                 <div className="overflow-x-auto pb-4">
                   <div className="min-w-[950px]">
                     <div className="flex gap-4">
