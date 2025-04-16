@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 import ChallengePopup from "./ChallengePopup";
@@ -12,24 +14,9 @@ import { useAuth } from "@/context/AuthContext";
 import { postPotdChallenge, solvedChallenges, streak } from "@/lib/potdchallenge";
 import ProblemStatus from "@/lib/solutionStatus";
 import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "@/platforms/leetcode";
-import {
-  Award,
-  Calendar,
-  CheckCircle,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Code,
-  Filter,
-  Flame,
-  Lightbulb,
-  Search,
-  Tag,
-} from "lucide-react";
+import { Award, Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, Code, Filter, Flame, Lightbulb, Search, Tag, } from "lucide-react";
 import toast from "react-hot-toast";
 
-
-// Define interfaces for type safety
 interface User {
   leetCode?: { username?: string; solved?: number; rank?: number; rating?: number };
   codeforces?: { username?: string; solved?: number; rank?: string; rating?: number };
@@ -49,11 +36,11 @@ interface Challenge {
   problemUrl?: string;
 }
 
-interface ProblemStatusProps {
-  problem: { id: string; status: string; createdAt: Date };
-  markSolved: (id: string) => void;
-  viewSolution: (id: string) => void;
-}
+// interface ProblemStatusProps {
+//   problem: { id: string; status: string; createdAt: Date };
+//   markSolved: (id: string) => void;
+//   viewSolution: (id: string) => void;
+// }
 
 type FilterTab = "all" | "solved" | "unsolved";
 
@@ -63,8 +50,9 @@ const Challenges: React.FC = () => {
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" });
-  const [problemsList, setProblemsList] = useState<challenge[]>([]);
+  const [problemsList, setProblemsList] = useState<Challenge[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  type SortOption = "date" | "difficulty" | "status";
   const [sortOption, setSortOption] = useState<SortOption>("date");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -130,7 +118,6 @@ const Challenges: React.FC = () => {
           },
         });
         setUser(res.data.user);
-
       } catch (error) {
         console.error("Failed to fetch user data:", error);
       }
@@ -194,7 +181,7 @@ const Challenges: React.FC = () => {
       const matchesTab = activeTab === "all" || problem.status.toLowerCase() === activeTab;
       const matchesDifficulty = selectedDifficulties.length === 0 || selectedDifficulties.includes(problem.difficulty);
       const matchesCategory =
-        selectedCategories.length === 0 || problem.categories.some((cat) => selectedCategories.includes(cat));
+        selectedCategories.length === 0 || problem.categories.some((cat: string) => selectedCategories.includes(cat));
       const matchesSearch =
         !searchTerm ||
         problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -217,7 +204,6 @@ const Challenges: React.FC = () => {
 
     return result;
   }, [problemsList, activeTab, selectedDifficulties, selectedCategories, searchTerm, sortOption]);
-
   const lastItemIndex = currentPage * itemsPerPage;
   const firstItemIndex = lastItemIndex - itemsPerPage;
   const currentItems = filteredProblems.slice(firstItemIndex, lastItemIndex);
@@ -414,9 +400,9 @@ const Challenges: React.FC = () => {
                       {dailyProblem?.description}
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {dailyProblem?.categories.map((cat) => (
+                      {dailyProblem?.categories.map((cat: boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | Key | null | undefined) => (
                         <Badge
-                          key={cat}
+                          key={String(cat)}
                           variant="secondary"
                           className="text-xs py-1 px-2 bg-secondary dark:bg-white text-gray-300 dark:text-gray-700 rounded-full"
                         >
@@ -624,9 +610,9 @@ const Challenges: React.FC = () => {
                             <h3 className="text-lg font-bold text-foreground">{problem.title}</h3>
                             <p className="text-muted-foreground text-sm line-clamp-1">{problem.description}</p>
                             <div className="flex flex-wrap gap-1.5">
-                              {problem.categories.map((cat) => (
+                              {problem.categories.map((cat: boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | Key | null | undefined) => (
                                 <Badge
-                                  key={cat}
+                                  key={String(cat)}
                                   variant="secondary"
                                   className="text-xs py-0.5 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
                                 >
@@ -651,7 +637,7 @@ const Challenges: React.FC = () => {
                           </div>
                           <ProblemStatus
                             problem={{
-                              id: problem.id.toString(),
+                              id: problem.id,
                               status: problem.status,
                               createdAt: new Date(problem.date),
                             }}
@@ -718,7 +704,7 @@ const Challenges: React.FC = () => {
 
       {showPopup && (
         <ChallengePopup
-          userStreak={userData?.streak || 0}
+          userStreak={User?.streak || 0}
           onClose={() => {
             setShowPopup(false);
             if (dailyProblem) markPopupShownToday(dailyProblem.id);

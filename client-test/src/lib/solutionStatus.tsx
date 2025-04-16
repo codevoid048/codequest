@@ -13,10 +13,10 @@ interface ProblemStatusProps {
   viewSolution: (id: number) => void;
 }
 
-const ProblemStatus: React.FC<ProblemStatusProps> = ({ 
-  problem, 
-  markSolved, 
-  viewSolution 
+const ProblemStatus: React.FC<ProblemStatusProps> = ({
+  problem,
+  markSolved,
+  viewSolution
 }) => {
   // Function to check if solution button should be displayed
   const canShowSolutionButton = () => {
