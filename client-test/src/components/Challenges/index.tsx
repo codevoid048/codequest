@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
@@ -63,10 +64,10 @@ const Challenges: React.FC = () => {
   const itemsPerPage = 5;
   const { user } = useAuth();
 
-  function convertTimestampToDate(timestamp: number) {
-    const date = new Date(timestamp * 1000);
-    return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
-  }
+  // function convertTimestampToDate(timestamp: number) {
+  //   const date = new Date(timestamp * 1000);
+  //   return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
+  // }
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -301,7 +302,7 @@ const Challenges: React.FC = () => {
     }
 
     checkPotdSolved();
-  }, [dailyProblem, userData]);
+  }, [dailyProblem]);
 
   // Styling for difficulty levels
   const getDifficultyStyle = (difficulty: string) => {
