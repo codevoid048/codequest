@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { postPotdChallenge, solvedChallenges, streak } from "@/lib/potdchallenge";
+import { postPotdChallenge} from "@/lib/potdchallenge";
 import ProblemStatus from "@/lib/solutionStatus";
 import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "@/platforms/leetcode";
 import { Award, Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, Code, Filter, Flame, Lightbulb, Search, Tag, } from "lucide-react";
@@ -22,7 +22,20 @@ interface User {
   leetCode?: { username?: string; solved?: number; rank?: number; rating?: number };
   codeforces?: { username?: string; solved?: number; rank?: string; rating?: number };
   streak?: number;
-  potdSolved?: unknown[];
+  solveChallenges?: {
+    easy: Array<{
+      challenge: string; // MongoDB ObjectId as string
+      timestamp: string;
+    }>,
+    medium: Array<{
+      challenge: string; // MongoDB ObjectId as string
+      timestamp: string;
+    }>,
+    hard: Array<{
+      challenge: string; // MongoDB ObjectId as string
+      timestamp: string;
+    }>
+  }
 }
 
 interface Challenge {
@@ -100,36 +113,6 @@ const Challenges: React.FC = () => {
     };
     fetchProblems();
   }, []);
-
-  // Fetch user profile data when user is authenticated
-  useEffect(() => {
-    const updatePlatforms = async () => {
-      await Promise.all([
-        axios.post('http://localhost:5000/platforms/leetcode', { username: user?.leetCode?.username }),
-        axios.post('http://localhost:5000/platforms/codeforces', { username: user?.codeforces?.username }),
-        axios.post('http://localhost:5000/platforms/codechef', { username: user?.codechef?.username }),
-        axios.post('http://localhost:5000/platforms/gfg', { username: user?.gfg?.username }),
-      ]);
-      toast.success("Data updated successfully");
-    }
-    const fetchUserData = async () => {
-      if (!user?._id) return;
-      try {
-        const res = await axios.get("http://localhost:5000/api/profile/getUser", {
-          params: {
-            userId: user?._id,
-          },
-        });
-        setUser(res.data.user);
-      } catch (error) {
-        console.error("Failed to fetch user data:", error);
-      }
-    };
-    if (user) {
-      fetchUserData();
-      updatePlatforms();
-    }
-  }, [user]);
 
   // Update countdown timer every second
   useEffect(() => {
@@ -244,6 +227,8 @@ const Challenges: React.FC = () => {
   useEffect(() => {
     const checkIfProblemSolved = async () => {
       try {
+        console.log("called")
+
         if (dailyProblem?.platform === "LeetCode") {
           const leetCodeData = await fetchLeetCodeProfile(`${user?.leetCode?.username}`);
           if (leetCodeData?.recentSubmissionList) {
@@ -360,7 +345,7 @@ const Challenges: React.FC = () => {
                 {/* POTD Solved counter */}
                 <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="font-semibold">{user?.solveChallenges?.length} solved</span>
+                  <span className="font-semibold">{user?.solveChallenges?.easy?.length+user?.solveChallenges?.medium?.length+user?.solveChallenges?.hard?.length} solved</span>
                 </div>
                 </div>
             ) : null}
