@@ -112,7 +112,6 @@ export default function ProfilePage() {
 
     return heatmapData;
   };
-
   useEffect(() => {
     const updatePlatforms = async () => {
       if (!profileUser || !profileUser.username) return;
@@ -276,7 +275,6 @@ export default function ProfilePage() {
     medium: profileUser.solveChallenges?.medium?.length || 0,
     hard: profileUser.solveChallenges?.hard?.length || 0,
   }
-
   // Generate the heatmap data from solveChallenges
   const heatmap = generateHeatmapFromSolveChallenges(profileUser);
   // console.log("heatmaop", heatmap)
