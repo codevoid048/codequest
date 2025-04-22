@@ -2,6 +2,7 @@ import { User } from "../models/User.js"
 import { Activity } from "../models/Activity.js"
 import cloudinary from "../config/cloudinary.js"
 import { v4 as uuidv4 } from "uuid"
+import { Challenge } from "../models/Challenge.js"
 
 export const getUserProfile = async (req, res) => {
     try {
@@ -192,31 +193,113 @@ export const getUserActivity = async (req, res) => {
 }
 export const postPotdChallenge = async (req, res) => {
     try {
-        const { username, timestamp } = req.body;
-        const date = new Date(timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-        const user = await User.findOne({ username });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        const potdExists = user.potdSolved.some(potd => new Date(potd.timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-') === date);
-        if (potdExists) {
-            return res.status(200).json({ message: 'POTD challenge already solved for today' });
-        }
+        console.log("request recieved", req.body);
+        const { username, timestamp, challengeId, difficulty } = req.body;
 
-        user.potdSolved.push({ timestamp: timestamp });
-        await user.save();
+        const today = new Date(timestamp)
+            .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
+            .split('/')
+            .reverse()
+            .join('-');
+
+        const user = await User.findOne({ username });
+        const challenge = await Challenge.findById(challengeId);
+
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (!challenge) return res.status(404).json({ message: 'Challenge not found' });
+
+        const difficultyKey = difficulty.toLowerCase();
+
+        // Initialize solveChallenges if not defined
+        await User.updateMany(
+            { solveChallenges: { $type: 'array' } },
+            {
+                $set: {
+                    solveChallenges: {
+                        easy: [],
+                        medium: [],
+                        hard: []
+                    }
+                }
+            }
+        );
+
+        // Get the relevant difficulty array
+        const solvedList = user.solveChallenges[difficultyKey] || [];
+        console.log(solvedList, "solvedList");
+
+        const alreadySolved = solvedList.some(entry =>
+            entry.challenge.toString() === challengeId.toString() &&
+            entry.timestamp === today
+        );
+        console.log(alreadySolved, "alreadySolved");
+        if (!alreadySolved) {
+            // Push the solved challenge
+            user.solveChallenges[difficultyKey].push({
+                challenge: challengeId,
+                timestamp: today
+            });
+
+            // Update points
+            const scoreMap = { easy: 5, medium: 10, hard: 20 };
+            user.points += scoreMap[difficultyKey] || 0;
+
+
+            // Streak update
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday
+                .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
+                .split('/')
+                .reverse()
+                .join('-');
+
+            // Flatten all timestamps from all difficulty levels
+            const allSolvedDates = ['easy', 'medium', 'hard']
+                .flatMap(difficulty => user.solveChallenges[difficulty] || [])
+                .map(entry => entry.timestamp);
+            console.log(allSolvedDates, "allSolvedDates");
+
+            if (allSolvedDates.includes(today)) {
+                // Already counted for streak today
+                console.log("already streak added");
+            } else {
+                user.streak = allSolvedDates.includes(yesterdayStr)
+                    ? (user.streak || 0) + 1
+                    : 1;
+            }
+
+            // Save user
+            await user.save();
+
+            // Avoid duplicates in solvedUsers
+            const alreadyAdded = challenge.solvedUsers.some(userId =>
+                userId.toString() === user._id.toString()
+            );
+            console.log(alreadyAdded, "alreadyAdded");
+            if (!alreadyAdded) {
+                challenge.solvedUsers.push(user._id);
+                await challenge.save();
+            }
+
+            console.log("POTD challenge recorded successfully");
+        } else {
+            console.log("Challenge already solved today");
+        }
 
         res.status(200).json({ message: 'POTD challenge recorded successfully' });
+
     } catch (error) {
         console.error('POTD challenge update error:', error);
-        res.status(500).json({ 
-            message: 'Server error', 
+        res.status(500).json({
+            message: 'Server error',
             error: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
 
     }
 };
+
 
 
 // Get user by username (for public profiles)
@@ -256,7 +339,7 @@ export const updateUserStreak = async (req, res) => {
         const yesterdayStr = yesterday.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
 
         // Check if today's problem was already solved
-        const solvedDates = user.potdSolved.map(potd => 
+        const solvedDates = user.potdSolved.map(potd =>
             new Date(potd.timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-')
         );
 
@@ -271,20 +354,19 @@ export const updateUserStreak = async (req, res) => {
         user.potdSolved.push({ timestamp: new Date().toISOString() });
 
         await user.save();
-        
         // Update leaderboard
         await updateRanks();
-        
-        return res.status(200).json({ 
-            success: true, 
-            streak: user.streak, 
-            message: "Streak updated successfully" 
+
+        return res.status(200).json({
+            success: true,
+            streak: user.streak,
+            message: "Streak updated successfully"
         });
 
     } catch (error) {
         console.error("Error updating streak:", error);
-        return res.status(500).json({ 
-            success: false, 
+        return res.status(500).json({
+            success: false,
             message: "An error occurred",
             error: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
@@ -294,24 +376,24 @@ export const updateUserStreak = async (req, res) => {
 
 export const getUserById = async (req, res) => {
     try {
-      const userId = req.query.userId;
-  
-      if (!userId) {
-        return res.status(400).json({ message: 'User ID is required' });
-      }
-  
-      const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
-      
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-  
-      res.status(200).json({ user });
+        const userId = req.query.userId;
+
+        if (!userId) {
+            return res.status(400).json({ message: 'User ID is required' });
+        }
+
+        const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({ user });
     } catch (error) {
-      console.error("Server error:", error);
-      res.status(500).json({ message: 'Server error' });
+        console.error("Server error:", error);
+        res.status(500).json({ message: 'Server error' });
     }
-  };
+};
 
 //   export const getUserById = async (req, res) => {
 //     try {
@@ -329,4 +411,3 @@ export const getUserById = async (req, res) => {
 //         res.status(500).json({ message: "Server error" });
 //     }
 // }
-  
