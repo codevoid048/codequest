@@ -58,28 +58,30 @@ export const verifyProfiles = async (req, res) => {
         else if (normalizedPlatform === 'leetcode') {
             const url = `https://leetcode.com/graphql`;
             const query = {
-                query: `query getUserData($username: String!) {
-                    matchedUser(username: $username) {
-                        profile {
-                        realName
-                        ranking
-                        starRating
+                query: `query ($username: String!) {
+                        matchedUser(username: $username) {
+                            username
+                            profile {
+                            realName
+                            ranking
+                            starRating
+                            }
+                            submitStats: submitStatsGlobal {
+                            acSubmissionNum {
+                                difficulty
+                                count
+                                submissions
+                            }
+                            }
                         }
-                    }
-                    submitStats: submitStatsGlobal {
-                        acSubmissionNum {
-                        difficulty
-                        count
-                        submissions
+                        userContestRanking(username: $username) {
+                            rating
                         }
-                    }
-                    userContestRanking(username: $username) {
-                        rating
-                    }
                     }`,
                 variables: { username }
             };
-            const response = await axios.post(url, query, { headers: { 'Content-Type': 'application/json' } });
+            const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' };
+            const response = await axios.post(url, query, { headers});
 
             if (!response.data.data.matchedUser) {
                 return res.status(400).json({ error: 'Invalid LeetCode username' });
@@ -97,9 +99,10 @@ export const verifyProfiles = async (req, res) => {
             const rank = responseData?.matchedUser?.profile?.ranking || 0;
             const stats = responseData?.matchedUser?.submitStatsGlobal?.acSubmissionNum || [];
             const totalSolved = stats.find((item) => item.difficulty === "All")?.count || 0;
+            console.log("LeetCode data:", username, rating, rank, totalSolved);
             await user.updateOne({ $set: { 'leetCode.username': username, 'leetCode.rating': rating, 'leetCode.rank': rank, 'leetCode.solved': totalSolved } });
             return res.status(200).json({ message: 'Profile verified successfully' });
-        } 
+        }
         else if (normalizedPlatform === 'codechef') {
             const response = await axios.get(`https://codechef-api.vercel.app/handle/${username}`)
             if (response.error) {
@@ -115,7 +118,7 @@ export const verifyProfiles = async (req, res) => {
             }
             await user.updateOne({ $set: { 'codechef.username': username, 'codechef.rating': currentRating, 'codechef.rank': globalRank, 'codechef.stars': stars } });
             return res.status(200).json({ message: 'Profile verified successfully' });
-        } 
+        }
         else {
             return res.status(400).json({ error: 'Unsupported platform. Supported platforms are: GeeksForGeeks, CodeForces, LeetCode, CodeChef.' });
         }
