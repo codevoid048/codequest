@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
@@ -34,6 +35,7 @@ interface Challenge {
   status: "Solved" | "Unsolved";
   description: string;
   problemUrl?: string;
+  _id: string;
 }
 
 // interface ProblemStatusProps {
@@ -63,10 +65,10 @@ const Challenges: React.FC = () => {
   const itemsPerPage = 5;
   const { user } = useAuth();
 
-  function convertTimestampToDate(timestamp: number) {
-    const date = new Date(timestamp * 1000);
-    return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
-  }
+  // function convertTimestampToDate(timestamp: number) {
+  //   const date = new Date(timestamp * 1000);
+  //   return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
+  // }
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -87,6 +89,7 @@ const Challenges: React.FC = () => {
             status: "Unsolved" as Challenge["status"],
             description: challenge.description,
             problemUrl: challenge.problemLink,
+            _id: challenge._id,
           }));
           setProblemsList(data);
           setIsLoading(false);
@@ -253,15 +256,14 @@ const Challenges: React.FC = () => {
 
             if (solvedProblem) {
               setIsSolved(true);
-              postPotdChallenge(user?.username);
-              streak();
-              solvedChallenges(user?.username);
-              localStorage.setItem('potdSolvedDate', new Date().toISOString().split('T')[0]); // Store today's date
+              postPotdChallenge(user?.username,dailyProblem?._id,dailyProblem?.difficulty);
+              localStorage.setItem('potdSolvedDate',new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-')); // Store today's date
               return;
             }
           }
         } else if (dailyProblem?.platform === "Codeforces") {
           const codeforcesData = await fetchCodeforcesProfile(`${user?.codeforces?.username}`);
+          console.log("called codeforces api", codeforcesData);
           if (codeforcesData?.result) {
             const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string }; verdict: string }) => {
               const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
@@ -272,10 +274,9 @@ const Challenges: React.FC = () => {
 
             if (solvedProblem) {
               setIsSolved(true);
-              postPotdChallenge(user?.username);
-              streak();
-              solvedChallenges(user?.username);
-              localStorage.setItem('potdSolvedDate', new Date().toISOString().split('T')[0]);
+              postPotdChallenge(user?.username,dailyProblem?._id,dailyProblem?.difficulty);
+              console.log("potd posted successfully");
+              localStorage.setItem('potdSolvedDate', new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'));
               return;
             }
           }
@@ -287,7 +288,7 @@ const Challenges: React.FC = () => {
 
     const checkPotdSolved = async () => {
       try {
-        const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+        const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'); // Get today's date in YYYY-MM-DD format
         const storedDate = localStorage.getItem('potdSolvedDate');
 
         if (storedDate === today) {
@@ -301,7 +302,7 @@ const Challenges: React.FC = () => {
     }
 
     checkPotdSolved();
-  }, [dailyProblem, userData]);
+  }, [dailyProblem]);
 
   // Styling for difficulty levels
   const getDifficultyStyle = (difficulty: string) => {

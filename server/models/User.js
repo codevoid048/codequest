@@ -58,34 +58,41 @@ const userSchema = new mongoose.Schema(
     streak: { type: Number, default: 0 },
 
     // All challenges solved (non-POTD)
-    solveChallenges: [
+    solveChallenges: 
       {
-        challengeId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Challenge",
-        },
-        easy: { type: mongoose.Schema.Types.ObjectId, ref: "Challenge" },
-        medium: { type: mongoose.Schema.Types.ObjectId, ref: "Challenge" },
-        hard: { type: mongoose.Schema.Types.ObjectId, ref: "Challenge" },
-        timestamp: { type: String },
+        easy: [
+          {
+            challenge: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "Challenge",
+            },
+            timestamp: { type: String },
+          }
+      ],
+        medium: [
+          {
+            challenge: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "Challenge",
+            },
+            timestamp: { type: String },
+          }
+      ],
+        hard: [
+          {
+            challenge: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "Challenge",
+            },
+            timestamp: { type: String },
+          }
+      ],
       }
-    ],
+    ,
     otherLinks: [
       {
         platform: String, // The name of the social platform, e.g., 'twitter', 'linkedin', 'github'
         url: String, // The URL of the user's profile on that platform
-      },
-    ],
-
-    heatmap: [
-      {
-        timestamp: { type: String },
-      },
-    ],
-
-    heatmap: [
-      {
-        timestamp: { type: String },
       },
     ],
   },

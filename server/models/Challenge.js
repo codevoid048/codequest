@@ -7,12 +7,12 @@ const challengeSchema = new mongoose.Schema({
     points: { type: Number, required: true },
     problemLink: { type: String, required: true },
     platform: { type: String, required: true },
-    createdAt: { type: Date, default: () => new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) },
+    createdAt: { type: Date, default: Date.now },
     solvedUsers: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
-            unique: true
+            
         }]
 });
 
