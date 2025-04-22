@@ -345,7 +345,7 @@ const Challenges: React.FC = () => {
                 {/* POTD Solved counter */}
                 <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="font-semibold">{user?.solveChallenges?.length} solved</span>
+                  <span className="font-semibold">{user?.solveChallenges?.easy?.length+user?.solveChallenges?.medium?.length+user?.solveChallenges?.hard?.length} solved</span>
                 </div>
                 </div>
             ) : null}
