@@ -235,7 +235,7 @@ export const postPotdChallenge = async (req, res) => {
         );
         
         console.log("Already solved:", alreadySolved);
-        
+
         if (!alreadySolved) {
             // Push the solved challenge
             user.solveChallenges[difficultyKey].push({
@@ -302,6 +302,7 @@ export const postPotdChallenge = async (req, res) => {
             error: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
+
     }
 };
 
