@@ -112,7 +112,6 @@ export default function ProfilePage() {
 
     return heatmapData;
   };
-
   useEffect(() => {
     const updatePlatforms = async () => {
       if (!profileUser || !profileUser.username) return;
@@ -123,6 +122,7 @@ export default function ProfilePage() {
       }
 
       try {
+        console.log("Updating platforms...");
         await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
         await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
         await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
@@ -276,7 +276,6 @@ export default function ProfilePage() {
     medium: profileUser.solveChallenges?.medium?.length || 0,
     hard: profileUser.solveChallenges?.hard?.length || 0,
   }
-
   // Generate the heatmap data from solveChallenges
   const heatmap = generateHeatmapFromSolveChallenges(profileUser);
   // console.log("heatmaop", heatmap)

@@ -296,6 +296,7 @@ export const postPotdChallenge = async (req, res) => {
             error: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
+
     }
 };
 
@@ -353,7 +354,6 @@ export const updateUserStreak = async (req, res) => {
         user.potdSolved.push({ timestamp: new Date().toISOString() });
 
         await user.save();
-
         // Update leaderboard
         await updateRanks();
 
