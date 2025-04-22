@@ -199,7 +199,6 @@ export const postPotdChallenge = async (req, res) => {
         if (!username || !timestamp || !challengeId || !difficulty) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
-
         const today = new Date(timestamp)
             .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
             .split('/')
@@ -235,7 +234,6 @@ export const postPotdChallenge = async (req, res) => {
         );
         
         console.log("Already solved:", alreadySolved);
-
         if (!alreadySolved) {
             // Push the solved challenge
             user.solveChallenges[difficultyKey].push({
@@ -294,7 +292,6 @@ export const postPotdChallenge = async (req, res) => {
             console.log("Challenge already solved today");
             return res.status(200).json({ message: 'Challenge already solved today' });
         }
-
     } catch (error) {
         console.error('POTD challenge update error:', error);
         res.status(500).json({
