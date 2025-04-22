@@ -14,12 +14,14 @@ import axios from 'axios';
 //   }
 // };
 
-export const postPotdChallenge = async (username:string) => {
+export const postPotdChallenge = async (username:string,challengeId : string , difficulty : string) => {
   try {
     const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
     console.log("today", today);
     const response = await axios.post('http://localhost:5000/api/profile/potd', {
-      username: username,
+      username,
+      challengeId,
+      difficulty,
       timestamp: today
     }, {
       withCredentials: true 

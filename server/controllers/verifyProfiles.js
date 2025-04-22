@@ -58,25 +58,24 @@ export const verifyProfiles = async (req, res) => {
         else if (normalizedPlatform === 'leetcode') {
             const url = `https://leetcode.com/graphql`;
             const query = {
-                query: `query ($username: String!) {
-                        matchedUser(username: $username) {
-                            username
-                            profile {
-                            realName
-                            ranking
-                            starRating
-                            }
-                            submitStats: submitStatsGlobal {
-                            acSubmissionNum {
-                                difficulty
-                                count
-                                submissions
-                            }
-                            }
+                query: `query getUserData($username: String!) {
+                    matchedUser(username: $username) {
+                        profile {
+                        realName
+                        ranking
+                        starRating
                         }
-                        userContestRanking(username: $username) {
-                            rating
+                    }
+                    submitStats: submitStatsGlobal {
+                        acSubmissionNum {
+                        difficulty
+                        count
+                        submissions
                         }
+                    }
+                    userContestRanking(username: $username) {
+                        rating
+                    }
                     }`,
                 variables: { username }
             };
