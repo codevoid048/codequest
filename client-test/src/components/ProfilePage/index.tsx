@@ -63,15 +63,14 @@ export default function ProfilePage() {
     // Modified: Removed the old heatmap property and will create it from solveChallenges
   }
 
-  interface Challenge {
-    challengeid: string
-    platform: string
-    difficulty: string
-    _id: string
-  }
+  // interface Challenge {
+  //   challengeid: string
+  //   platform: string
+  //   difficulty: string
+  //   _id: string
+  // }
 
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
@@ -123,11 +122,11 @@ export default function ProfilePage() {
 
       try {
         console.log("Updating platforms...");
-        await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
-        await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
-        await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
-        await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
-        await axios.post('http://localhost:5000/platforms/solvedChallenges', { user: profileUser });
+        if(profileUser.leetCode?.username != "") await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
+        if(profileUser.codeforces?.username != "") await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
+        if(profileUser.codechef?.username != "") await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
+        if(profileUser.gfg?.username != "") await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
+        //await axios.post('http://localhost:5000/platforms/solvedChallenges', { user: profileUser });
         toast.success("Data updated successfully");
         updatePlatformCacheTimestamp(profileUser.username);
       } catch (error) {
@@ -139,22 +138,6 @@ export default function ProfilePage() {
 
 
   useEffect(() => {
-    const fetchChallenges = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/challenges")
-        // console.log("Challenges:", response.data)
-        if (Array.isArray(response.data)) {
-          setChallenges(response.data)
-        } else if (response.data && Array.isArray(response.data.challenges)) {
-          setChallenges(response.data.challenges)
-        } else {
-          console.error("Challenges data is not an array:", response.data)
-          setChallenges([])
-        }
-      } catch (err) {
-        console.error("Error fetching challenges:", err)
-      }
-    }
 
     const fetchProfileUser = async () => {
       setLoading(true)
@@ -176,7 +159,6 @@ export default function ProfilePage() {
         setLoading(false)
       }
     }
-    fetchChallenges()
     fetchProfileUser()
     //solvedChallenges(routeUsername || "");
   }, [routeUsername, user?.username])

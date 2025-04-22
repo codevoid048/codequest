@@ -65,12 +65,12 @@ export const verifyProfiles = async (req, res) => {
                         ranking
                         starRating
                         }
-                    }
-                    submitStats: submitStatsGlobal {
-                        acSubmissionNum {
-                        difficulty
-                        count
-                        submissions
+                        submitStats: submitStatsGlobal {
+                            acSubmissionNum {
+                            difficulty
+                            count
+                            submissions
+                            }
                         }
                     }
                     userContestRanking(username: $username) {

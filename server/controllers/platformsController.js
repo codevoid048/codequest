@@ -18,12 +18,19 @@ export const leetcodeData = async (req, res) => {
     const query = JSON.stringify({
       query: `
         {
-          matchedUser(username: "${username}") {
-            profile {
+          matchedUser(username: $username) {
+              profile {
               realName
               ranking
               starRating
-            }
+              }
+              submitStats: submitStatsGlobal {
+                  acSubmissionNum {
+                  difficulty
+                  count
+                  submissions
+                  }
+              }
           }
           userContestRanking(username: "${username}") {
             rating
