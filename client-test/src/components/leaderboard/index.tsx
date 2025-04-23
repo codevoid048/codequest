@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Card } from "@/components/ui/card";
@@ -405,7 +407,7 @@ export default function Leaderboard() {
                               : "" // Change text to blue when row is hovered
                           )}
                         >
-                          {user.solveChallenges? user.solveChallenges.length: 0}
+                          {user.solveChallenges ? user.solveChallenges.total: 0}
                         </div>
                       </div>
 

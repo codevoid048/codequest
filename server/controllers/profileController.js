@@ -195,11 +195,12 @@ export const postPotdChallenge = async (req, res) => {
     try {
         console.log("Request received:", req.body);
         const { username, timestamp, challengeId, difficulty } = req.body;
+        const dateOnly = timestamp.date;
 
         if (!username || !timestamp || !challengeId || !difficulty) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
-        const today = new Date(timestamp)
+        const today = new Date(dateOnly)
             .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
             .split('/')
             .reverse()
@@ -229,16 +230,16 @@ export const postPotdChallenge = async (req, res) => {
         // Check if challenge is already solved today
         const solvedList = user.solveChallenges[difficultyKey];
         const alreadySolved = solvedList && solvedList.some(entry => 
-            entry.challenge && entry.challenge.toString() === challengeId.toString() && 
-            entry.timestamp === today
-        );
+            entry.challenge?.toString() === challengeId.toString() && 
+            entry.timestamp?.startsWith(today)
+          );
         
         console.log("Already solved:", alreadySolved);
         if (!alreadySolved) {
             // Push the solved challenge
             user.solveChallenges[difficultyKey].push({
                 challenge: challengeId,
-                timestamp: today
+                timestamp: `${timestamp.date} ${timestamp.time}`
             });
 
             // Update points
@@ -247,24 +248,28 @@ export const postPotdChallenge = async (req, res) => {
 
             // Check if any challenge was solved today across all difficulties
             const anyChallengeTodayBefore = ['easy', 'medium', 'hard']
-                .some(diff => diff !== difficultyKey && 
-                    user.solveChallenges[diff].some(entry => entry.timestamp === today)
-                );
+            .some(diff => diff !== difficultyKey &&
+                user.solveChallenges[diff]?.some(entry =>
+                entry.timestamp?.startsWith(today)
+                )
+            );
 
             if (!anyChallengeTodayBefore) {
                 // Calculate streak
-                const yesterday = new Date(timestamp);
-                yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayStr = yesterday
-                    .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
-                    .split('/')
-                    .reverse()
-                    .join('-');
-
-                // Check if any challenge was solved yesterday
+                const yesterdayStr = new Date(dateOnly);
+                yesterdayStr.setDate(yesterdayStr.getDate() - 1);
+                const formattedYesterday = yesterdayStr
+                .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
+                .split("/")
+                .reverse()
+                .join("-");
+            
                 const anyYesterday = ['easy', 'medium', 'hard']
-                    .some(diff => user.solveChallenges[diff].some(entry => entry.timestamp === yesterdayStr));
-
+                .some(diff => 
+                user.solveChallenges[diff]?.some(entry => 
+                    entry.timestamp?.startsWith(formattedYesterday)
+                )
+                );
                 user.streak = anyYesterday ? (user.streak || 0) + 1 : 1;
                 console.log(`Streak updated to ${user.streak}`);
             } else {
