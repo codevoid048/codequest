@@ -63,15 +63,14 @@ export default function ProfilePage() {
     // Modified: Removed the old heatmap property and will create it from solveChallenges
   }
 
-  interface Challenge {
-    challengeid: string
-    platform: string
-    difficulty: string
-    _id: string
-  }
+  // interface Challenge {
+  //   challengeid: string
+  //   platform: string
+  //   difficulty: string
+  //   _id: string
+  // }
 
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
@@ -122,11 +121,12 @@ export default function ProfilePage() {
       }
 
       try {
-        await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
-        await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
-        await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
-        await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
-        await axios.post('http://localhost:5000/platforms/solvedChallenges', { user: profileUser });
+        console.log("Updating platforms...");
+        if(profileUser.leetCode?.username != "") await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
+        if(profileUser.codeforces?.username != "") await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
+        if(profileUser.codechef?.username != "") await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
+        if(profileUser.gfg?.username != "") await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
+        //await axios.post('http://localhost:5000/platforms/solvedChallenges', { user: profileUser });
         toast.success("Data updated successfully");
         updatePlatformCacheTimestamp(profileUser.username);
       } catch (error) {
@@ -138,22 +138,6 @@ export default function ProfilePage() {
 
 
   useEffect(() => {
-    const fetchChallenges = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/challenges")
-        // console.log("Challenges:", response.data)
-        if (Array.isArray(response.data)) {
-          setChallenges(response.data)
-        } else if (response.data && Array.isArray(response.data.challenges)) {
-          setChallenges(response.data.challenges)
-        } else {
-          console.error("Challenges data is not an array:", response.data)
-          setChallenges([])
-        }
-      } catch (err) {
-        console.error("Error fetching challenges:", err)
-      }
-    }
 
     const fetchProfileUser = async () => {
       setLoading(true)
@@ -175,7 +159,6 @@ export default function ProfilePage() {
         setLoading(false)
       }
     }
-    fetchChallenges()
     fetchProfileUser()
     //solvedChallenges(routeUsername || "");
   }, [routeUsername, user?.username])
@@ -395,12 +378,30 @@ export default function ProfilePage() {
     heatmap.forEach((item: HeatmapItem) => {
       try {
         if (!item.timestamp) {
-          // console.log("Found item without timestamp");
           return;
         }
         
-        // Check if the timestamp is already in YYYY-MM-DD format
-        if (typeof item.timestamp === 'string' && item.timestamp.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+        // Handle the new format: "2025-04-23 18:39:42"
+        if (typeof item.timestamp === 'string' && item.timestamp.includes(' ')) {
+          // Split the timestamp into date and time parts
+          const [datePart] = item.timestamp.split(' ');
+          
+          // Split the date part
+          const [dateYear, dateMonth, dateDay] = datePart.split('-');
+          
+          // Format month with leading zero if needed
+          const formattedMonth = dateMonth.padStart(2, '0');
+          
+          // Create a standardized date string
+          const dateString = `${dateYear}-${formattedMonth}-${dateDay.padStart(2, '0')}`;
+          
+          // Check if this contribution belongs to the selected month and year
+          if (parseInt(dateYear) === year && formattedMonth === monthStr) {
+            dateContributionsMap[dateString] = (dateContributionsMap[dateString] || 0) + 1;
+          }
+        }
+        // Handle YYYY-MM-DD format
+        else if (typeof item.timestamp === 'string' && item.timestamp.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
           // Split the date string
           const [dateYear, dateMonth, dateDay] = item.timestamp.split('-');
           
@@ -410,10 +411,9 @@ export default function ProfilePage() {
           // Create a standardized date string
           const dateString = `${dateYear}-${formattedMonth}-${dateDay.padStart(2, '0')}`;
           
-          
           // Check if this contribution belongs to the selected month and year
           if (parseInt(dateYear) === year && formattedMonth === monthStr) {
-            dateContributionsMap[dateString] = 1;
+            dateContributionsMap[dateString] = (dateContributionsMap[dateString] || 0) + 1;
           }
         } else {
           // Handle numeric timestamps or ISO strings as before
@@ -423,7 +423,7 @@ export default function ProfilePage() {
             // If it's a Unix timestamp (in seconds), convert to milliseconds
             contributionDate = new Date(parseInt(item.timestamp) * 1000);
           } else {
-            // If it's an ISO string
+            // If it's an ISO string or other format
             contributionDate = new Date(item.timestamp);
           }
   
@@ -438,7 +438,7 @@ export default function ProfilePage() {
   
           // Check if this contribution belongs to the selected month and year
           if (parseInt(dateYear) === year && dateMonth === monthStr) {
-            dateContributionsMap[dateStr] = 1;
+            dateContributionsMap[dateStr] = (dateContributionsMap[dateStr] || 0) + 1;
           }
         }
       } catch (err) {

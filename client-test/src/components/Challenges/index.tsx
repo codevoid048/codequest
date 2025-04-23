@@ -114,7 +114,6 @@ const Challenges: React.FC = () => {
     fetchProblems();
   }, []);
 
-
   // Update countdown timer every second
   useEffect(() => {
     const updateCountdown = () => {
@@ -229,6 +228,7 @@ const Challenges: React.FC = () => {
     const checkIfProblemSolved = async () => {
       try {
         console.log("called")
+
         if (dailyProblem?.platform === "LeetCode") {
           const leetCodeData = await fetchLeetCodeProfile(`${user?.leetCode?.username}`);
           if (leetCodeData?.recentSubmissionList) {
