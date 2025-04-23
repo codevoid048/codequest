@@ -405,7 +405,7 @@ export default function Leaderboard() {
                               : "" // Change text to blue when row is hovered
                           )}
                         >
-                          {user.solveChallenges? user.solveChallenges.length: 0}
+                          {user.solveChallenges ? user.solveChallenges.total: 0}
                         </div>
                       </div>
 
