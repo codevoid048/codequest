@@ -17,7 +17,9 @@ import platformRoute from "./routes/platformsRoute.js";
 import axios from "axios";
 import userRoutes from "./routes/userRoutes.js";
 import typeSenseRoutes from "./routes/typeSenseRoutes.js";
+
 dotenv.config();
+
 const app = express();
 
 app.use(cors({ origin: "http://localhost:5173", credentials: true, }));

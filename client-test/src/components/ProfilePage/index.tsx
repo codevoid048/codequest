@@ -9,8 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { updatePlatformCacheTimestamp, isPlatformDataStale } from "./platformCache"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import ProfileSkeleton from "@/components/profile-skeleton"
-import { usePartialRendering } from "@/lib/use-partial-rendering"
 import {
   Calendar,
   ChevronUp,
@@ -130,7 +128,6 @@ export default function ProfilePage() {
         }
       } finally {
         setLoading(false)
-        setLoading(false)
       }
     }
     fetchChallenges()
@@ -192,7 +189,11 @@ export default function ProfilePage() {
 
   // Handle loading and error states
   if (loading) {
-    return <ProfileSkeleton />
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   if (error) {
@@ -205,27 +206,9 @@ export default function ProfilePage() {
         </Button>
       </div>
     )
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="text-2xl font-bold text-red-500 mb-2">Error</div>
-        <div className="text-muted-foreground text-center">{error}</div>
-        <Button className="mt-4" onClick={() => navigate("/")}>
-          Go Home
-        </Button>
-      </div>
-    )
   }
 
   if (!profileUser) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="text-2xl font-bold mb-2">No User Data</div>
-        <div className="text-muted-foreground text-center">No user data available</div>
-        <Button className="mt-4" onClick={() => navigate("/")}>
-          Go Home
-        </Button>
-      </div>
-    )
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <div className="text-2xl font-bold mb-2">No User Data</div>
@@ -265,18 +248,12 @@ export default function ProfilePage() {
   interface GetDaysInMonthParams {
     month: number
     year: number
-    month: number
-    year: number
   }
 
   const getDaysInMonth = (month: GetDaysInMonthParams["month"], year: GetDaysInMonthParams["year"]): number =>
     new Date(year, month + 1, 0).getDate()
-  const getDaysInMonth = (month: GetDaysInMonthParams["month"], year: GetDaysInMonthParams["year"]): number =>
-    new Date(year, month + 1, 0).getDate()
 
   interface Contribution {
-    date: string
-    count: number
     date: string
     count: number
   }
@@ -285,21 +262,13 @@ export default function ProfilePage() {
     const contributions: Contribution[] = []
     const startDate = new Date(year, 0, 1)
     const endDate = new Date(year, 11, 31)
-    const contributions: Contribution[] = []
-    const startDate = new Date(year, 0, 1)
-    const endDate = new Date(year, 11, 31)
     for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-      const count = Math.random() > 0.6 ? Math.floor(Math.random() * 10) : 0
-      contributions.push({ date: date.toISOString().split("T")[0], count })
       const count = Math.random() > 0.6 ? Math.floor(Math.random() * 10) : 0
       contributions.push({ date: date.toISOString().split("T")[0], count })
     }
     return contributions
   }
-    return contributions
-  }
 
-  const contributions = generateContributions(selectedYear)
   const contributions = generateContributions(selectedYear)
 
   // const contributionsByMonth = Array.from({ length: 12 }, (_, month) => {
@@ -313,7 +282,6 @@ export default function ProfilePage() {
   // })
 
   const yearOptions = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2]
-  const yearOptions = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2]
 
   // const getColor = (count: number): string => {
   //   if (count === 0) return "bg-gray-300"
@@ -326,9 +294,6 @@ export default function ProfilePage() {
     monthIndex: number
     dayIndex: number
     monthContribs: Contribution[]
-    monthIndex: number
-    dayIndex: number
-    monthContribs: Contribution[]
   }
 
   const isPartOfStreak = ({ monthIndex, dayIndex, monthContribs }: StreakParams): boolean => {
@@ -336,10 +301,6 @@ export default function ProfilePage() {
     const currentContrib = monthContribs.find((c) => c.date === currentDate.toISOString().split("T")[0])
     const currentCount = currentContrib ? currentContrib.count : 0
     if (currentCount === 0) return false
-    const currentDate = new Date(selectedYear, monthIndex, dayIndex + 1)
-    const currentContrib = monthContribs.find((c) => c.date === currentDate.toISOString().split("T")[0])
-    const currentCount = currentContrib ? currentContrib.count : 0
-    if (currentCount === 0) return false
 
     const prevDate = new Date(currentDate)
     prevDate.setDate(prevDate.getDate() - 1)
@@ -347,15 +308,7 @@ export default function ProfilePage() {
     const nextDate = new Date(currentDate)
     nextDate.setDate(nextDate.getDate() + 1)
     const nextContrib = contributions.find((c) => c.date === nextDate.toISOString().split("T")[0])
-    const prevDate = new Date(currentDate)
-    prevDate.setDate(prevDate.getDate() - 1)
-    const prevContrib = contributions.find((c) => c.date === prevDate.toISOString().split("T")[0])
-    const nextDate = new Date(currentDate)
-    nextDate.setDate(nextDate.getDate() + 1)
-    const nextContrib = contributions.find((c) => c.date === nextDate.toISOString().split("T")[0])
 
-    return (prevContrib?.count ?? 0) > 0 || (nextContrib?.count ?? 0) > 0
-  }
     return (prevContrib?.count ?? 0) > 0 || (nextContrib?.count ?? 0) > 0
   }
 
@@ -363,13 +316,8 @@ export default function ProfilePage() {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
   }
-    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
-  }
 
   const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  }
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   }
@@ -468,9 +416,7 @@ export default function ProfilePage() {
   }
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
       <motion.div
-        className="grid grid-cols-1 lg:grid-cols-4 gap-6"
         className="grid grid-cols-1 lg:grid-cols-4 gap-6"
         variants={containerVariants}
         initial="hidden"
@@ -478,50 +424,49 @@ export default function ProfilePage() {
       >
         {/* Sidebar - Profile Details */}
         <motion.div className="lg:col-span-1" variants={cardVariants}>
-          {sidebarReady ? (
-            <Card className="overflow-hidden shadow-lg border-0">
-              <div className="h-24 bg-gradient-to-r from-purple-500 to-cyan-500"></div>
-              <div className="px-6 pb-6 -mt-12">
-                <Avatar className="w-24 h-24 border-4 border-white shadow-xl mx-auto">
-                  <AvatarImage
-                    src={profileUser.profilePicture || "/placeholder.svg?height=128&width=128"}
-                    alt={profileUser.name || "User"}
-                  />
-                  <AvatarFallback className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500">
-                    {profileUser.name?.charAt(0) || "?"}
-                  </AvatarFallback>
-                </Avatar>
+          <Card className="overflow-hidden shadow-lg border-0">
+            <div className="h-24 bg-gradient-to-r from-purple-500 to-cyan-500"></div>
+            <div className="px-6 pb-6 -mt-12">
+              <Avatar className="w-24 h-24 border-4 border-white shadow-xl mx-auto">
+                <AvatarImage
+                  src={profileUser.profilePicture || "/placeholder.svg?height=128&width=128"}
+                  alt={profileUser.name || "User"}
+                />
+                <AvatarFallback className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500">
+                  {profileUser.name?.charAt(0) || "?"}
+                </AvatarFallback>
+              </Avatar>
 
-                <div className="mt-4 text-center">
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text text-transparent">
-                    {profileUser.name}
-                  </h1>
-                  <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
+              <div className="mt-4 text-center">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text text-transparent">
+                  {profileUser.name}
+                </h1>
+                <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
 
-                  <div className="mt-2">
-                    <p className="text-sm flex items-center justify-center text-muted-foreground">
-                      <ChevronUp className="h-4 w-4 text-green-500 mr-1" />
-                      Position #{profileUser.rank || "N/A"}
+                <div className="mt-2">
+                  <p className="text-sm flex items-center justify-center text-muted-foreground">
+                    <ChevronUp className="h-4 w-4 text-green-500 mr-1" />
+                    Position #{profileUser.rank || "N/A"}
+                  </p>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  {profileUser.collegeName && (
+                    <p className="text-sm flex items-center gap-2 justify-center">
+                      <School className="h-4 w-4 text-purple-500" /> {profileUser.collegeName}
                     </p>
-                  </div>
-
-                  <div className="mt-5 space-y-3">
-                    {profileUser.collegeName && (
-                      <p className="text-sm flex items-center gap-2 justify-center">
-                        <School className="h-4 w-4 text-purple-500" /> {profileUser.collegeName}
-                      </p>
-                    )}
-                    {profileUser.branch && (
-                      <p className="text-sm flex items-center gap-2 justify-center">
-                        <Code2 className="h-4 w-4 text-cyan-500" /> {profileUser.branch}
-                      </p>
-                    )}
-                    {profileUser.RegistrationNumber && (
-                      <p className="text-sm flex items-center gap-2 justify-center">
-                        <MapPin className="h-4 w-4 text-pink-500" /> {profileUser.RegistrationNumber}
-                      </p>
-                    )}
-                  </div>
+                  )}
+                  {profileUser.branch && (
+                    <p className="text-sm flex items-center gap-2 justify-center">
+                      <Code2 className="h-4 w-4 text-cyan-500" /> {profileUser.branch}
+                    </p>
+                  )}
+                  {profileUser.RegistrationNumber && (
+                    <p className="text-sm flex items-center gap-2 justify-center">
+                      <MapPin className="h-4 w-4 text-pink-500" /> {profileUser.RegistrationNumber}
+                    </p>
+                  )}
+                </div>
 
                 <div className="mt-6 flex justify-center gap-3">
                   {profileUser.otherLinks?.find((link) => link.platform === "Twitter")?.url && (
@@ -551,22 +496,19 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                  {isOwnProfile && (
-                    <div className="mt-6">
-                      <Button
-                        className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600"
-                        onClick={() => navigate("/profile/edit-profile")}
-                      >
-                        Edit Profile
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                {isOwnProfile && (
+                  <div className="mt-6">
+                    <Button
+                      className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600"
+                      onClick={() => navigate("/profile/edit-profile")}
+                    >
+                      Edit Profile
+                    </Button>
+                  </div>
+                )}
               </div>
-            </Card>
-          ) : (
-            <div className="h-[450px] bg-muted animate-pulse rounded-lg"></div>
-          )}
+            </div>
+          </Card>
 
           {/* Coding Platforms */}
           <motion.div variants={cardVariants} className="mt-6">
@@ -641,175 +583,161 @@ export default function ProfilePage() {
         <motion.div className="lg:col-span-3" variants={cardVariants}>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {statsReady ? (
-              <>
-                <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
-                  <Card className="shadow-lg border-0 overflow-hidden">
-                    <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
-                    <CardContent className="pt-6">
-                      <div className="flex items-center">
-                        <div className="bg-blue-100 p-3 rounded-lg mr-4">
-                          <Code2 className="h-6 w-6 text-blue-500" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Problems Solved</p>
-                          <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                            {problemsSolved.total}
-                          </h3>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+            <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+              <Card className="shadow-lg border-0 overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+                <CardContent className="pt-6">
+                  <div className="flex items-center">
+                    <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                      <Code2 className="h-6 w-6 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Problems Solved</p>
+                      <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
+                        {problemsSolved.total}
+                      </h3>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-                <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
-                  <Card className="shadow-lg border-0 overflow-hidden">
-                    <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
-                    <CardContent className="pt-6">
-                      <div className="flex items-center">
-                        <div className="bg-amber-100 p-3 rounded-lg mr-4">
-                          <Trophy className="h-6 w-6 text-amber-500" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Total Points</p>
-                          <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                            {profileUser.points || 0}
-                          </h3>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+            <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+              <Card className="shadow-lg border-0 overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+                <CardContent className="pt-6">
+                  <div className="flex items-center">
+                    <div className="bg-amber-100 p-3 rounded-lg mr-4">
+                      <Trophy className="h-6 w-6 text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total Points</p>
+                      <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                        {profileUser.points || 0}
+                      </h3>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-                <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
-                  <Card className="shadow-lg border-0 overflow-hidden">
-                    <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
-                    <CardContent className="pt-6">
-                      <div className="flex items-center">
-                        <div className="bg-red-100 p-3 rounded-lg mr-4">
-                          <Flame className="h-6 w-6 text-red-500" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
-                          <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-                            {profileUser.streak || 0}
-                          </h3>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </>
-            ) : (
-              <>
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-[100px] bg-muted animate-pulse rounded-lg"></div>
-                ))}
-              </>
-            )}
+            <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+              <Card className="shadow-lg border-0 overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
+                <CardContent className="pt-6">
+                  <div className="flex items-center">
+                    <div className="bg-red-100 p-3 rounded-lg mr-4">
+                      <Flame className="h-6 w-6 text-red-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
+                      <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
+                        {profileUser.streak || 0}
+                      </h3>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
           {/* Problem Difficulty Breakdown */}
           <motion.div variants={cardVariants} className="mt-6">
-            {difficultyReady ? (
-              <Card className="shadow-lg border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Sparkles className="mr-2 h-5 w-5 text-amber-500" /> Problem Difficulty Breakdown
-                  </CardTitle>
-                  <CardDescription>Track your progress across difficulty levels</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <motion.div
-                      variants={cardVariants}
-                      whileHover={{ scale: 1.03 }}
-                      className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm"
-                    >
-                      <div className="relative w-28 h-28 mx-auto">
-                        <svg className="w-full h-full" viewBox="0 0 36 36">
-                          <path
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#E5E7EB"
-                            strokeWidth="3"
-                          />
-                          <path
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#10B981"
-                            strokeWidth="3"
-                            strokeDasharray={`${(problemsSolved.easy / 300) * 100}, 100`}
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-3xl font-bold text-green-600">{problemsSolved.easy}</div>
-                        </div>
+            <Card className="shadow-lg border-0">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Sparkles className="mr-2 h-5 w-5 text-amber-500" /> Problem Difficulty Breakdown
+                </CardTitle>
+                <CardDescription>Track your progress across difficulty levels</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <motion.div
+                    variants={cardVariants}
+                    whileHover={{ scale: 1.03 }}
+                    className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm"
+                  >
+                    <div className="relative w-28 h-28 mx-auto">
+                      <svg className="w-full h-full" viewBox="0 0 36 36">
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#E5E7EB"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#10B981"
+                          strokeWidth="3"
+                          strokeDasharray={`${(problemsSolved.easy / 300) * 100}, 100`}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-3xl font-bold text-green-600">{problemsSolved.easy}</div>
                       </div>
-                      <div className="text-sm font-medium text-green-800 mt-3">Easy</div>
-                    </motion.div>
+                    </div>
+                    <div className="text-sm font-medium text-green-800 mt-3">Easy</div>
+                  </motion.div>
 
-                    <motion.div
-                      variants={cardVariants}
-                      whileHover={{ scale: 1.03 }}
-                      className="text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm"
-                    >
-                      <div className="relative w-28 h-28 mx-auto">
-                        <svg className="w-full h-full" viewBox="0 0 36 36">
-                          <path
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#E5E7EB"
-                            strokeWidth="3"
-                          />
-                          <path
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#F59E0B"
-                            strokeWidth="3"
-                            strokeDasharray={`${(problemsSolved.medium / 300) * 100}, 100`}
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-3xl font-bold text-yellow-600">{problemsSolved.medium}</div>
-                        </div>
+                  <motion.div
+                    variants={cardVariants}
+                    whileHover={{ scale: 1.03 }}
+                    className="text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm"
+                  >
+                    <div className="relative w-28 h-28 mx-auto">
+                      <svg className="w-full h-full" viewBox="0 0 36 36">
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#E5E7EB"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#F59E0B"
+                          strokeWidth="3"
+                          strokeDasharray={`${(problemsSolved.medium / 300) * 100}, 100`}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-3xl font-bold text-yellow-600">{problemsSolved.medium}</div>
                       </div>
-                      <div className="text-sm font-medium text-yellow-800 mt-3">Medium</div>
-                    </motion.div>
+                    </div>
+                    <div className="text-sm font-medium text-yellow-800 mt-3">Medium</div>
+                  </motion.div>
 
-                    <motion.div
-                      variants={cardVariants}
-                      whileHover={{ scale: 1.03 }}
-                      className="text-center p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm"
-                    >
-                      <div className="relative w-28 h-28 mx-auto">
-                        <svg className="w-full h-full" viewBox="0 0 36 36">
-                          <path
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#E5E7EB"
-                            strokeWidth="3"
-                          />
-                          <path
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                            fill="none"
-                            stroke="#EF4444"
-                            strokeWidth="3"
-                            strokeDasharray={`${(problemsSolved.hard / 100) * 100}, 100`}
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-3xl font-bold text-red-600">{problemsSolved.hard}</div>
-                        </div>
+                  <motion.div
+                    variants={cardVariants}
+                    whileHover={{ scale: 1.03 }}
+                    className="text-center p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm"
+                  >
+                    <div className="relative w-28 h-28 mx-auto">
+                      <svg className="w-full h-full" viewBox="0 0 36 36">
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#E5E7EB"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#EF4444"
+                          strokeWidth="3"
+                          strokeDasharray={`${(problemsSolved.hard / 100) * 100}, 100`}
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-3xl font-bold text-red-600">{problemsSolved.hard}</div>
                       </div>
-                      <div className="text-sm font-medium text-red-800 mt-3">Hard</div>
-                    </motion.div>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="h-[300px] bg-muted animate-pulse rounded-lg mt-6"></div>
-            )}
+                    </div>
+                    <div className="text-sm font-medium text-red-800 mt-3">Hard</div>
+                  </motion.div>
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
 
           {/* Contributions Map */}
@@ -936,8 +864,5 @@ export default function ProfilePage() {
       {/* <RatingChart ratingData={rating} /> */}
     </div>
   )
-  )
 }
-
-
 

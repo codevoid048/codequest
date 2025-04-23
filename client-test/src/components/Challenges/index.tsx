@@ -362,82 +362,82 @@ const Challenges: React.FC = () => {
                   <CheckCircle className="h-5 w-5 text-green-500" />
                   <span className="font-semibold">{user?.solveChallenges?.length} solved</span>
                 </div>
-                </div>
+              </div>
             ) : null}
-                <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary/60 dark:bg-muted/60 px-3 py-2 rounded-lg">
-                  <Clock className="h-5 w-5 mr-2 text-primary" />
-                  <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
-                    {countdown.hours}
-                  </span>
-                  <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
-                  <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
-                    {countdown.minutes}
-                  </span>
-                  <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
-                  <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
-                    {countdown.seconds}
-                  </span>
-                </div>
-              </div>
+            <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary/60 dark:bg-muted/60 px-3 py-2 rounded-lg">
+              <Clock className="h-5 w-5 mr-2 text-primary" />
+              <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
+                {countdown.hours}
+              </span>
+              <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
+              <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
+                {countdown.minutes}
+              </span>
+              <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
+              <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
+                {countdown.seconds}
+              </span>
+            </div>
+          </div>
           {isLoading ? (
-              <div className="flex justify-center items-center h-40">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-              </div>
-            ) : (
-              <div
-                className="mt-6 bg-gray-800 dark:bg-muted rounded-xl p-4 sm:p-6 cursor-pointer"
-                onClick={() => openProblemLink(dailyProblem?.problemUrl)}
-              >
-                <div className="flex flex-col sm:flex-row justify-between gap-6">
-                  <div className="space-y-3 flex-1">
-                    <div className="flex items-center text-sm text-gray-400 dark:text-gray-600">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-600" />
-                      {dailyProblem?.date}
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-gray-200 dark:text-gray-800 line-clamp-1">
-                      {dailyProblem?.title}
-                    </h3>
-                    <p className="text-gray-400 dark:text-gray-600 text-sm line-clamp-2">
-                      {dailyProblem?.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {dailyProblem?.categories.map((cat: boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | Key | null | undefined) => (
-                        <Badge
-                          key={String(cat)}
-                          variant="secondary"
-                          className="text-xs py-1 px-2 bg-secondary dark:bg-white text-gray-300 dark:text-gray-700 rounded-full"
-                        >
-                          {cat}
-                        </Badge>
-                      ))}
-                    </div>
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div
+              className="mt-6 bg-gray-800 dark:bg-muted rounded-xl p-4 sm:p-6 cursor-pointer"
+              onClick={() => openProblemLink(dailyProblem?.problemUrl)}
+            >
+              <div className="flex flex-col sm:flex-row justify-between gap-6">
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center text-sm text-gray-400 dark:text-gray-600">
+                    <Calendar className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-600" />
+                    {dailyProblem?.date}
                   </div>
-                  <div className="flex flex-col gap-4 justify-center">
-                    {isSolved ? (
-                      <Button className="bg-green-600 hover:bg-green-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full">
-                        Solved
-                      </Button>
-                    ) : (
-                      <Button
-                        className="bg-primary hover:bg-primary/90 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openProblemLink(dailyProblem?.problemUrl);
-                        }}
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-200 dark:text-gray-800 line-clamp-1">
+                    {dailyProblem?.title}
+                  </h3>
+                  <p className="text-gray-400 dark:text-gray-600 text-sm line-clamp-2">
+                    {dailyProblem?.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {dailyProblem?.categories.map((cat: boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | Key | null | undefined) => (
+                      <Badge
+                        key={String(cat)}
+                        variant="secondary"
+                        className="text-xs py-1 px-2 bg-secondary dark:bg-white text-gray-300 dark:text-gray-700 rounded-full"
                       >
-                        Solve Now
-                      </Button>
-                    )}
+                        {cat}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-700 dark:border-gray-300 flex flex-wrap gap-3 text-sm">
-                  <span className="flex items-center gap-2 bg-secondary dark:bg-white px-2 py-1 rounded-full text-gray-300 dark:text-gray-700">
-                    <Code className="h-4 w-4 text-primary" />
-                    {dailyProblem?.platform}
-                  </span>
+                <div className="flex flex-col gap-4 justify-center">
+                  {isSolved ? (
+                    <Button className="bg-green-600 hover:bg-green-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full">
+                      Solved
+                    </Button>
+                  ) : (
+                    <Button
+                      className="bg-primary hover:bg-primary/90 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openProblemLink(dailyProblem?.problemUrl);
+                      }}
+                    >
+                      Solve Now
+                    </Button>
+                  )}
                 </div>
               </div>
-            )}
+              <div className="mt-4 pt-4 border-t border-gray-700 dark:border-gray-300 flex flex-wrap gap-3 text-sm">
+                <span className="flex items-center gap-2 bg-secondary dark:bg-white px-2 py-1 rounded-full text-gray-300 dark:text-gray-700">
+                  <Code className="h-4 w-4 text-primary" />
+                  {dailyProblem?.platform}
+                </span>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -458,6 +458,7 @@ const Challenges: React.FC = () => {
             </Button>
           </div>
           <Card className={`shadow-lg border-0 bg-card ${isFilterOpen ? "block" : "hidden lg:block"}`}>
+            {difficultyLevels.length > 0 ? (
             <CardContent className="p-6 space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
@@ -509,60 +510,60 @@ const Challenges: React.FC = () => {
                         onClick={() => toggleCategory(cat)}
                         className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedCategories.includes(cat) ? "bg-primary border-primary" : "border-border"
                           }`}
-                        >
-                          {selectedCategories.includes(cat) && (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="h-3 w-3 text-primary-foreground"
-                            >
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          )}
-                        </button>
-                        <label
-                          htmlFor={cat}
-                          className="text-sm font-medium cursor-pointer text-foreground"
-                          onClick={() => toggleCategory(cat)}
-                        >
-                          {cat}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+                      >
+                        {selectedCategories.includes(cat) && (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-3 w-3 text-primary-foreground"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        )}
+                      </button>
+                      <label
+                        htmlFor={cat}
+                        className="text-sm font-medium cursor-pointer text-foreground"
+                        onClick={() => toggleCategory(cat)}
+                      >
+                        {cat}
+                      </label>
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
+              </div>
+            </CardContent>
             ) : (
-              <CardContent className="p-6 space-y-6">
-                <div>
-                  <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
-                  <div className="flex flex-col gap-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
-                        <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
-                      </div>
-                    ))}
-                  </div>
+            <CardContent className="p-6 space-y-6">
+              <div>
+                <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
+                <div className="flex flex-col gap-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
+                      <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
+                    </div>
+                  ))}
                 </div>
-                <div className="h-1 w-full bg-muted animate-pulse"></div>
-                <div>
-                  <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
-                  <div className="flex flex-col gap-3">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
-                        <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
-                      </div>
-                    ))}
-                  </div>
+              </div>
+              <div className="h-1 w-full bg-muted animate-pulse"></div>
+              <div>
+                <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
+                <div className="flex flex-col gap-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
+                      <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
+              </div>
+            </CardContent>
             )}
           </Card>
         </div>
@@ -577,8 +578,8 @@ const Challenges: React.FC = () => {
                   variant={activeTab === tab ? "default" : "outline"}
                   onClick={() => setActiveTab(tab as FilterTab)}
                   className={`text-sm py-2 px-4 w-full sm:w-auto transition-all duration-300 ${activeTab === tab
-                      ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md"
-                      : "border-border hover:border-primary text-foreground"
+                    ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md"
+                    : "border-border hover:border-primary text-foreground"
                     }`}
                 >
                   {tab === "all" ? (
