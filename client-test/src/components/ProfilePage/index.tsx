@@ -378,12 +378,30 @@ export default function ProfilePage() {
     heatmap.forEach((item: HeatmapItem) => {
       try {
         if (!item.timestamp) {
-          // console.log("Found item without timestamp");
           return;
         }
         
-        // Check if the timestamp is already in YYYY-MM-DD format
-        if (typeof item.timestamp === 'string' && item.timestamp.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+        // Handle the new format: "2025-04-23 18:39:42"
+        if (typeof item.timestamp === 'string' && item.timestamp.includes(' ')) {
+          // Split the timestamp into date and time parts
+          const [datePart] = item.timestamp.split(' ');
+          
+          // Split the date part
+          const [dateYear, dateMonth, dateDay] = datePart.split('-');
+          
+          // Format month with leading zero if needed
+          const formattedMonth = dateMonth.padStart(2, '0');
+          
+          // Create a standardized date string
+          const dateString = `${dateYear}-${formattedMonth}-${dateDay.padStart(2, '0')}`;
+          
+          // Check if this contribution belongs to the selected month and year
+          if (parseInt(dateYear) === year && formattedMonth === monthStr) {
+            dateContributionsMap[dateString] = (dateContributionsMap[dateString] || 0) + 1;
+          }
+        }
+        // Handle YYYY-MM-DD format
+        else if (typeof item.timestamp === 'string' && item.timestamp.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
           // Split the date string
           const [dateYear, dateMonth, dateDay] = item.timestamp.split('-');
           
@@ -393,10 +411,9 @@ export default function ProfilePage() {
           // Create a standardized date string
           const dateString = `${dateYear}-${formattedMonth}-${dateDay.padStart(2, '0')}`;
           
-          
           // Check if this contribution belongs to the selected month and year
           if (parseInt(dateYear) === year && formattedMonth === monthStr) {
-            dateContributionsMap[dateString] = 1;
+            dateContributionsMap[dateString] = (dateContributionsMap[dateString] || 0) + 1;
           }
         } else {
           // Handle numeric timestamps or ISO strings as before
@@ -406,7 +423,7 @@ export default function ProfilePage() {
             // If it's a Unix timestamp (in seconds), convert to milliseconds
             contributionDate = new Date(parseInt(item.timestamp) * 1000);
           } else {
-            // If it's an ISO string
+            // If it's an ISO string or other format
             contributionDate = new Date(item.timestamp);
           }
   
@@ -421,7 +438,7 @@ export default function ProfilePage() {
   
           // Check if this contribution belongs to the selected month and year
           if (parseInt(dateYear) === year && dateMonth === monthStr) {
-            dateContributionsMap[dateStr] = 1;
+            dateContributionsMap[dateStr] = (dateContributionsMap[dateStr] || 0) + 1;
           }
         }
       } catch (err) {
