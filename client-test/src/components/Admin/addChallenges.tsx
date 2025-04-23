@@ -1,16 +1,17 @@
-import { AnimatePresence, motion } from "framer-motion";
+import React from "react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
+  ChevronDown,
+  Plus,
+  X,
+  Calendar,
+  Link2,
   Award,
   BarChart3,
-  Calendar,
-  ChevronDown,
-  Link2,
-  PenLine,
-  Plus,
   Tag,
-  X,
+  PenLine,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
 
 import DatePicker from "@/components/Admin/datepicker";
 import { Button } from "@/components/ui/button";
@@ -18,15 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -34,6 +28,17 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import axios from "axios";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import DatePicker from "@/components/Admin/datepicker";
+import { time } from "console";
+
 
 const difficultyOptions = ["Easy", "Medium", "Hard"];
 const categoryOptions = [
@@ -65,10 +70,12 @@ export default function Admin() {
     createdAt: currentDate,
     platform: "",
     solutions: {
-      c: "",
+      explanation: "",
       cpp: "",
       java: "",
       python: "",
+      timeComplexity: "",
+      spaceComplexity: ""
     },
   });
   const [newCategory, setNewCategory] = useState("");
@@ -101,14 +108,14 @@ export default function Admin() {
   };
 
   const handleSolutionChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>,
-    language: string
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      solutions: { ...prev.solutions, [language]: e.target.value },
-    }));
-  };
+      e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
+      language: string
+    ) => {
+      setFormData((prev) => ({
+        ...prev,
+        solutions: { ...prev.solutions, [language]: e.target.value },
+      }));
+    };
 
   const handleDifficultyChange = (value: string) => {
     setFormData((prev) => ({ ...prev, difficulty: value }));
@@ -177,7 +184,17 @@ export default function Admin() {
           problemLink: formData.problemLink,
           createdAt: formData.createdAt.toISOString(),
           platform: formData.platform,
+        solution: {
+          explanation: formData.solutions.explanation,
+          cpp: formData.solutions.cpp,
+          java: formData.solutions.java,
+          python: formData.solutions.python,
+          timeComplexity: formData.solutions.timeComplexity,
+          spaceComplexity: formData.solutions.spaceComplexity,
         },
+        
+  
+      },
         {
           headers: { "Content-Type": "application/json" },
         }
@@ -186,11 +203,7 @@ export default function Admin() {
 
       // Success notification
       alert(
-        `Challenge created! Successfully created "${
-          formData.title
-        }" on ${formData.createdAt.toLocaleDateString()} from ${
-          formData.platform
-        }`
+        `Challenge created! Successfully created "${formData.title}" on ${formData.createdAt.toLocaleDateString()} from ${formData.platform}`
       );
     } catch (error) {
       alert("Error: Failed to create challenge. Please try again.");
@@ -263,17 +276,9 @@ export default function Admin() {
         </CardHeader>
 
         <CardContent className="p-0">
-          <Tabs
-            defaultValue="details"
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
+          <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger
-                value="details"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white"
-              >
+              <TabsTrigger value="details" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                 Details
               </TabsTrigger>
               <TabsTrigger
@@ -282,16 +287,10 @@ export default function Admin() {
               >
                 Categorization
               </TabsTrigger>
-              <TabsTrigger
-                value="Solutions"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white"
-              >
+              <TabsTrigger value="Solutions" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                 Solutions
               </TabsTrigger>
-              <TabsTrigger
-                value="publish"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white"
-              >
+              <TabsTrigger value="publish" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                 Publish
               </TabsTrigger>
             </TabsList>
@@ -396,9 +395,7 @@ export default function Admin() {
                                   ? `${formData.category.length} Categories Selected`
                                   : "Select Categories"}
                                 <ChevronDown
-                                  className={`h-4 w-4 transition-transform ${
-                                    showCategories ? "rotate-180" : ""
-                                  }`}
+                                  className={`h-4 w-4 transition-transform ${showCategories ? "rotate-180" : ""}`}
                                 />
                               </Button>
                             </TooltipTrigger>
@@ -424,11 +421,10 @@ export default function Admin() {
                                   type="button"
                                   variant="ghost"
                                   onClick={() => addCategory(category)}
-                                  className={`justify-start text-left text-sm ${
-                                    formData.category.includes(category)
-                                      ? "bg-primary/20 text-foreground"
-                                      : "text-muted-foreground hover:bg-muted"
-                                  }`}
+                                  className={`justify-start text-left text-sm ${formData.category.includes(category)
+                                    ? "bg-primary/20 text-foreground"
+                                    : "text-muted-foreground hover:bg-muted"
+                                    }`}
                                 >
                                   {category}
                                 </Button>
@@ -470,12 +466,14 @@ export default function Admin() {
                       >
                         {difficultyOptions.map((difficulty) => (
                           <div key={difficulty} className="flex items-center">
-                            <div
-                              className={`flex cursor-pointer items-center gap-2 rounded-full border-2 px-4 py-2 ${
-                                formData.difficulty === difficulty
-                                  ? getDifficultyColor(difficulty) + " bg-secondary/20"
-                                  : "border-gray-600"
-                              }`}
+                            <motion.div
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className={`flex cursor-pointer items-center gap-2 rounded-full border-2 px-4 py-2 ${formData.difficulty === difficulty
+                                ? getDifficultyColor(difficulty) + " bg-secondary/20"
+                                : "border-gray-600"
+                                }`}
+                              onClick={() => handleDifficultyChange(difficulty)}
                             >
                               <RadioGroupItem
                                 value={difficulty}
@@ -484,11 +482,10 @@ export default function Admin() {
                               />
                               <Label
                                 htmlFor={`difficulty-${difficulty.toLowerCase()}`}
-                                className={`cursor-pointer font-medium ${
-                                  formData.difficulty === difficulty
-                                    ? getDifficultyColor(difficulty)
-                                    : ""
-                                }`}
+                                className={`cursor-pointer font-medium ${formData.difficulty === difficulty
+                                  ? getDifficultyColor(difficulty)
+                                  : ""
+                                  }`}
                               >
                                 {difficulty}
                               </Label>
@@ -542,23 +539,26 @@ export default function Admin() {
               <TabsContent value="Solutions">
                 <motion.div className="space-y-6" variants={containerVariants}>
                   <motion.div variants={itemVariants} className="space-y-4">
-                    <motion.div variants={itemVariants} className="space-y-2">
+                   
+                  <motion.div variants={itemVariants} className="space-y-2">
                       <Label
-                        htmlFor="c-solution"
+                        htmlFor="explanation"
                         className="flex items-center text-lg font-medium text-foreground"
                       >
-                        <BarChart3 className="mr-2 h-5 w-5" />C Solution
+                        <BarChart3 className="mr-2 h-5 w-5" />
+                        Explanation
                       </Label>
                       <Textarea
-                        id="c-solution"
-                        name="c-solution"
-                        value={formData.solutions.c}
-                        onChange={(e) => handleSolutionChange(e, "c")}
+                        id="explanation"
+                        name="explanation"
+                        value={formData.solutions.explanation}
+                        onChange={(e) => handleSolutionChange(e, "explanation")}
                         required
-                        placeholder="Provide a solution in C"
+                        placeholder="Provide a Explanation Of the Problem"
                         className="min-h-[150px] border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
                       />
                     </motion.div>
+
                     <motion.div variants={itemVariants} className="space-y-2">
                       <Label
                         htmlFor="cpp-solution"
@@ -613,7 +613,47 @@ export default function Admin() {
                         className="min-h-[150px] border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
                       />
                     </motion.div>
-                  </motion.div>
+                    
+                    <motion.div variants={itemVariants} className="space-y-2">
+  <Label
+    htmlFor="timeComplexity"
+    className="flex items-center text-lg font-medium text-foreground"
+  >
+    <BarChart3 className="mr-2 h-5 w-5" />
+    Time Complexity
+  </Label>
+  <input
+    type="text"
+    id="timeComplexity"
+    name="timeComplexity"
+    value={formData.solutions.timeComplexity}
+    onChange={(e) => handleSolutionChange(e, "timeComplexity")}
+    required
+    placeholder="Enter time complexity (e.g., O(n))"
+    className="w-full px-3 py-2 h-10 rounded-md border border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+  />
+</motion.div>
+
+<motion.div variants={itemVariants} className="space-y-2">
+  <Label
+    htmlFor="spaceComplexity"
+    className="flex items-center text-lg font-medium text-foreground"
+  >
+    <BarChart3 className="mr-2 h-5 w-5" />
+    Space Complexity
+  </Label>
+  <input
+    type="text"
+    id="spaceComplexity"
+    name="spaceComplexity"
+    value={formData.solutions.spaceComplexity}
+    onChange={(e) => handleSolutionChange(e, "spaceComplexity")}
+    required
+    placeholder="Enter space complexity (e.g., O(n))"
+    className="w-full px-3 py-2 h-10 rounded-md border border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+  />
+</motion.div>
+</motion.div>
 
                   <div className="flex justify-end">
                     <Button
@@ -703,43 +743,27 @@ export default function Admin() {
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex items-center gap-2">
                           <PenLine className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Title:</span>
+                          <span className="text-muted-foreground">Title: {formData.title}</span>
                         </div>
-                        <div>{formData.title || "Not set"}</div>
+                        {/* <div>{formData.title || "Not set"}</div> */}
 
                         <div className="flex items-center gap-2">
                           <Award className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">
-                            Difficulty:
-                          </span>
-                        </div>
-                        <div
-                          className={
-                            getDifficultyColor(formData.difficulty).split(
-                              " "
-                            )[0]
-                          }
-                        >
-                          {formData.difficulty}
+                          <span className="text-muted-foreground">Difficulty: {formData.difficulty}</span>
+                         
                         </div>
 
                         <div className="flex items-center gap-2">
                           <Tag className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">
-                            Categories:
-                          </span>
+                          <span className="text-muted-foreground">Categories: {formData.category.length ? formData.category.join(", ") : "None"}</span>
                         </div>
-                        <div>
-                          {formData.category.length
-                            ? formData.category.join(", ")
-                            : "None"}
-                        </div>
+                        {/* <div>{formData.category.length ? formData.category.join(", ") : "None"}</div> */}
 
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Date:</span>
+                          <span className="text-muted-foreground">Date:{formData.createdAt.toLocaleDateString()}</span>
                         </div>
-                        <div>{formData.createdAt.toLocaleDateString()}</div>
+                        {/* <div>{formData.createdAt.toLocaleDateString()}</div> */}
                       </div>
                     </motion.div>
 

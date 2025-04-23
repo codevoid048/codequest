@@ -4,7 +4,7 @@ import Home from './components/Home';
 import LoginPage from './components/Login';
 import LogoutPage from './components/Logout';
 import RegisterPage from './components/SignUp';
-import Leaderboard from './components/leaderboard';
+import Leaderboard from './components/Leaderboard';
 import AboutPage from './components/About';
 import ProfilePage from './components/ProfilePage';
 import ResetPassword from './components/ResetPassword.tsx';
@@ -17,6 +17,8 @@ import { Sidebar } from './components/Admin/sidebar';
 import Footer from './components/footer';
 import { Navbar } from './components/Navbar';
 import AdminHome from './components/Admin/home';
+import CodeQuestSolutionViewer from './components/Challenges/solution.tsx';
+import SolutionPage from './components/Challenges/solutionPage';
 
 function UserApp() {
   return (
@@ -35,6 +37,7 @@ function UserApp() {
         <Route path="/profile/:username" element={<ProfilePage />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/challenges/solution/:problemId" element={<SolutionPage />} />
       </Routes>
       <Footer />
     </div>
