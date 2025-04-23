@@ -16,7 +16,15 @@ import axios from 'axios';
 
 export const postPotdChallenge = async (username:string,challengeId : string , difficulty : string) => {
   try {
-    const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+    const today = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).formatToParts(new Date()).reduce((acc, part) => {
+      if (part.type === "year") acc.date = part.value + "-";
+      if (part.type === "month") acc.date += part.value + "-";
+      if (part.type === "day") acc.date += part.value;
+      if (part.type === "hour") acc.time = part.value;
+      if (part.type === "minute") acc.time += ":" + part.value;
+      if (part.type === "second") acc.time += ":" + part.value;
+      return acc;
+    }, { date: "", time: "" });
     console.log("today", today);
     const response = await axios.post('http://localhost:5000/api/profile/potd', {
       username,
