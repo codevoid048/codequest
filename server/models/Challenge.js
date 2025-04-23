@@ -7,8 +7,12 @@ const challengeSchema = new mongoose.Schema({
     points: { type: Number, required: true },
     problemLink: { type: String, required: true },
     platform: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now }
-});
+    createdAt: { type: Date, default: Date.now },
+    }
+    
+);
+
+
 
 
 export const Challenge = mongoose.model('Challenge', challengeSchema);

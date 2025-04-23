@@ -1,76 +1,65 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Eye } from "lucide-react";
+import { Eye, Code } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface ProblemStatusProps {
   problem: {
-    id: number;  // Changed from string to match your challenge interface
-    status: "Solved" | "Unsolved";
+    id: string;
+    status: string;
     createdAt: Date;
+    title?: string;
+    description?: string;
+    problemUrl?: string;
   };
-  markSolved: (id: number) => void;
-  viewSolution: (id: number) => void;
 }
 
-const ProblemStatus: React.FC<ProblemStatusProps> = ({ 
-  problem, 
-  markSolved, 
-  viewSolution 
-}) => {
+const solutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
+  const navigate = useNavigate();
+
   // Function to check if solution button should be displayed
   const canShowSolutionButton = () => {
-    if (problem.status !== "Solved") return false;
-    
     const createdDate = new Date(problem.createdAt);
     const nextDay = new Date(createdDate);
     nextDay.setDate(createdDate.getDate() + 1);
-    nextDay.setHours(0, 0, 0, 0); // Set to start of next day
+    nextDay.setHours(0, 0, 0, 0);
     
     const now = new Date();
     return now >= nextDay;
   };
 
+  const handleViewSolution = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/challenges/solution/${problem.id}`);
+  };
+
   return (
     <div className="flex flex-col gap-2 self-start sm:self-center min-w-[100px]">
-      {problem.status === "Solved" ? (
-        <div className="flex flex-col gap-2">
-          <Badge
-            variant="outline"
-            className="bg-emerald-900/5 dark:bg-emerald-100 text-emerald-400 dark:text-emerald-800 text-xs py-1 px-2 w-full text-center flex items-center justify-center border-emerald-200 dark:border-emerald-800"
-          >
-            <CheckCircle className="h-3 w-3 mr-1" /> Solved
-          </Badge>
+      <Button
+        size="sm"
+        variant="outline"
+        className="text-xs py-1 px-2 w-full border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
+        onClick={(e) => {
+          e.stopPropagation();
+          window.open(problem.problemUrl, '_blank');
+        }}
+      >
+        <Code className="h-3 w-3 mr-1" /> Solve Now
+      </Button>
 
-          {canShowSolutionButton() && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-xs py-1 px-2 w-full border-blue-500 hover:bg-blue-500/10 hover:text-blue-500 transition-colors duration-200 text-foreground"
-              onClick={(e) => {
-                e.stopPropagation();
-                viewSolution(problem.id);
-              }}
-            >
-              <Eye className="h-3 w-3 mr-1" /> View Solution
-            </Button>
-          )}
-        </div>
-      ) : (
+      {canShowSolutionButton() && (
         <Button
           size="sm"
           variant="outline"
-          className="text-xs py-1 px-2 w-full border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
-          onClick={(e) => {
-            e.stopPropagation();
-            markSolved(problem.id);
-          }}
+          className="text-xs py-1 px-2 w-full border-blue-500 hover:bg-blue-500/10 hover:text-blue-500 transition-colors duration-200 text-foreground"
+          onClick={handleViewSolution}
         >
-          Mark Solved
+          <Eye className="h-3 w-3 mr-1" /> View Solution
         </Button>
       )}
     </div>
   );
 };
 
-export default ProblemStatus;
+export default solutionStatus;

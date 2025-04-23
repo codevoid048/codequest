@@ -63,7 +63,7 @@ const userSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "Challenge",
       },
-    ],
+    ],              
 
     // POTD solved: store dates (unique per day)
     potdSolved: [
