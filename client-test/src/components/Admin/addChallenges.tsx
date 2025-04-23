@@ -13,7 +13,6 @@ import {
   PenLine,
 } from "lucide-react";
 
-import DatePicker from "@/components/Admin/datepicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,7 +27,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import axios from "axios";
-
 import {
   Select,
   SelectContent,
@@ -37,8 +35,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import DatePicker from "@/components/Admin/datepicker";
-import { time } from "console";
-
 
 const difficultyOptions = ["Easy", "Medium", "Hard"];
 const categoryOptions = [
@@ -62,10 +58,10 @@ export default function Admin() {
   const currentDate = new Date();
   const [formData, setFormData] = useState({
     title: "",
-    description: "", 
+    description: "",
     category: [] as string[],
     difficulty: "Easy",
-    points: 5, // Default points for Easy difficulty
+    points: 100,
     problemLink: "",
     createdAt: currentDate,
     platform: "",
@@ -77,6 +73,7 @@ export default function Admin() {
       timeComplexity: "",
       spaceComplexity: ""
     },
+    
   });
   const [newCategory, setNewCategory] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -267,9 +264,7 @@ export default function Admin() {
                     transition={{ type: "spring", stiffness: 50 }}
                   />
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {formProgress}% completed
-                </p>
+                <p className="text-sm text-muted-foreground">{formProgress}% completed</p>
               </div>
             )}
           </motion.div>
@@ -281,10 +276,7 @@ export default function Admin() {
               <TabsTrigger value="details" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                 Details
               </TabsTrigger>
-              <TabsTrigger
-                value="categorization"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white"
-              >
+              <TabsTrigger value="categorization" className="data-[state=active]:bg-primary data-[state=active]:text-white">
                 Categorization
               </TabsTrigger>
               <TabsTrigger value="Solutions" className="data-[state=active]:bg-primary data-[state=active]:text-white">
@@ -386,9 +378,7 @@ export default function Admin() {
                               <Button
                                 type="button"
                                 variant="outline"
-                                onClick={() =>
-                                  setShowCategories(!showCategories)
-                                }
+                                onClick={() => setShowCategories(!showCategories)}
                                 className="flex w-full items-center justify-between border-gray-600 bg-card text-foreground hover:bg-muted hover:text-foreground"
                               >
                                 {formData.category.length > 0
@@ -489,7 +479,7 @@ export default function Admin() {
                               >
                                 {difficulty}
                               </Label>
-                            </div>
+                            </motion.div>
                           </div>
                         ))}
                       </RadioGroup>
@@ -509,9 +499,9 @@ export default function Admin() {
                       name="points"
                       type="number"
                       min="1"
-                      value={formData.difficulty === "Easy" ? 5 : formData.difficulty === "Medium" ? 10 : 15}
+                      value={formData.points}
                       onChange={handleChange}
-                      disabled
+                      required
                       className="border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
                     />
                   </motion.div>
@@ -539,7 +529,7 @@ export default function Admin() {
               <TabsContent value="Solutions">
                 <motion.div className="space-y-6" variants={containerVariants}>
                   <motion.div variants={itemVariants} className="space-y-4">
-                   
+                    
                   <motion.div variants={itemVariants} className="space-y-2">
                       <Label
                         htmlFor="explanation"
@@ -674,9 +664,7 @@ export default function Admin() {
                       id="createdAt"
                       label="Creation Date"
                       selectedDate={formData.createdAt}
-                      onChange={(date) =>
-                        setFormData((prev) => ({ ...prev, createdAt: date }))
-                      }
+                      onChange={(date) => setFormData((prev) => ({ ...prev, createdAt: date }))}
                     />
                   </motion.div>
 
@@ -737,9 +725,7 @@ export default function Admin() {
                       whileTap={{ scale: 0.98 }}
                       className="rounded-lg bg-card/20 p-4 shadow"
                     >
-                      <h3 className="mb-2 text-lg font-semibold">
-                        Challenge Summary
-                      </h3>
+                      <h3 className="mb-2 text-lg font-semibold">Challenge Summary</h3>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex items-center gap-2">
                           <PenLine className="h-4 w-4 text-muted-foreground" />
@@ -752,6 +738,9 @@ export default function Admin() {
                           <span className="text-muted-foreground">Difficulty: {formData.difficulty}</span>
                          
                         </div>
+                        {/* <div className={getDifficultyColor(formData.difficulty).split(" ")[0]}>
+                          {formData.difficulty}
+                        </div> */}
 
                         <div className="flex items-center gap-2">
                           <Tag className="h-4 w-4 text-muted-foreground" />

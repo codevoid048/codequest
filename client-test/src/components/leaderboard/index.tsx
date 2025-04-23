@@ -492,11 +492,11 @@ export default function Leaderboard() {
                           className={cn(
                             "font-medium ml-4 relative inline-block",
                             isTop3 ? "text-lg ml-0" : "",
-                            rank === 1
+                            user.rank === 1
                               ? "text-chart-1 font-bold"
-                              : rank === 2
+                              : user.rank === 2
                               ? "text-chart-2 font-bold"
-                              : rank === 3
+                              : user.rank === 3
                               ? "text-chart-3 font-bold"
                               : "",
                             isUsernameHovered || isHovered
@@ -586,9 +586,9 @@ export default function Leaderboard() {
                         <div
                           className={cn(
                             "absolute left-0 top-0 h-full w-1",
-                            rank === 1
+                            user.rank === 1
                               ? "bg-gradient-to-b from-chart-1 to-chart-1/60"
-                              : rank === 2
+                              : user.rank === 2
                               ? "bg-gradient-to-b from-chart-2 to-chart-2/60"
                               : "bg-gradient-to-b from-chart-3 to-chart-3/60"
                           )}
