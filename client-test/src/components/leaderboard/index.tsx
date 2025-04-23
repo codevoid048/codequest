@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Card } from "@/components/ui/card";
@@ -474,189 +476,173 @@ export default function Leaderboard() {
               {getRankIcon(user.rank)}
             </motion.div>
                 </div>
+                      {/* Username with special styling for top 3 */}
+                      <Link to={`/profile/${user.username}`} className="col-span-5 flex items-center gap-3">
+                        {isTop3 && (
+                          <motion.div
+                            animate={{ rotate: [0, 5, 0, -5, 0] }}
+                            transition={{
+                              repeat: Number.POSITIVE_INFINITY,
+                              duration: 2,
+                              repeatType: "loop",
+                            }}
+                          ></motion.div>
+                        )}
+                        <motion.span
+                          className={cn(
+                            "font-medium ml-4 relative inline-block",
+                            isTop3 ? "text-lg ml-0" : "",
+                            rank === 1
+                              ? "text-chart-1 font-bold"
+                              : rank === 2
+                              ? "text-chart-2 font-bold"
+                              : rank === 3
+                              ? "text-chart-3 font-bold"
+                              : "",
+                            isUsernameHovered || isHovered
+                              ? "text-blue-500"
+                              : "" // Change text to blue on hover
+                          )}
+                          onMouseEnter={() => setUsernameHovered(user.id)}
+                          onMouseLeave={() => setUsernameHovered(null)}
+                          whileHover={{
+                            scale: 1.15,
+                            textShadow: isDarkMode
+                              ? "0 0 8px rgba(59, 130, 246, 0.8)"
+                              : "0 0 8px rgba(59, 130, 246, 0.5)",
+                          }}
+                        >
+                          {user.username}
+                        </motion.span>
+                      </Link>
 
-                {/* Username with special styling for top 3 */}
-                <Link to={`/profile/${user.username}`} className="col-span-5 flex items-center gap-3">
-            {isTop3 && (
-              <motion.div
-                animate={{ rotate: [0, 5, 0, -5, 0] }}
-                transition={{
-                  repeat: Number.POSITIVE_INFINITY,
-                  duration: 2,
-                  repeatType: "loop",
-                }}
-              ></motion.div>
-            )}
-            <motion.span
-              className={cn(
-                "font-medium ml-4 relative inline-block",
-                isTop3 ? "text-lg ml-0" : "",
-                user.rank === 1
-                  ? "text-chart-1 font-bold"
-                  : user.rank === 2
-                  ? "text-chart-2 font-bold"
-                  : user.rank === 3
-                  ? "text-chart-3 font-bold"
-                  : "",
-                isUsernameHovered || isHovered
-                  ? "text-blue-500"
-                  : "",
-                isSearchMatch && !isHovered ? "bg-primary/20 px-1 rounded" : ""
-              )}
-              onMouseEnter={() => setUsernameHovered(user.id)}
-              onMouseLeave={() => setUsernameHovered(null)}
-              whileHover={{
-                scale: 1.15,
-                textShadow: isDarkMode
-                  ? "0 0 8px rgba(59, 130, 246, 0.8)"
-                  : "0 0 8px rgba(59, 130, 246, 0.5)",
-              }}
-            >
-              {isSearchMatch && searchTerm ? (
-                highlightSearchMatch(user.username, searchTerm)
-              ) : (
-                user.username
-              )}
-            </motion.span>
-                </Link>
+                      {/* Points with animation */}
+                      <motion.div
+                        className="col-span-3 text-center font-semibold"
+                        key={`points-${user.id}-${user.points}`}
+                        initial={{ scale: 1 }}
+                        animate={{
+                          scale: isUpdated ? [1, 1.2, 1] : 1,
+                        }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          {isUpdated && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0 }}
+                              className={
+                                isHovered ? "text-blue-500" : "text-chart-4"
+                              }
+                            >
+                              <ChevronUp className="h-4 w-4" />
+                            </motion.div>
+                          )}
+                          <div
+                            className={cn(
+                              "transition-all duration-300",
+                              isUsernameHovered || isHovered
+                                ? "text-blue-500"
+                                : "", // Change text to blue when row is hovered
+                              isUpdated && !isHovered ? "text-chart-4" : ""
+                            )}
+                          >
+                            {user.points}
+                          </div>
+                        </div>
+                      </motion.div>
 
-                {/* Points with animation */}
-                <motion.div
-            className="col-span-3 text-center font-semibold"
-            key={`points-${user.id}-${user.points}`}
-            initial={{ scale: 1 }}
-            animate={{
-              scale: isUpdated ? [1, 1.2, 1] : 1,
-            }}
-            transition={{ duration: 0.5 }}
-                >
-            <div className="flex items-center justify-center gap-1">
-              {isUpdated && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className={
-              isHovered ? "text-blue-500" : "text-chart-4"
-                  }
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </motion.div>
-              )}
-              <div
-                className={cn(
-                  "transition-all duration-300",
-                  isUsernameHovered || isHovered
-              ? "text-blue-500"
-              : "",
-                  isUpdated && !isHovered ? "text-chart-4" : ""
-                )}
-              >
-                {user.points}
-              </div>
-            </div>
-                </motion.div>
+                      {/* Problems solved */}
+                      <div className="col-span-3 text-center">
+                        <div
+                          className={cn(
+                            "flex items-center justify-center gap-2 transition-all duration-300",
+                            isUsernameHovered || isHovered
+                              ? "text-blue-500"
+                              : "" // Change text to blue when row is hovered
+                          )}
+                        >
+                          {user.solveChallenges ? user.solveChallenges.total: 0}
+                        </div>
+                      </div>
 
-                {/* Problems solved */}
-                <div className="col-span-3 text-center">
-            <div
-              className={cn(
-                "flex items-center justify-center gap-2 transition-all duration-300",
-                isUsernameHovered || isHovered
-                  ? "text-blue-500"
-                  : ""
-              )}
-            >
-              {user.solveChallenges ? user.solveChallenges.length : 0}
-            </div>
-                </div>
+                      {/* Streak column */}
+                      <div className="col-span-3 text-center">
+                        <div
+                          className={cn(
+                            "flex items-center justify-center gap-2 transition-all duration-300",
+                            isUsernameHovered || isHovered
+                              ? "text-blue-500"
+                              : "" // Change text to blue when row is hovered
+                          )}
+                        >
+                          <span>{user.streak}</span>
+                        </div>
+                      </div>
 
-                {/* Streak column */}
-                <div className="col-span-3 text-center">
-            <div
-              className={cn(
-                "flex items-center justify-center gap-2 transition-all duration-300",
-                isUsernameHovered || isHovered
-                  ? "text-blue-500"
-                  : ""
-              )}
-            >
-              <span>{user.streak}</span>
-            </div>
-                </div>
+                      {/* Decorative elements for top 3 */}
+                      {isTop3 && (
+                        <div
+                          className={cn(
+                            "absolute left-0 top-0 h-full w-1",
+                            rank === 1
+                              ? "bg-gradient-to-b from-chart-1 to-chart-1/60"
+                              : rank === 2
+                              ? "bg-gradient-to-b from-chart-2 to-chart-2/60"
+                              : "bg-gradient-to-b from-chart-3 to-chart-3/60"
+                          )}
+                        ></div>
+                      )}
 
-                {/* Decorative elements for top 3 */}
-                {isTop3 && (
-            <div
-              className={cn(
-                "absolute left-0 top-0 h-full w-1",
-                user.rank === 1
-                  ? "bg-gradient-to-b from-chart-1 to-chart-1/60"
-                  : user.rank === 2
-                  ? "bg-gradient-to-b from-chart-2 to-chart-2/60"
-                  : "bg-gradient-to-b from-chart-3 to-chart-3/60"
-              )}
-            ></div>
-                )}
+                      {/* Hover effect overlay */}
+                      {isHovered && (
+                        <motion.div
+                          className={cn(
+                            "absolute inset-0 pointer-events-none",
+                            isDarkMode
+                              ? "bg-gradient-to-r from-accent/0 via-accent/5 to-accent/0"
+                              : "bg-gradient-to-r from-accent/0 via-accent/30 to-accent/0"
+                          )}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                        />
+                      )}
 
-                {/* Search match highlight */}
-                {isSearchMatch && !isHovered && (
-            <motion.div
-              className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-primary to-ring"
-              initial={{ scaleY: 0 }}
-              animate={{ scaleY: 1 }}
-              transition={{ duration: 0.3 }}
-            />
-                )}
+                      {/* Right border highlight on hover */}
+                      {isHovered && (
+                        <motion.div
+                          className={cn(
+                            "absolute right-0 top-0 h-full w-1",
+                            isDarkMode
+                              ? "bg-gradient-to-b from-primary/50 to-ring/50"
+                              : "bg-gradient-to-b from-primary to-ring"
+                          )}
+                          initial={{ scaleY: 0 }}
+                          animate={{ scaleY: 1 }}
+                          exit={{ scaleY: 0 }}
+                          transition={{ duration: 0.2 }}
+                        />
+                      )}
 
-                {/* Hover effect overlay */}
-                {isHovered && (
-            <motion.div
-              className={cn(
-                "absolute inset-0 pointer-events-none",
-                isDarkMode
-                  ? "bg-gradient-to-r from-accent/0 via-accent/5 to-accent/0"
-                  : "bg-gradient-to-r from-accent/0 via-accent/30 to-accent/0"
-              )}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            />
-                )}
-
-                {/* Right border highlight on hover */}
-                {isHovered && (
-            <motion.div
-              className={cn(
-                "absolute right-0 top-0 h-full w-1",
-                isDarkMode
-                  ? "bg-gradient-to-b from-primary/50 to-ring/50"
-                  : "bg-gradient-to-b from-primary to-ring"
-              )}
-              initial={{ scaleY: 0 }}
-              animate={{ scaleY: 1 }}
-              exit={{ scaleY: 0 }}
-              transition={{ duration: 0.2 }}
-            />
-                )}
-
-                {/* Animated highlight for updated user */}
-                {isUpdated && (
-            <motion.div
-              className={cn(
-                "absolute inset-0 pointer-events-none",
-                isDarkMode ? "bg-primary/10" : "bg-primary/5"
-              )}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            />
-                )}
-              </motion.div>
-            );
-          })}
+                      {/* Animated highlight for updated user */}
+                      {isUpdated && (
+                        <motion.div
+                          className={cn(
+                            "absolute inset-0 pointer-events-none",
+                            isDarkMode ? "bg-primary/10" : "bg-primary/5"
+                          )}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      )}
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </div>
 

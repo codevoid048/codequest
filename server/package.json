@@ -4,7 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "start": "nodemon server.js",
+    "ts:delete": "docker-compose exec backend node typesense/deleteCollections.js",
+    "ts:create": "docker-compose exec backend node typesense/createCollections.js",
+    "ts:syncDB": "docker-compose exec backend node typesense/syncdataFromDb.js"
   },
   "type": "module",
   "author": "",

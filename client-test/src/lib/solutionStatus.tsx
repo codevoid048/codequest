@@ -16,7 +16,6 @@ interface ProblemStatusProps {
 
 const solutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
   const navigate = useNavigate();
-
   // Function to check if solution button should be displayed
   const canShowSolutionButton = () => {
     const createdDate = new Date(problem.createdAt);

@@ -51,8 +51,8 @@ export const addChallenge = async (req, res) => {
             difficulty,
             points,
             problemLink,
-            platform,
-            createdAt: istDate,
+            createdAt: createdAt ? new Date(createdAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-') : new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'),
+            platform
         });
         
         const savedChallenge = await newChallenge.save();
