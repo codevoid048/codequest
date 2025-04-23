@@ -345,7 +345,7 @@ const Challenges: React.FC = () => {
                 {/* POTD Solved counter */}
                 <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="font-semibold">{user?.solveChallenges?.length} solved</span>
+                  <span className="font-semibold">{user?.solveChallenges?.easy?.length+user?.solveChallenges?.medium?.length+user?.solveChallenges?.hard?.length} solved</span>
                 </div>
                 </div>
             ) : null}
@@ -656,7 +656,8 @@ const Challenges: React.FC = () => {
                     disabled={currentPage === 1}
                     className="text-sm py-2 px-6 w-full sm:w-auto border-border hover:border-primary disabled:opacity-50 text-foreground"
                   >
-                    <ChevronUp className="h-4 w-4 rotate-90 mr-2" />
+                    
+                    <ChevronDown className="h-4 w-4 rotate-90 ml-2" />
                     Previous
                   </Button>
                   <div className="flex items-center gap-1">
@@ -679,7 +680,7 @@ const Challenges: React.FC = () => {
                     className="text-sm py-2 px-6 w-full sm:w-auto border-border hover:border-primary disabled:opacity-50 text-foreground"
                   >
                     Next
-                    <ChevronDown className="h-4 w-4 rotate-90 ml-2" />
+                    <ChevronUp className="h-4 w-4 rotate-90 mr-2" />
                   </Button>
                 </div>
               )}
