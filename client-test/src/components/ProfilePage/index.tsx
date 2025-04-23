@@ -7,6 +7,7 @@ import { motion } from "framer-motion"
 import { useAuth } from "@/context/AuthContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { updatePlatformCacheTimestamp, isPlatformDataStale } from "./platformCache"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import ProfileSkeleton from "@/components/profile-skeleton"
 import { usePartialRendering } from "@/lib/use-partial-rendering"
@@ -23,14 +24,15 @@ import {
   Trophy,
   Twitter,
 } from "lucide-react"
+import toast from "react-hot-toast"
+//import { solvedChallenges } from "@/lib/potdchallenge"
+import { PlatformManager } from "./platform-manager"
 
 export default function ProfilePage() {
   const { username: routeUsername } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
-  const { username: routeUsername } = useParams()
-  const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, verificationString } = useAuth()
+  // const token = localStorage.getItem("token")
 
   interface ProfileUser {
     leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
@@ -45,72 +47,148 @@ export default function ProfilePage() {
     branch?: string
     RegistrationNumber?: string
     otherLinks?: { platform: string; url: string }[]
-    solveChallenges?: Array<unknown>
+    solveChallenges?: { challengeId: string; timestamp: string }[]
     points?: number
     streak?: number
-    leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
-    gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
-    codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
-    codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
-    profilePicture?: string
-    name?: string
-    username?: string
-    rank?: number
-    collegeName?: string
-    branch?: string
-    RegistrationNumber?: string
-    otherLinks?: { platform: string; url: string }[]
-    solveChallenges?: Array<unknown>
-    points?: number
-    streak?: number
+    potdSolved?: { timestamp: string }[]
+    heatmap?: { timestamp: string; _id: string }[]
+  }
+
+  interface Challenge {
+    challengeid: string
+    platform: string
+    difficulty: string
+    _id: string
   }
 
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  //const [rating, setRating] = useState([]);
 
-  // Partial rendering states
-  const { isReady: sidebarReady } = usePartialRendering(200)
-  const { isReady: statsReady } = usePartialRendering(400)
-  const { isReady: difficultyReady } = usePartialRendering(600)
-  const { isReady: contributionsReady } = usePartialRendering(800)
-
-  // Fetch user details from backend using Axios
   useEffect(() => {
+    const updatePlatforms = async () => {
+      if (!profileUser || !profileUser.username) return;
+      // Check if the platforms data is stale (older than 30 minutes)
+      if (!isPlatformDataStale(profileUser.username, 5)) {
+        console.log("Platforms data is fresh; skipping update.");
+        return;
+      }
+
+      try {
+        console.log("Updating platforms...");
+        await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
+        await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
+        await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
+        await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
+        await axios.post('http://localhost:5000/platforms/solvedChallenges', { user: profileUser });
+        toast.success("Data updated successfully");
+        updatePlatformCacheTimestamp(profileUser.username);
+      } catch (error) {
+        console.error("Error updating platforms:", error);
+      }
+    };
+    updatePlatforms();
+  }, [profileUser]);
+
+
+  useEffect(() => {
+    const fetchChallenges = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/challenges")
+        console.log("Challenges:", response.data)
+        if (Array.isArray(response.data)) {
+          setChallenges(response.data)
+        } else if (response.data && Array.isArray(response.data.challenges)) {
+          setChallenges(response.data.challenges)
+        } else {
+          console.error("Challenges data is not an array:", response.data)
+          setChallenges([])
+        }
+      } catch (err) {
+        console.error("Error fetching challenges:", err)
+      }
+    }
+
     const fetchProfileUser = async () => {
       setLoading(true)
       setError(null)
-      setLoading(true)
-      setError(null)
-
-      const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
       const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
 
       try {
         const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
         console.log("Fetched user data:", response.data)
         setProfileUser(response.data.user)
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error fetching user:", err)
-        setError(err.response?.data?.message || "User not found")
-        const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
-        console.log("Fetched user data:", response.data)
-        setProfileUser(response.data.user)
-      } catch (err: any) {
-        console.error("Error fetching user:", err)
-        setError(err.response?.data?.message || "User not found")
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.message || "User not found");
+        } else {
+          toast.error("An unexpected error occurred");
+        }
       } finally {
         setLoading(false)
         setLoading(false)
       }
     }
-    }
+    fetchChallenges()
+    fetchProfileUser()
+    //solvedChallenges(routeUsername || "");
+  }, [routeUsername, user?.username])
 
-    fetchProfileUser()
-  }, [routeUsername, user?.username])
-    fetchProfileUser()
-  }, [routeUsername, user?.username])
+
+  // Handle platform verification
+  const handleVerifyPlatform = async (platform: string, username: string): Promise<boolean> => {
+    console.log("Verifying platform:", platform, username, verificationString, user?._id);
+    if (!verificationString) {
+      console.warn("Verification string is undefined or empty.");
+    }
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/verifyacc",
+        {
+          platform,
+          username,
+          verificationString,
+          userId: user?._id,
+        },
+        { withCredentials: true }
+      );
+
+      if (response.status === 200) {
+        toast.success(response.data.message);
+        // Update the local state with the new platform data
+        setProfileUser((prev) => {
+          if (!prev) return prev;
+
+          return {
+            ...prev,
+            [platform]: {
+              username,
+              solved: response.data.platformData?.solved || prev[platform]?.solved,
+              rank: response.data.platformData?.rank || prev[platform]?.rank,
+              rating: response.data.platformData?.rating || prev[platform]?.rating,
+            },
+          };
+        });
+      } else {
+        const errorMessage = (response.data as { error?: string })?.error;
+        toast.error(errorMessage || "An unexpected error occurred.");
+      }
+
+      return true;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("Error verifying platform:", error.response?.data?.message || error.message);
+      } else {
+        console.error("Error verifying platform:", error);
+      }
+      toast.error("Verification failed, try again");
+      return false;
+    }
+  };
 
   // Handle loading and error states
   if (loading) {
@@ -159,65 +237,30 @@ export default function ProfilePage() {
     )
   }
 
-  // Static data for now (can be fetched from backend later)
+  // Calculate the number of problems solved in each difficulty using the solveChallenges object
+  const allSolved = profileUser?.solveChallenges || [];
+  let easyCount = 0;
+  let mediumCount = 0;
+  let hardCount = 0;
+  allSolved.forEach((solved) => {
+    const challenge = challenges.find(challenge => challenge._id === solved.challengeId);
+    if (challenge) {
+      if (challenge.difficulty === "Easy") {
+        easyCount += 1;
+      } else if (challenge.difficulty === "Medium") {
+        mediumCount += 1;
+      } else if (challenge.difficulty === "Hard") {
+        hardCount += 1;
+      }
+    }
+  });
   const problemsSolved = {
-    total: profileUser.solveChallenges?.length || 0,
-    easy: Math.floor((profileUser.solveChallenges?.length || 0) * 0.4),
-    medium: Math.floor((profileUser.solveChallenges?.length || 0) * 0.5),
-    hard: Math.floor((profileUser.solveChallenges?.length || 0) * 0.1),
+    total: allSolved?.length || 0,
+    easy: easyCount,
+    medium: mediumCount,
+    hard: hardCount,
   }
-
-  const platforms = [
-    {
-      name: "LeetCode",
-      handle: profileUser.leetCode?.username || "-",
-      rating: profileUser.leetCode?.rating || 0,
-      color: "#FFA116",
-    },
-    {
-      name: "GeeksForGeeks",
-      handle: profileUser.gfg?.username || "-",
-      rating: profileUser.gfg?.rating || 0,
-      color: "#2F8D46",
-    },
-    {
-      name: "CodeForces",
-      handle: profileUser.codeforces?.username || "-",
-      rating: profileUser.codeforces?.rating || 0,
-      color: "#318CE7",
-    },
-    {
-      name: "CodeChef",
-      handle: profileUser.codechef?.username || "-",
-      rating: profileUser.codechef?.rating || 0,
-      color: "#745D0B",
-    },
-  ]
-    {
-      name: "LeetCode",
-      handle: profileUser.leetCode?.username || "-",
-      rating: profileUser.leetCode?.rating || 0,
-      color: "#FFA116",
-    },
-    {
-      name: "GeeksForGeeks",
-      handle: profileUser.gfg?.username || "-",
-      rating: profileUser.gfg?.rating || 0,
-      color: "#2F8D46",
-    },
-    {
-      name: "CodeForces",
-      handle: profileUser.codeforces?.username || "-",
-      rating: profileUser.codeforces?.rating || 0,
-      color: "#318CE7",
-    },
-    {
-      name: "CodeChef",
-      handle: profileUser.codechef?.username || "-",
-      rating: profileUser.codechef?.rating || 0,
-      color: "#745D0B",
-    },
-  ]
+  // console.log(problemsSolved,"problemsSolved");
 
   interface GetDaysInMonthParams {
     month: number
@@ -259,36 +302,25 @@ export default function ProfilePage() {
   const contributions = generateContributions(selectedYear)
   const contributions = generateContributions(selectedYear)
 
-  const contributionsByMonth = Array.from({ length: 12 }, (_, month) => {
-    const daysInMonth = getDaysInMonth(month, selectedYear)
-    const daysInMonth = getDaysInMonth(month, selectedYear)
-    return contributions
-      .filter((contrib) => {
-        const contribDate = new Date(contrib.date)
-        return contribDate.getMonth() === month && contribDate.getFullYear() === selectedYear
-        const contribDate = new Date(contrib.date)
-        return contribDate.getMonth() === month && contribDate.getFullYear() === selectedYear
-      })
-      .slice(0, daysInMonth)
-  })
-      .slice(0, daysInMonth)
-  })
+  // const contributionsByMonth = Array.from({ length: 12 }, (_, month) => {
+  //   const daysInMonth = getDaysInMonth(month, selectedYear)
+  //   return contributions
+  //     .filter((contrib) => {
+  //       const contribDate = new Date(contrib.date)
+  //       return contribDate.getMonth() === month && contribDate.getFullYear() === selectedYear
+  //     })
+  //     .slice(0, daysInMonth)
+  // })
 
   const yearOptions = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2]
   const yearOptions = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2]
 
-  const getColor = (count: number): string => {
-    if (count === 0) return "bg-gray-300"
-    if (count <= 3) return "bg-green-200"
-    if (count <= 6) return "bg-green-400"
-    return "bg-green-500"
-  }
-  const getColor = (count: number): string => {
-    if (count === 0) return "bg-gray-300"
-    if (count <= 3) return "bg-green-200"
-    if (count <= 6) return "bg-green-400"
-    return "bg-green-500"
-  }
+  // const getColor = (count: number): string => {
+  //   if (count === 0) return "bg-gray-300"
+  //   if (count <= 3) return "bg-green-200"
+  //   if (count <= 6) return "bg-green-400"
+  //   return "bg-green-500"
+  // }
 
   interface StreakParams {
     monthIndex: number
@@ -355,19 +387,85 @@ export default function ProfilePage() {
   const twitterLink = findSocialLink("twitter")
   const linkedinLink = findSocialLink("linkedin")
   const githubLink = findSocialLink("github")
-  const isOwnProfile = user?.username === routeUsername
 
-  // Find social links from otherLinks array
-  const findSocialLink = (platform: string) => {
-    if (!profileUser.otherLinks) return null
-    const link = profileUser.otherLinks.find((link) => link.platform.toLowerCase() === platform.toLowerCase())
-    return link ? link.url : null
+  {/* Helper function to create the date-contributions mapping from heatmap data */ }
+  function createDateContributionsMap(heatmap: Array<{ timestamp: string; _id: string }>, year: number, monthIndex: number) {
+    if (!heatmap || !heatmap.length) return {};
+
+    // Create a map of dates to contribution counts
+    const dateContributionsMap: Record<string, number> = {};
+
+    // Format monthIndex to 2-digit string for comparison
+    const monthStr = String(monthIndex + 1).padStart(2, '0');
+
+    heatmap.forEach(item => {
+      try {
+        if (!item.timestamp) return;
+
+        // Convert Unix timestamp (seconds) to milliseconds for Date
+        const timestamp = parseInt(item.timestamp) * 1000;
+        const contributionDate = new Date(timestamp);
+
+        if (isNaN(contributionDate.getTime())) {
+          console.error("Invalid timestamp:", item.timestamp);
+          return;
+        }
+
+        // Convert to Indian timezone (UTC+5:30)
+        // First get the date in UTC
+        const utcYear = contributionDate.getUTCFullYear();
+        const utcMonth = contributionDate.getUTCMonth();
+        const utcDay = contributionDate.getUTCDate();
+        const utcHours = contributionDate.getUTCHours();
+        const utcMinutes = contributionDate.getUTCMinutes();
+
+        // Apply the India timezone offset (+5:30)
+        let indianHours = utcHours + 5;
+        let indianMinutes = utcMinutes + 30;
+
+        // Adjust minutes if they exceed 60
+        if (indianMinutes >= 60) {
+          indianHours += 1;
+          indianMinutes -= 60;
+        }
+
+        // Adjust date if needed based on hours
+        let indianDay = utcDay;
+        let indianMonth = utcMonth + 1; // Convert 0-indexed month to 1-indexed
+        let indianYear = utcYear;
+
+        if (indianHours >= 24) {
+          indianHours -= 24;
+          indianDay += 1;
+
+          // Handle month/year transitions
+          const lastDayOfMonth = new Date(indianYear, indianMonth - 1, 0).getDate();
+          if (indianDay > lastDayOfMonth) {
+            indianDay = 1;
+            indianMonth += 1;
+
+            if (indianMonth > 12) {
+              indianMonth = 1;
+              indianYear += 1;
+            }
+          }
+        }
+
+        // Format the contribution date as YYYY-MM-DD for comparison
+        const indianDateString = `${indianYear}-${String(indianMonth).padStart(2, '0')}-${String(indianDay).padStart(2, '0')}`;
+
+        // Check if this contribution belongs to the selected month and year
+        if (indianYear === year && String(indianMonth).padStart(2, '0') === monthStr) {
+          // Increment the counter for this date
+          dateContributionsMap[indianDateString] = (dateContributionsMap[indianDateString] || 0) + 1;
+        }
+      } catch (err) {
+        console.error("Error processing timestamp:", item.timestamp, err);
+      }
+    });
+
+    return dateContributionsMap;
   }
-
-  const twitterLink = findSocialLink("twitter")
-  const linkedinLink = findSocialLink("linkedin")
-  const githubLink = findSocialLink("github")
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -425,29 +523,33 @@ export default function ProfilePage() {
                     )}
                   </div>
 
-                  <div className="mt-6 flex justify-center gap-3">
-                    {twitterLink && (
-                      <Button variant="outline" size="icon" className="rounded-full" asChild>
+                <div className="mt-6 flex justify-center gap-3">
+                  {profileUser.otherLinks?.find((link) => link.platform === "Twitter")?.url && (
+                    <Button variant="outline" size="icon" className="rounded-full" asChild>
+                      {twitterLink && (
                         <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
-                          <Twitter className="h-4 w-4 text-sky-500" />
+                            <Twitter className="h-4 w-4 text-sky-500" />
                         </Link>
-                      </Button>
-                    )}
-                    {linkedinLink && (
-                      <Button variant="outline" size="icon" className="rounded-full" asChild>
-                        <Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
-                          <Linkedin className="h-4 w-4 text-blue-600" />
-                        </Link>
-                      </Button>
-                    )}
-                    {githubLink && (
-                      <Button variant="outline" size="icon" className="rounded-full" asChild>
-                        <Link to={githubLink} target="_blank" rel="noopener noreferrer">
-                          <Github className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
+                      )}
+                    </Button>
+                  )}
+                  {profileUser.otherLinks?.find((link) => link.platform === "LinkedIn")?.url && (
+                    <Button variant="outline" size="icon" className="rounded-full" asChild>
+                      {linkedinLink && (<Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
+                        <Linkedin className="h-4 w-4 text-blue-600" />
+                      </Link>
+                      )}
+                    </Button>
+                  )}
+                  {profileUser.otherLinks?.find((link) => link.platform === "GitHub")?.url && (
+                    <Button variant="outline" size="icon" className="rounded-full" asChild>
+                      {githubLink && (<Link to={githubLink} target="_blank" rel="noopener noreferrer">
+                        <Github className="h-4 w-4" />
+                      </Link>
+                      )}
+                    </Button>
+                  )}
+                </div>
 
                   {isOwnProfile && (
                     <div className="mt-6">
@@ -468,7 +570,17 @@ export default function ProfilePage() {
 
           {/* Coding Platforms */}
           <motion.div variants={cardVariants} className="mt-6">
-            {sidebarReady ? (
+            {isOwnProfile ? (
+              <PlatformManager
+                userPlatforms={{
+                  leetCode: profileUser.leetCode,
+                  gfg: profileUser.gfg,
+                  codeforces: profileUser.codeforces,
+                  codechef: profileUser.codechef,
+                }}
+                onVerifyPlatform={handleVerifyPlatform}
+              />
+            ) : (
               <Card className="shadow-lg border-0">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg">
@@ -476,7 +588,32 @@ export default function ProfilePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {platforms.map((platform) => (
+                  {[
+                    {
+                      name: "LeetCode",
+                      handle: profileUser.leetCode?.username || "-",
+                      rating: profileUser.leetCode?.rating || 0,
+                      color: "#FFA116",
+                    },
+                    {
+                      name: "GeeksForGeeks",
+                      handle: profileUser.gfg?.username || "-",
+                      rating: profileUser.gfg?.rating || 0,
+                      color: "#2F8D46",
+                    },
+                    {
+                      name: "CodeForces",
+                      handle: profileUser.codeforces?.username || "-",
+                      rating: profileUser.codeforces?.rating || 0,
+                      color: "#318CE7",
+                    },
+                    {
+                      name: "CodeChef",
+                      handle: profileUser.codechef?.username || "-",
+                      rating: profileUser.codechef?.rating || 0,
+                      color: "#745D0B",
+                    },
+                  ].map((platform) => (
                     <motion.div
                       key={platform.name}
                       whileHover={{ scale: 1.02 }}
@@ -496,13 +633,11 @@ export default function ProfilePage() {
                   ))}
                 </CardContent>
               </Card>
-            ) : (
-              <div className="h-[300px] bg-muted animate-pulse rounded-lg mt-6"></div>
             )}
           </motion.div>
         </motion.div>
 
-        {/* Main Content */}
+        {/* Main Content - Keeping the rest of the component unchanged */}
         <motion.div className="lg:col-span-3" variants={cardVariants}>
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -679,120 +814,126 @@ export default function ProfilePage() {
 
           {/* Contributions Map */}
           <motion.div variants={cardVariants} className="mt-6">
-            {contributionsReady ? (
-              <Card className="shadow-lg border-0">
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="flex items-center">
-                      <Calendar className="mr-2 h-5 w-5 text-green-500" /> Contributions
-                    </CardTitle>
-                    <select
-                      value={selectedYear}
-                      onChange={(e) => setSelectedYear(Number.parseInt(e.target.value))}
-                      className="border rounded-md p-2 text-sm bg-background"
-                    >
-                      {yearOptions.map((year) => (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <CardDescription>Your coding activity for {selectedYear}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto pb-4">
-                    <div className="min-w-[950px]">
-                      <div className="flex gap-4 text-xs text-muted-foreground text-center mb-2">
-                        {[
-                          "January",
-                          "February",
-                          "March",
-                          "April",
-                          "May",
-                          "June",
-                          "July",
-                          "August",
-                          "September",
-                          "October",
-                          "November",
-                          "December",
-                        ].map((month) => (
-                          <div key={month} className="flex-1 truncate">
-                            {month}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex gap-4">
-                        {contributionsByMonth.map((monthContribs, monthIndex) => {
-                          const daysInMonth = getDaysInMonth(monthIndex, selectedYear)
-                          const firstDayOfMonth = new Date(selectedYear, monthIndex, 1).getDay()
-                          const offset = (firstDayOfMonth + 6) % 7
-                          const totalContributions = monthContribs.reduce(
-                            (sum, contrib) => sum + (contrib ? contrib.count : 0),
-                            0,
-                          )
-                          const numWeeks = Math.ceil((daysInMonth + offset) / 7)
+            <Card className="shadow-lg border-0">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center">
+                    <Calendar className="mr-2 h-5 w-5 text-green-500" /> Contributions
+                  </CardTitle>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number.parseInt(e.target.value))}
+                    className="border rounded-md p-2 text-sm bg-background"
+                  >
+                    {yearOptions.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <CardDescription>Your coding activity for {selectedYear}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto pb-4">
+                  <div className="min-w-[950px]">
+                    <div className="flex gap-4">
+                      {Array.from({ length: 12 }).map((_, monthIndex) => {
+                        const daysInMonth = getDaysInMonth(monthIndex, selectedYear);
+                        const firstDayOfMonth = new Date(selectedYear, monthIndex, 1).getDay();
+                        const numWeeks = Math.ceil((daysInMonth + firstDayOfMonth) / 7);
+                        const monthNames = [
+                          "January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December",
+                        ];
 
-                          return (
-                            <div key={monthIndex} className="flex-1">
-                              <div
-                                className="grid gap-1"
-                                style={{
-                                  gridTemplateColumns: `repeat(${numWeeks}, 1fr)`,
-                                  gridTemplateRows: "repeat(7, 1fr)",
-                                }}
-                              >
-                                {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
-                                  const date = new Date(selectedYear, monthIndex, dayIndex + 1)
-                                  const dayOfWeek = (date.getDay() + 6) % 7
-                                  const weekIndex = Math.floor((dayIndex + offset) / 7) + 1
-                                  const contrib = monthContribs.find((c) => c.date === date.toISOString().split("T")[0])
-                                  const count = contrib ? contrib.count : 0
-                                  const isToday =
-                                    date.toISOString().split("T")[0] === new Date().toISOString().split("T")[0]
-                                  const inStreak = isPartOfStreak({ monthIndex, dayIndex, monthContribs })
-
-                                  return (
-                                    <motion.div
-                                      key={dayIndex}
-                                      className={`h-4 w-4 rounded-sm ${getColor(count)} ${
-                                        isToday ? "ring-2 ring-black dark:ring-white" : ""
-                                      } ${inStreak && count > 0 ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
-                                      style={{ gridRow: dayOfWeek + 1, gridColumn: weekIndex }}
-                                      title={`${date.toLocaleDateString()}: ${count} contributions`}
-                                      whileHover={{ scale: 1.5, zIndex: 10 }}
-                                      transition={{ duration: 0.2 }}
-                                    />
-                                  )
-                                })}
-                              </div>
-                              <div className="text-xs text-muted-foreground text-center mt-1">
-                                {totalContributions} contributions
-                              </div>
+                        // Create contributions map for the month using the heatmap data
+                        const dateContributionsMap = createDateContributionsMap(profileUser?.heatmap || [], selectedYear, monthIndex);
+                        return (
+                          <div key={monthIndex} className="flex-none">
+                            <div className="text-xs text-muted-foreground text-center mb-2">
+                              {monthNames[monthIndex]}
                             </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-4">
-                      <span>Less</span>
-                      <div className="h-3 w-3 rounded-sm bg-gray-300"></div>
-                      <div className="h-3 w-3 rounded-sm bg-green-200"></div>
-                      <div className="h-3 w-3 rounded-sm bg-green-400"></div>
-                      <div className="h-3 w-3 rounded-sm bg-green-500"></div>
-                      <span>More</span>
+                            <div className="grid gap-1"
+                              style={{
+                                gridTemplateRows: `repeat(7, 1fr)`,
+                                gridTemplateColumns: `repeat(${numWeeks}, 1fr)`,
+                              }}
+                            >
+                              {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
+                                // Create date for this calendar cell (using local time)
+                                const date = new Date(selectedYear, monthIndex, dayIndex + 1);
+                                const dayOfWeek = date.getDay();
+
+                                // Format the date as YYYY-MM-DD for comparison
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const dateString = `${selectedYear}-${month}-${day}`;
+
+                                // Get contribution count for this date
+                                const contributionCount = dateContributionsMap[dateString] || 0;
+
+                                // Determine intensity based on count
+                                const getIntensityColor = (count: number) => {
+                                  if (count === 0) return "bg-gray-300";
+                                  if (count === 1) return "bg-green-200";
+                                  if (count <= 3) return "bg-green-300";
+                                  if (count <= 5) return "bg-green-400";
+                                  return "bg-green-500";
+                                };
+
+                                const isSolved = contributionCount > 0;
+                                const today = new Date();
+                                const isToday =
+                                  today.getDate() === date.getDate() &&
+                                  today.getMonth() === date.getMonth() &&
+                                  today.getFullYear() === date.getFullYear();
+
+                                const inStreak = isPartOfStreak({
+                                  monthIndex,
+                                  dayIndex,
+                                  monthContribs: Object.keys(dateContributionsMap)
+                                    .filter(date => date.startsWith(`${selectedYear}-${month}`))
+                                    .map(date => ({ date, count: dateContributionsMap[date] }))
+                                });
+
+                                return (
+                                  <motion.div
+                                    key={dayIndex}
+                                    className={`h-4 w-4 rounded-sm ${getIntensityColor(contributionCount)} ${isToday ? "ring-2 ring-black dark:ring-white" : ""
+                                      } ${inStreak && isSolved ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
+                                    style={{ gridRow: dayOfWeek + 1, gridColumn: Math.floor((dayIndex + firstDayOfMonth) / 7) + 1 }}
+                                    title={`${date.toLocaleDateString()}: ${contributionCount > 0 ? `${contributionCount} contribution${contributionCount > 1 ? 's' : ''}` : "No contributions"}`}
+                                    whileHover={{ scale: 1.5, zIndex: 10 }}
+                                    transition={{ duration: 0.2 }}
+                                  />
+                                );
+                              })}
+                            </div>
+                            <div className="text-xs text-muted-foreground text-center mt-1">
+                              {Object.values(dateContributionsMap).reduce((sum, count) => sum + count, 0)} contributions
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="h-[400px] bg-muted animate-pulse rounded-lg mt-6"></div>
-            )}
+                  <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-4">
+                    <span>Less</span>
+                    <div className="h-3 w-3 rounded-sm bg-gray-300"></div>
+                    <div className="h-3 w-3 rounded-sm bg-green-400"></div>
+                    <div className="h-3 w-3 rounded-sm bg-green-500"></div>
+                    <div className="h-3 w-3 rounded-sm bg-green-600"></div>
+                    <div className="h-3 w-3 rounded-sm bg-green-700"></div>
+                    <span>More</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
         </motion.div>
       </motion.div>
-      <RatingChart ratingData={rating} />
+      {/* <RatingChart ratingData={rating} /> */}
     </div>
   )
   )

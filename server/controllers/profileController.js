@@ -90,7 +90,7 @@ export const updateUserProfile = async (req, res) => {
                 const url = link.url
 
                 if (platform === "leetcode" && url) {
-                    user.leetCode = { ...user.leetCode, username: url }
+                    user.leetcode = { ...user.leetcode, username: url }
                 } else if (platform === "codeforces" && url) {
                     user.codeforces = { ...user.codeforces, username: url }
                 } else if (platform === "github" && url) {
@@ -119,7 +119,7 @@ export const updateUserProfile = async (req, res) => {
             collegeName: updatedUser.collegeName,
             profilePicture: updatedUser.profilePicture,
             isAffiliate: updatedUser.isAffiliate,
-            leetCode: updatedUser.leetCode,
+            leetcode: updatedUser.leetcode,
             codeforces: updatedUser.codeforces,
             codechef: updatedUser.codechef,
             gfg: updatedUser.gfg,
@@ -192,14 +192,13 @@ export const getUserActivity = async (req, res) => {
 }
 export const postPotdChallenge = async (req, res) => {
     try {
-        const userId = req.user._id;
-        const { timestamp } = req.body;
-        const date = new Date(timestamp).toISOString().split('T')[0]; // Extract only the date part
-        const user = await User.findById(userId);
+        const { username, timestamp } = req.body;
+        const date = new Date(timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+        const user = await User.findOne({ username });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        const potdExists = user.potdSolved.some(potd => potd.timestamp.split('T')[0] === date);
+        const potdExists = user.potdSolved.some(potd => new Date(potd.timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-') === date);
         if (potdExists) {
             return res.status(200).json({ message: 'POTD challenge already solved for today' });
         }
@@ -240,3 +239,94 @@ export const getUserByUsername = async (req, res) => {
     }
 }
 
+
+// Removed duplicate declaration of getUserById
+
+export const updateUserStreak = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+
+        // Check if today's problem was already solved
+        const solvedDates = user.potdSolved.map(potd => 
+            new Date(potd.timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-')
+        );
+
+        if (solvedDates.includes(today)) {
+            return res.status(200).json({ success: false, message: "Already solved today's POTD", streak: user.streak });
+        }
+
+        // Check if yesterday's problem was solved
+        user.streak = solvedDates.includes(yesterdayStr) ? user.streak + 1 : 1;
+
+        // Store today's solved date
+        user.potdSolved.push({ timestamp: new Date().toISOString() });
+
+        await user.save();
+        
+        // Update leaderboard
+        await updateRanks();
+        
+        return res.status(200).json({ 
+            success: true, 
+            streak: user.streak, 
+            message: "Streak updated successfully" 
+        });
+
+    } catch (error) {
+        console.error("Error updating streak:", error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "An error occurred",
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
+};
+
+export const getUserById = async (req, res) => {
+    try {
+      const userId = req.query.userId;
+  
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+      }
+  
+      const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      res.status(200).json({ user });
+    } catch (error) {
+      console.error("Server error:", error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
+
+//   export const getUserById = async (req, res) => {
+//     try {
+//         const userId = req.params.id; // Get user ID from request parameters
+
+//         const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
+
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found" });
+//         }
+//         res.status(200).json({ user });
+
+//     } catch (error) {
+//         console.error("Error fetching user by ID:", error);
+//         res.status(500).json({ message: "Server error" });
+//     }
+// }
+  

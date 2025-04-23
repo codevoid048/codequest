@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Code, Menu, Moon, Sun, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useTheme } from "@/context/ThemeContext";
-import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
+import { motion } from "framer-motion";
+import { Code, Menu, Moon, Sun, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 export function Sidebar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -31,21 +31,44 @@ export function Sidebar() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full p-6">
       <Link to="/codingclubadmin" className="flex items-center space-x-2 mb-8">
-        <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 5 }}>
+        <motion.div
+          animate={{ rotate: [0, 10, -10, 0] }}
+          transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 5 }}
+        >
           <Code className="h-6 w-6 text-primary" />
         </motion.div>
-        <span className="font-bold text-xl">Admin CodeQuest</span>
+        <span className="font-bold text-xl dark:text-primary">
+          Admin CodeQuest
+        </span>
       </Link>
       <nav className="flex flex-col gap-4 flex-1">
         {navItems.map((item) => (
-          <Link key={item.href} to={item.href} className={`text-sm font-medium hover:text-primary ${location.pathname === item.href ? "text-primary" : "text-muted-foreground"}`} onClick={() => setIsOpen(false)}>
+          <Link
+            key={item.href}
+            to={item.href}
+            className={`text-sm font-medium hover:text-primary ${
+              location.pathname === item.href
+                ? "text-primary"
+                : "text-muted-foreground"
+            }`}
+            onClick={() => setIsOpen(false)}
+          >
             {item.label}
           </Link>
         ))}
       </nav>
       <div className="flex flex-col gap-4 mt-auto">
-        <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="hover:bg-muted "
+        >
+          {theme === "dark" ? (
+            <Sun className="h-5 w-5 text-black" />
+          ) : (
+            <Moon className="h-5 w-5" />
+          )}
         </Button>
         {!isAuthenticated ? (
           <div className="flex flex-col gap-2">
@@ -58,10 +81,13 @@ export function Sidebar() {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            <Button onClick={logout} variant="outline">Logout</Button>
-            <Link to="/profile">
-              <img src="/default-profile.png" alt="Profile" className="w-8 h-8 rounded-full mx-auto" />
-            </Link>
+            <Button
+              onClick={logout}
+              variant="outline"
+              className="dark:bg-primary"
+            >
+              Logout
+            </Button>
           </div>
         )}
       </div>
@@ -70,7 +96,13 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className={`hidden md:block fixed top-0 left-0 h-full w-64 z-50 border-r ${isScrolled ? "bg-background/80 backdrop-blur-md shadow-lg" : "bg-background"}`}>
+      <aside
+        className={`hidden md:block fixed top-0 left-0 h-full w-64 z-50 border-r ${
+          isScrolled
+            ? "bg-background/80 backdrop-blur-md shadow-lg"
+            : "bg-background"
+        }`}
+      >
         <SidebarContent />
       </aside>
       <div className="md:hidden sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b">
@@ -82,7 +114,11 @@ export function Sidebar() {
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
-                {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {isOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">

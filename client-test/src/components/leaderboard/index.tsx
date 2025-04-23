@@ -14,22 +14,16 @@ import { usePartialRendering } from "@/lib/use-partial-rendering"
 const USERS_PER_PAGE = 8
 
 export default function Leaderboard() {
-  const [users, setUsers] = useState<any[]>([])
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const [updatedUser, setUpdatedUser] = useState<number | null>(null)
-  const [hoveredUser, setHoveredUser] = useState<number | null>(null)
-  const confettiRef = useRef(null)
-  const [isLoading, setIsLoading] = useState(true)
-
+  const [users, setUsers] = useState<any[]>([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [updatedUser, setUpdatedUser] = useState<number | null>(null);
+  const [hoveredUser, setHoveredUser] = useState<number | null>(null);
+  const confettiRef = useRef(null);
+  const controls = useAnimationControls();
+  
   // Pagination states
-  const [currentPage, setCurrentPage] = useState(1)
-  const [usernameHovered, setUsernameHovered] = useState<number | null>(null)
-
-  // Partial rendering states
-  const { isReady: headerReady } = usePartialRendering(100)
-  const { isReady: tableReady } = usePartialRendering(300)
-  const { isReady: paginationReady } = usePartialRendering(500)
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usernameHovered, setUsernameHovered] = useState<number | null>(null);
   // Calculate total pages
   const totalPages = Math.ceil(users.length / USERS_PER_PAGE)
 
@@ -368,17 +362,19 @@ export default function Leaderboard() {
                           </div>
                         </motion.div>
 
-                        {/* Problems solved */}
-                        <div className="col-span-3 text-center">
-                          <div
-                            className={cn(
-                              "flex items-center justify-center gap-2 transition-all duration-300",
-                              isUsernameHovered || isHovered ? "text-blue-500" : "", // Change text to blue when row is hovered
-                            )}
-                          >
-                            {user.solveChallenges ? user.solveChallenges.length : 0}
-                          </div>
+                      {/* Problems solved */}
+                      <div className="col-span-3 text-center">
+                        <div
+                          className={cn(
+                            "flex items-center justify-center gap-2 transition-all duration-300",
+                            isUsernameHovered || isHovered
+                              ? "text-blue-500"
+                              : "" // Change text to blue when row is hovered
+                          )}
+                        >
+                          {user.solveChallenges? user.solveChallenges.length: 0}
                         </div>
+                      </div>
 
                         {/* Streak column */}
                         <div className="col-span-3 text-center">
