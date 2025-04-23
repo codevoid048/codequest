@@ -5,8 +5,6 @@ import axios from "axios";
      const response = await axios.get(`https://codeforces.com/api/user.status?handle=${username}`);
      const submissions= response.data;
     //  console.log(submissions)
-
- 
      return submissions;
     //  return mockdata;
    } catch (error) {

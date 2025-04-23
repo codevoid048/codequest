@@ -14,7 +14,7 @@ export const verifyProfiles = async (req, res) => {
         if (normalizedPlatform === 'gfg') {
             //const response = await axios.get(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`);
             const response = await getGFGName(username);
-            if (response.data.message === 'User not found!') {
+            if (response.data?.message === 'User not found!') {
                 return res.status(400).json({ error: 'User not found on GFG' });
             }
     
@@ -23,7 +23,16 @@ export const verifyProfiles = async (req, res) => {
             if (!name) {
                 return res.status(400).json({ error: 'Name not found in GFG profile' });
             }
-            if (name.trim() !== verificationString.trim()) {
+
+            // Debugging logs
+            console.log("GFG name from profile:", JSON.stringify(name));
+            console.log("Verification string:", JSON.stringify(verificationString));
+
+            // Normalize strings for comparison
+            const normalizedName = name.trim().toLowerCase();
+            const normalizedVerificationString = verificationString.trim().toLowerCase();
+
+            if (normalizedName !== normalizedVerificationString) {
                 return res.status(400).json({ error: 'Verification string does not match' });
             }
     
@@ -32,7 +41,7 @@ export const verifyProfiles = async (req, res) => {
                 return res.status(404).json({ error: 'User not found' });
             }
     
-            await user.updateOne({ $set: { 'gfg.username': username, 'gfg.solved': total_problems_solved, 'gfg.rating': rating } });
+            await user.updateOne({ $set: { 'gfg.username': username, 'gfg.solved': total_problems_solved, 'gfg.rank': institute_rank, 'gfg.rating': rating } });
             return res.status(200).json({ message: 'GFG Profile verified successfully' });
         }
         else if (normalizedPlatform === 'codeforces') {
