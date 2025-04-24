@@ -74,7 +74,8 @@ const Challenges: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
   const [User, setUser] = useState<User | null>(null);
-  const [showPopup, setShowPopup] = useState(false); // Popup for solved challenge
+  const [showPopup, setShowPopup] = useState(false); 
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 5;
   const { user } = useAuth();
 
@@ -278,6 +279,7 @@ const Challenges: React.FC = () => {
 
 
   const checkPotdSolved = async () => {
+    setIsRefreshing(true);
     try {
       const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'); // Get today's date in YYYY-MM-DD format
       const storedDate = localStorage.getItem('potdSolvedDate');
@@ -285,9 +287,11 @@ const Challenges: React.FC = () => {
       if (storedDate === today) {
         toast.success("You have already solved today's problem!");
         setIsSolved(true);
+        setIsRefreshing(false);
       } else {
         toast.loading("Checking if you solved today's problem...", { id: "potd-check" });
         await checkIfProblemSolved();
+        setIsRefreshing(false);
       }
     } catch (error) {
       console.error("Error checking POTD solved:", error);
@@ -426,9 +430,9 @@ const Challenges: React.FC = () => {
                           checkPotdSolved();
                         }}
                         className="bg-primary/20 hover:bg-primary/30 text-primary border-0 shadow-md hover:shadow-lg transition-all duration-300 rounded-full flex items-center gap-2"
-                        // disabled={isRefreshing}
+                        disabled={isRefreshing}
                       >
-                        {/* <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} /> */}
+                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                         Check Status
                       </Button>
                   </div>
