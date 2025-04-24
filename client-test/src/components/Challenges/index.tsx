@@ -15,7 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 import { postPotdChallenge} from "@/lib/potdchallenge";
 import ProblemStatus from "@/lib/solutionStatus";
 import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "@/platforms/leetcode";
-import { Award, Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, Code, Filter, Flame, Lightbulb, Search, Tag, } from "lucide-react";
+import { Award, Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, Code, Filter, Flame, Lightbulb, RefreshCw, Search, Tag, } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface User {
@@ -74,7 +74,8 @@ const Challenges: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
   const [User, setUser] = useState<User | null>(null);
-  const [showPopup, setShowPopup] = useState(false); // Popup for solved challenge
+  const [showPopup, setShowPopup] = useState(false); 
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 5;
   const { user } = useAuth();
 
@@ -223,71 +224,81 @@ const Challenges: React.FC = () => {
     }
   };
 
-  // Check if the daily challenge was solved
-  useEffect(() => {
-    const checkIfProblemSolved = async () => {
-      try {
-        console.log("called")
+  const checkIfProblemSolved = async () => {
+    try {
+      console.log("called")
+      if (dailyProblem?.platform === "LeetCode") {
+        const leetCodeData = await fetchLeetCodeProfile(`${user?.leetCode?.username}`);
+        if (leetCodeData?.recentSubmissionList) {
+          const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string; statusDisplay: string }) => {
+            const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+            const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
 
-        if (dailyProblem?.platform === "LeetCode") {
-          const leetCodeData = await fetchLeetCodeProfile(`${user?.leetCode?.username}`);
-          if (leetCodeData?.recentSubmissionList) {
-            const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string; statusDisplay: string }) => {
-              const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-              const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && submissionDate === today;
+          });
 
-              return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && submissionDate === today;
-            });
-
-            if (solvedProblem) {
-              setIsSolved(true);
-              postPotdChallenge(user?.username,dailyProblem?._id,dailyProblem?.difficulty);
-              localStorage.setItem('potdSolvedDate',new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-')); // Store today's date
-              return;
-            }
+          if (solvedProblem) {
+            setIsSolved(true);
+            postPotdChallenge(user?.username,dailyProblem?._id,dailyProblem?.difficulty);
+            localStorage.setItem('potdSolvedDate',new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-')); // Store today's date
+            return true;
           }
-        } else if (dailyProblem?.platform === "Codeforces") {
-          const codeforcesData = await fetchCodeforcesProfile(`${user?.codeforces?.username}`);
-          console.log("called codeforces api", codeforcesData);
-          if (codeforcesData?.result) {
-            const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string }; verdict: string }) => {
-              const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-              const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-              return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" &&
-                submissionDate === today;
-            });
-
-            if (solvedProblem) {
-              setIsSolved(true);
-              postPotdChallenge(user?.username,dailyProblem?._id,dailyProblem?.difficulty);
-              console.log("potd posted successfully");
-              localStorage.setItem('potdSolvedDate', new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'));
-              return;
-            }
+          else{
+            toast.error("You haven't solved today's problem yet!");
+            return false;
           }
         }
-      } catch (error) {
-        console.error("Error checking challenge status:", error);
-      }
-    };
+      } else if (dailyProblem?.platform === "Codeforces") {
+        const codeforcesData = await fetchCodeforcesProfile(`${user?.codeforces?.username}`);
+        console.log("called codeforces api", codeforcesData);
+        if (codeforcesData?.result) {
+          const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string }; verdict: string }) => {
+            const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+            const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+            return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" &&
+              submissionDate === today;
+          });
 
-    const checkPotdSolved = async () => {
-      try {
-        const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'); // Get today's date in YYYY-MM-DD format
-        const storedDate = localStorage.getItem('potdSolvedDate');
-
-        if (storedDate === today) {
-          setIsSolved(true);
-        } else {
-          await checkIfProblemSolved();
+          if (solvedProblem) {
+            setIsSolved(true);
+            postPotdChallenge(user?.username,dailyProblem?._id,dailyProblem?.difficulty);
+            console.log("potd posted successfully");
+            localStorage.setItem('potdSolvedDate', new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'));
+            return true;
+          }
+          else{
+            toast.error("You haven't solved today's problem yet!");
+            return false;
+          }
         }
-      } catch (error) {
-        console.error("Error checking POTD solved:", error);
       }
+    } catch (error) {
+      console.error("Error checking challenge status:", error);
     }
+  };
 
-    checkPotdSolved();
-  }, [dailyProblem]);
+
+  const checkPotdSolved = async () => {
+    setIsRefreshing(true);
+    try {
+      const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'); // Get today's date in YYYY-MM-DD format
+      const storedDate = localStorage.getItem('potdSolvedDate');
+
+      if (storedDate === today) {
+        toast.success("You have already solved today's problem!");
+        setIsSolved(true);
+        setIsRefreshing(false);
+      } else {
+        toast.loading("Checking if you solved today's problem...", { id: "potd-check" });
+        await checkIfProblemSolved();
+        setIsRefreshing(false);
+      }
+    } catch (error) {
+      console.error("Error checking POTD solved:", error);
+    }
+  }
+ 
+
 
   // Styling for difficulty levels
   const getDifficultyStyle = (difficulty: string) => {
@@ -413,6 +424,17 @@ const Challenges: React.FC = () => {
                         Solve Now
                       </Button>
                     )}
+                    <Button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          checkPotdSolved();
+                        }}
+                        className="bg-primary/20 hover:bg-primary/30 text-primary border-0 shadow-md hover:shadow-lg transition-all duration-300 rounded-full flex items-center gap-2"
+                        disabled={isRefreshing}
+                      >
+                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        Check Status
+                      </Button>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-700 dark:border-gray-300 flex flex-wrap gap-3 text-sm">
@@ -584,6 +606,7 @@ const Challenges: React.FC = () => {
                     <Card
                       key={problem.id}
                       className="border-1 cursor-pointer bg-card overflow-hidden"
+                      onClick={() => openProblemLink(problem.problemUrl)}
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <CardContent>
@@ -622,12 +645,12 @@ const Challenges: React.FC = () => {
                           </div>
                           <ProblemStatus
                             problem={{
-                              id: problem.id.toString(),
-                              status: problem.status as "Solved" | "Unsolved",
+                              id: problem.id,
+                              status: problem.status,
                               createdAt: new Date(problem.date),
-                              title: problem.title,
-                              description: problem.description,
-                              problemUrl: problem.problemUrl
+                            }}
+                            markSolved={() => markSolved(problem.id)}
+                            viewSolution={(id) => {
                             }}
                           />
                         </div>
