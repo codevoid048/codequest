@@ -11,7 +11,7 @@ router.get('/activity', protect, getUserActivity)
 router.post('/solvedChallenges',protect,solvedChallenges)
 router.get('/getUser',getUserById);
 router.get('/streak',protect,updateUserStreak);
-
+router.get('/delete',protect,deleteUserProfile);
 
 
 export default router;

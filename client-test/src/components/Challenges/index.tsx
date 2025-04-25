@@ -81,7 +81,7 @@ interface ProblemStatusProps {
     status: string;
     createdAt: Date;
   };
-  markSolved: (id: string) => void;
+  // markSolved: (id: string) => void;
   viewSolution: (id: string) => void;
 }
 
