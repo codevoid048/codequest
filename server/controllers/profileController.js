@@ -230,8 +230,7 @@ export const postPotdChallenge = async (req, res) => {
         // Check if challenge is already solved today
         const solvedList = user.solveChallenges[difficultyKey];
         const alreadySolved = solvedList && solvedList.some(entry => 
-            entry.challenge?.toString() === challengeId.toString() && 
-            entry.timestamp?.startsWith(today)
+            entry.challenge?.toString() === challengeId.toString() 
           );
         
         console.log("Already solved:", alreadySolved);
@@ -256,21 +255,26 @@ export const postPotdChallenge = async (req, res) => {
 
             if (!anyChallengeTodayBefore) {
                 // Calculate streak
-                const yesterdayStr = new Date(dateOnly);
-                yesterdayStr.setDate(yesterdayStr.getDate() - 1);
-                const formattedYesterday = yesterdayStr
+                const yesterdayDate = new Date(dateOnly);
+                yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+                const formattedYesterday = yesterdayDate
                 .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
                 .split("/")
                 .reverse()
                 .join("-");
+                console.log("Yesterday ", formattedYesterday);
             
+                // Check if any challenges were solved yesterday
                 const anyYesterday = ['easy', 'medium', 'hard']
-                .some(diff => 
-                user.solveChallenges[diff]?.some(entry => 
-                    entry.timestamp?.startsWith(formattedYesterday)
-                )
+                .some(diff =>
+                    user.solveChallenges[diff]?.some(entry => {
+                        // Extract date part from the timestamp string (format "YYYY-MM-DD HH:MM:SS")
+                        const entryDate = entry.timestamp?.split(' ')[0];
+                        return entryDate === formattedYesterday;
+                    })
                 );
-                user.streak = anyYesterday ? (user.streak || 0) + 1 : 1;
+                console.log("Checking if any challenges were solved yesterday",anyYesterday);
+                user.streak = anyYesterday ? user.streak + 1 : 1;
                 console.log(`Streak updated to ${user.streak}`);
             } else {
                 console.log("Already solved a challenge today, streak not updated");
@@ -304,7 +308,6 @@ export const postPotdChallenge = async (req, res) => {
             error: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
-
     }
 };
 

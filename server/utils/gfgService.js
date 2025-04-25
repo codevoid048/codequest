@@ -26,7 +26,7 @@ export const getGFGName = async (username) => {
             institute_rank: userInfo.institute_rank,
             rating: data.props.pageProps.contestData.user_contest_data?.current_rating || 0
         };
-        console.log("gfg data from web", val);
+        //console.log("gfg data from web", val);
         return val;
     }
     catch (error) {
