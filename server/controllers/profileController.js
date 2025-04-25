@@ -191,21 +191,19 @@ export const getUserActivity = async (req, res) => {
         res.status(500).json({ message: "Server error" })
     }
 }
+
 export const postPotdChallenge = async (req, res) => {
     try {
         console.log("Request received:", req.body);
         const { username, timestamp, challengeId, difficulty } = req.body;
-        const dateOnly = timestamp.date;
 
         if (!username || !timestamp || !challengeId || !difficulty) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
-        const today = new Date(dateOnly)
-            .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
-            .split('/')
-            .reverse()
-            .join('-');
 
+        // Extract date from timestamp object
+        const dateOnly = timestamp.date;
+        
         const user = await User.findOne({ username });
         const challenge = await Challenge.findById(challengeId);
 
@@ -213,6 +211,7 @@ export const postPotdChallenge = async (req, res) => {
         if (!challenge) return res.status(404).json({ message: 'Challenge not found' });
 
         const difficultyKey = difficulty.toLowerCase();
+        
         // Ensure solveChallenges structure exists
         if (!user.solveChallenges) {
             user.solveChallenges = {
@@ -227,14 +226,14 @@ export const postPotdChallenge = async (req, res) => {
         if (!user.solveChallenges.medium) user.solveChallenges.medium = [];
         if (!user.solveChallenges.hard) user.solveChallenges.hard = [];
 
-        // Check if challenge is already solved today
+        // Check if challenge is already solved
         const solvedList = user.solveChallenges[difficultyKey];
         const alreadySolved = solvedList && solvedList.some(entry => 
-            entry.challenge?.toString() === challengeId.toString() && 
-            entry.timestamp?.startsWith(today)
-          );
+            entry.challenge?.toString() === challengeId.toString()
+        );
         
         console.log("Already solved:", alreadySolved);
+        
         if (!alreadySolved) {
             // Push the solved challenge
             user.solveChallenges[difficultyKey].push({
@@ -247,33 +246,53 @@ export const postPotdChallenge = async (req, res) => {
             user.points += scoreMap[difficultyKey] || 0;
 
             // Check if any challenge was solved today across all difficulties
-            const anyChallengeTodayBefore = ['easy', 'medium', 'hard']
-            .some(diff => diff !== difficultyKey &&
-                user.solveChallenges[diff]?.some(entry =>
-                entry.timestamp?.startsWith(today)
-                )
-            );
-
-            if (!anyChallengeTodayBefore) {
-                // Calculate streak
-                const yesterdayStr = new Date(dateOnly);
-                yesterdayStr.setDate(yesterdayStr.getDate() - 1);
-                const formattedYesterday = yesterdayStr
-                .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
-                .split("/")
-                .reverse()
-                .join("-");
-            
-                const anyYesterday = ['easy', 'medium', 'hard']
+            const anyChallengeToday = ['easy', 'medium', 'hard']
                 .some(diff => 
-                user.solveChallenges[diff]?.some(entry => 
-                    entry.timestamp?.startsWith(formattedYesterday)
-                )
+                    diff !== difficultyKey && user.solveChallenges[diff]?.some(entry => {
+                        const entryDateStr = entry.timestamp?.split(' ')[0];
+                        return entryDateStr === dateOnly;
+                    })
                 );
-                user.streak = anyYesterday ? (user.streak || 0) + 1 : 1;
-                console.log(`Streak updated to ${user.streak}`);
+
+            console.log("Any challenge solved today in other difficulties:", anyChallengeToday);
+
+            // Only update streak if no other challenge was solved today
+            if (!anyChallengeToday) {
+                // Calculate yesterday's date in YYYY-MM-DD format using Intl.DateTimeFormat
+                const yesterday = new Date(dateOnly);
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                const yesterdayStr = new Intl.DateTimeFormat("en-IN", {
+                    timeZone: "Asia/Kolkata",
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit"
+                }).format(yesterday).split('/').reverse().join('-');
+                
+                console.log("Yesterday's date for streak check:", yesterdayStr);
+
+                // Check if any challenge was solved yesterday across all difficulties
+                const anyYesterday = ['easy', 'medium', 'hard']
+                    .some(diff => 
+                        user.solveChallenges[diff]?.some(entry => {
+                            const entryDateStr = entry.timestamp?.split(' ')[0];
+                            console.log(entryDateStr, "===", yesterdayStr);
+                            return entryDateStr === yesterdayStr;
+                        })
+                    );
+                
+                console.log("Any challenge solved yesterday:", anyYesterday);
+                
+                // Update streak based on yesterday's activity
+                if (anyYesterday) {
+                    user.streak = (user.streak || 0) + 1;
+                    console.log(`Streak continued and updated to ${user.streak}`);
+                } else {
+                    user.streak = 1;
+                    console.log(`Streak reset to 1`);
+                }
             } else {
-                console.log("Already solved a challenge today, streak not updated");
+                console.log("Already solved a challenge today in another difficulty, streak not updated");
             }
 
             // Save user
@@ -285,6 +304,9 @@ export const postPotdChallenge = async (req, res) => {
                 challenge.solvedUsers = challenge.solvedUsers || [];
                 challenge.solvedUsers.push(user._id);
                 await challenge.save();
+                console.log("User added to challenge's solvedUsers");
+            } else {
+                console.log("User already in challenge's solvedUsers");
             }
 
             console.log("POTD challenge recorded successfully");
@@ -294,8 +316,8 @@ export const postPotdChallenge = async (req, res) => {
                 streak: user.streak
             });
         } else {
-            console.log("Challenge already solved today");
-            return res.status(200).json({ message: 'Challenge already solved today' });
+            console.log("Challenge already solved");
+            return res.status(200).json({ message: 'Challenge already solved' });
         }
     } catch (error) {
         console.error('POTD challenge update error:', error);
@@ -304,7 +326,6 @@ export const postPotdChallenge = async (req, res) => {
             error: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
-
     }
 };
 
