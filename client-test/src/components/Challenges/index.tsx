@@ -1,8 +1,4 @@
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
-
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
@@ -78,11 +74,14 @@ const Challenges: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 5;
   const { user } = useAuth();
+  
 
   // function convertTimestampToDate(timestamp: number) {
   //   const date = new Date(timestamp * 1000);
   //   return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
   // }
+
+  
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -226,21 +225,26 @@ const Challenges: React.FC = () => {
 
   const checkIfProblemSolved = async () => {
     try {
-      console.log("called")
+      console.log("called");
+      const dateOnly = new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(new Date()).split('/').reverse().join('-');
       if (dailyProblem?.platform === "LeetCode") {
         const leetCodeData = await fetchLeetCodeProfile(`${user?.leetCode?.username}`);
         if (leetCodeData?.recentSubmissionList) {
           const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string; statusDisplay: string }) => {
             const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-
             return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && submissionDate === today;
           });
 
           if (solvedProblem) {
             setIsSolved(true);
             postPotdChallenge(user?.username,dailyProblem?._id,dailyProblem?.difficulty);
-            localStorage.setItem('potdSolvedDate',new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-')); // Store today's date
+            localStorage.setItem('potdSolvedDate',dateOnly); // Store today's date
             return true;
           }
           else{
@@ -263,7 +267,7 @@ const Challenges: React.FC = () => {
             setIsSolved(true);
             postPotdChallenge(user?.username,dailyProblem?._id,dailyProblem?.difficulty);
             console.log("potd posted successfully");
-            localStorage.setItem('potdSolvedDate', new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'));
+            localStorage.setItem('potdSolvedDate', dateOnly);
             return true;
           }
           else{
@@ -281,9 +285,14 @@ const Challenges: React.FC = () => {
   const checkPotdSolved = async () => {
     setIsRefreshing(true);
     try {
-      const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'); // Get today's date in YYYY-MM-DD format
+      const today = new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(new Date()).split('/').reverse().join('-');  
       const storedDate = localStorage.getItem('potdSolvedDate');
-
+      console.log("checkPotdSolved",today);
       if (storedDate === today) {
         toast.success("You have already solved today's problem!");
         setIsSolved(true);
