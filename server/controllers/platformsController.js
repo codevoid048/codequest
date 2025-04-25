@@ -15,49 +15,43 @@ export const leetcodeData = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const query = JSON.stringify({
-      query: `
-        {
-          matchedUser(username: $username) {
-              profile {
-              realName
-              ranking
-              starRating
-              }
-              submitStats: submitStatsGlobal {
-                  acSubmissionNum {
-                  difficulty
-                  count
-                  submissions
-                  }
-              }
-          }
-          userContestRanking(username: "${username}") {
-            rating
-          }
-        }
-      `,
-    });
+    const url = `https://leetcode.com/graphql`;
+    const query = {
+        query: `query ($username: String!) {
+                matchedUser(username: $username) {
+                    username
+                    profile {
+                    realName
+                    ranking
+                    starRating
+                    }
+                    submitStats: submitStatsGlobal {
+                    acSubmissionNum {
+                        difficulty
+                        count
+                        submissions
+                    }
+                    }
+                }
+                userContestRanking(username: $username) {
+                    rating
+                }
+            }`,
+        variables: { username }
+    };
+    const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' };
+    const response = await axios.post(url, query, { headers});
 
-    const response = await fetch("https://leetcode.com/graphql", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: query,
-    });
-
-    const responseData = await response.json();
-    const stats = responseData?.data?.matchedUser?.submitStatsGlobal?.acSubmissionNum || [];
-    const totalSolved = stats.find((item) => item.difficulty === "All")?.count || 0;
-    await User.findByIdAndUpdate(
-      user._id,
-      {
-        $set: {
-          'leetCode.solved': totalSolved,
-          'leetCode.rank': responseData?.data?.matchedUser?.profile?.ranking || 0,
-          'leetCode.rating': Math.floor(responseData?.data?.userContestRanking?.rating) || 0,
-        }
-      }
-    );
+    if (!response.data.data.matchedUser) {
+        return res.status(400).json({ error: 'Invalid LeetCode username' });
+    }
+    const responseData = response.data.data;
+    const rating = Math.floor(responseData?.userContestRanking?.rating) || user.leetCode.rating || 0;
+    const rank = responseData?.matchedUser?.profile?.ranking || user.leetCode.rank || 0;
+    const stats = responseData?.matchedUser?.submitStats?.acSubmissionNum || [];
+    const totalSolved = stats.find(s => s.difficulty === "All")?.count || user.leetCode.solved || 0;
+    console.log("LeetCode data:", username, rating, rank, totalSolved);
+    await user.updateOne({ $set: { 'leetCode.username': username, 'leetCode.rating': rating, 'leetCode.rank': rank, 'leetCode.solved': totalSolved } });
 
     return res.json({ success: true, message: "LeetCode data updated successfully" });
   } catch (error) {
