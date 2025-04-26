@@ -34,7 +34,7 @@ export default function ProfilePage() {
     leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
     gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
     codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
-    codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+    codechef?: { username?: string; stars?: string; rank?: number; rating?: number }
     profilePicture?: string
     name?: string
     username?: string
@@ -568,47 +568,88 @@ export default function ProfilePage() {
                     {
                       name: "LeetCode",
                       handle: profileUser.leetCode?.username || "-",
-                      rating: profileUser.leetCode?.rating || 0,
+                      solved: profileUser.leetCode?.solved,
+                      rating: profileUser.leetCode?.rating,
                       color: "#FFA116",
+                      type: "leetcode",
                     },
                     {
                       name: "GeeksForGeeks",
                       handle: profileUser.gfg?.username || "-",
-                      rating: profileUser.gfg?.rating || 0,
+                      solved: profileUser.gfg?.solved,
+                      rating: profileUser.gfg?.rating,
                       color: "#2F8D46",
+                      type: "gfg",
                     },
                     {
                       name: "CodeForces",
                       handle: profileUser.codeforces?.username || "-",
-                      rating: profileUser.codeforces?.rating || 0,
+                      solved: profileUser.codeforces?.solved,
+                      rating: profileUser.codeforces?.rating,
                       color: "#318CE7",
+                      type: "codeforces",
                     },
                     {
                       name: "CodeChef",
                       handle: profileUser.codechef?.username || "-",
-                      rating: profileUser.codechef?.rating || 0,
+                      stars: profileUser.codechef?.stars || "1*",
+                      rating: profileUser.codechef?.rating,
                       color: "#745D0B",
+                      type: "codechef",
                     },
                   ].map((platform) => (
                     <motion.div
                       key={platform.name}
                       whileHover={{ scale: 1.02 }}
-                      className="border-l-4 rounded-lg shadow-sm p-3"
+                      className="border-l-4 rounded-lg shadow-sm p-2 hover:shadow-md transition-shadow duration-200"
                       style={{ borderLeftColor: platform.color }}
                     >
                       <div className="flex justify-between items-center">
-                        <div>
-                          <div className="font-medium">{platform.name}</div>
-                          <div className="text-sm text-muted-foreground">@{platform.handle}</div>
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{platform.name}</div>
+                          <div className="text-xs text-muted-foreground">@{platform.handle}</div>
                         </div>
-                        <div className="text-lg font-bold" style={{ color: platform.color }}>
-                          {platform.rating}
+                        <div className="flex flex-col items-end space-y-1 text-right">
+                          {platform.solved !== undefined && platform.type !== "codechef" && (
+                            <div className="text-xs">
+                              <span className="text-muted-foreground">Solved:</span>{" "}
+                              {platform.handle !== "-" ? (
+                                <span className="font-semibold">{platform.solved}</span>
+                              ) : (
+                                <span className="font-semibold">--</span>
+                              )
+                            }
+                            </div>
+                          )}
+                          {platform.type === "codechef" && platform.stars !== undefined && (
+                            <div className="text-xs">
+                              <span className="text-muted-foreground">Stars:</span>{" "}
+                              {platform.handle !== "-" ? (
+                                <span className="font-semibold" style={{ color: platform.color }}>{platform.stars}</span>
+                              ) : (
+                                <span className="font-semibold" style={{ color: platform.color }}>--</span>
+                              )
+                            }
+                            </div>
+                          )}
+                          {platform.rating !== undefined && (
+                            <div className="text-xs">
+                              <span className="text-muted-foreground">Rating:</span>{" "}
+                              {platform.handle !== "-" ? (
+                                <span className="font-semibold" style={{ color: platform.color }}>{platform.rating}</span>
+                              ) : (
+                                <span className="font-semibold" style={{ color: platform.color }}>--</span>
+                              )
+                            }
+                            </div>
+                          )}
                         </div>
                       </div>
                     </motion.div>
                   ))}
                 </CardContent>
               </Card>
+
             )}
           </motion.div>
         </motion.div>
