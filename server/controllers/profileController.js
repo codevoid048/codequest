@@ -209,7 +209,6 @@ export const postPotdChallenge = async (req, res) => {
 //             .join('-');
 
         // Extract date from timestamp object
-        const dateOnly = timestamp.date;
         
         const user = await User.findOne({ username });
         const challenge = await Challenge.findById(challengeId);
