@@ -615,7 +615,6 @@ const Challenges: React.FC = () => {
                     <Card
                       key={problem.id}
                       className="border-1 cursor-pointer bg-card overflow-hidden"
-                      onClick={() => openProblemLink(problem.problemUrl)}
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <CardContent>
@@ -654,12 +653,12 @@ const Challenges: React.FC = () => {
                           </div>
                           <ProblemStatus
                             problem={{
-                              id: problem.id,
-                              status: problem.status,
+                              id: problem.id.toString(),
+                              status: problem.status as "Solved" | "Unsolved",
                               createdAt: new Date(problem.date),
-                            }}
-                            markSolved={() => markSolved(problem.id)}
-                            viewSolution={(id) => {
+                              title: problem.title,
+                              description: problem.description,
+                              problemUrl: problem.problemUrl
                             }}
                           />
                         </div>
