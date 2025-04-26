@@ -601,17 +601,6 @@ export default function ProfileEditForm() {
                                             </div>
 
                                             <div className="space-y-2">
-                                                <Label htmlFor="github">GitHub</Label>
-                                                <Input
-                                                    id="github"
-                                                    placeholder="Your GitHub username"
-                                                    className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
-                                                    value={formData.otherLinks.find((link) => link.platform === "github")?.url || ""}
-                                                    onChange={(e) => handleLinkChange("github", e.target.value)}
-                                                />
-                                            </div>
-
-                                            <div className="space-y-2">
                                                 <Label htmlFor="codeforces">Codeforces</Label>
                                                 <Input
                                                     id="codeforces"
@@ -644,16 +633,6 @@ export default function ProfileEditForm() {
                                                 />
                                             </div>
 
-                                            <div className="space-y-2">
-                                                <Label htmlFor="hackerrank">HackerRank</Label>
-                                                <Input
-                                                    id="hackerrank"
-                                                    placeholder="Your HackerRank username"
-                                                    className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
-                                                    value={formData.otherLinks.find((link) => link.platform === "hackerrank")?.url || ""}
-                                                    onChange={(e) => handleLinkChange("hackerrank", e.target.value)}
-                                                />
-                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>

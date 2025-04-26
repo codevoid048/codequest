@@ -19,6 +19,7 @@ import { Navbar } from './components/Navbar';
 import AdminHome from './components/Admin/home';
 import CodeQuestSolutionViewer from './components/Challenges/solution.tsx';
 import SolutionPage from './components/Challenges/solutionPage';
+// import NotFoundPage from './components/page404';
 
 function UserApp() {
   return (
@@ -38,6 +39,7 @@ function UserApp() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/challenges/solution/:problemId" element={<SolutionPage />} />
+        {/* <Route path="*" element={<NotFoundPage />} /> */}
       </Routes>
       <Footer />
     </div>
@@ -62,6 +64,7 @@ function AdminApp() {
           <Route path="/codingclubadmin/addchallenge" element={<AddChallenge />} />
           <Route path="/codingclubadmin/leaderboard" element={<Leaderboard />} />
           <Route path="/codingclubadmin/logout" element={<LogoutPage />} />
+          {/* <Route path="/codingclubadmin/*" element={<NotFoundPage />} /> */}
         </Routes>
       </div>
     </div>
