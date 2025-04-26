@@ -74,14 +74,13 @@ const Challenges: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 5;
   const { user } = useAuth();
+  
 
 
   // function convertTimestampToDate(timestamp: number) {
   //   const date = new Date(timestamp * 1000);
   //   return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
   // }
-
-
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -243,8 +242,8 @@ const Challenges: React.FC = () => {
 
           if (solvedProblem) {
             setIsSolved(true);
-            postPotdChallenge(user?.username, dailyProblem?._id, dailyProblem?.difficulty);
-            localStorage.setItem('potdSolvedDate', dateOnly); // Store today's date
+            postPotdChallenge(user?.username,dailyProblem?._id,dailyProblem?.difficulty);
+            localStorage.setItem('potdSolvedDate',dateOnly); // Store today's date
             return true;
           }
           else {
@@ -290,9 +289,9 @@ const Challenges: React.FC = () => {
         year: "numeric",
         month: "2-digit",
         day: "2-digit"
-      }).format(new Date()).split('/').reverse().join('-');
+      }).format(new Date()).split('/').reverse().join('-');  
       const storedDate = localStorage.getItem('potdSolvedDate');
-      console.log("checkPotdSolved", today);
+      console.log("checkPotdSolved",today);
       if (storedDate === today) {
         toast.success("You have already solved today's problem!");
         setIsSolved(true);
@@ -625,7 +624,6 @@ const Challenges: React.FC = () => {
                     <Card
                       key={problem.id}
                       className="border-1 cursor-pointer bg-card overflow-hidden"
-                      onClick={() => openProblemLink(problem.problemUrl)}
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <CardContent>
@@ -664,8 +662,8 @@ const Challenges: React.FC = () => {
                           </div>
                           <ProblemStatus
                             problem={{
-                              id: problem.id,
-                              status: isChallengeSolved(problem._id) ? "Solved" : problem.status,
+                              id: problem.id.toString(),
+                              status: problem.status as "Solved" | "Unsolved",
                               createdAt: new Date(problem.date),
                               title: problem.title,
                               description: problem.description,

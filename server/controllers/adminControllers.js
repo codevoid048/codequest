@@ -24,6 +24,7 @@ export const addChallenge = async (req, res) => {
             difficulty,
             points,
             problemLink,
+            createdAt,
             platform,
             solution,
             createdAt

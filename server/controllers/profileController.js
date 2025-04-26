@@ -200,7 +200,6 @@ export const postPotdChallenge = async (req, res) => {
         if (!username || !timestamp || !challengeId || !difficulty) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
-
         // Extract date from timestamp object
         const dateOnly = timestamp.date;
         

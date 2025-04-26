@@ -106,22 +106,28 @@ export function PlatformVerification({ platformType, isLinked, username, stats, 
 
   const handleConfirmVerification = async () => {
     try {
-      const success = await onVerify(platformType, inputUsername)
+      const success = await onVerify(platformType, inputUsername);
+  
       if (success) {
-        toast.success(`Your ${platformNames[platformType as keyof typeof platformNames]} account for ${inputUsername} has been linked.`)
-
-        handleCancel()
-        // Update the UI to reflect the linked status
-        
         setIsLinking(false);
         setIsVerifying(false);
+        handleCancel();
+  
+        // Delay refresh slightly to allow backend update to complete
+        setTimeout(() => {
+          window.location.reload();
+          toast.success(
+            `Your ${platformNames[platformType as keyof typeof platformNames]} account for ${inputUsername} has been linked.`
+          );
+        }, 2000); // 2 seconds delay
       } else {
-        toast.error("Verification failed, try again")
+        toast.error("Verification failed, try again");
       }
     } catch (error) {
-      toast.error("Verification failed, try again")
+      toast.error("Verification failed, try again");
     }
-  }
+  };
+  
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -135,14 +141,38 @@ export function PlatformVerification({ platformType, isLinked, username, stats, 
 
   if (isLinked && username) {
     return (
-      <Card className="border-l-4 rounded-lg shadow-sm p-3" style={{ borderLeftColor: platformColor }}>
+      <Card
+        className="border-l-4 rounded-lg shadow-sm p-2 hover:shadow-md transition-shadow duration-200"
+        style={{ borderLeftColor: platformColor }}
+      >
         <div className="flex justify-between items-center">
-          <div>
-            <div className="font-medium">{platformName}</div>
-            <div className="text-sm text-muted-foreground">@{username}</div>
+          <div className="flex-1">
+            <div className="font-medium text-sm">{platformName}</div>
+            <div className="text-xs text-muted-foreground">@{username}</div>
           </div>
-          <div className="text-lg font-bold" style={{ color: platformColor }}>
-            {stats?.rating || 0}
+          <div className="flex flex-col items-end space-y-1 text-right">
+            {stats?.solved !== undefined && platformType !== "codechef" && (
+              <div className="text-xs">
+                <span className="text-muted-foreground">Solved:</span>{" "}
+                <span className="font-semibold">{stats.solved}</span>
+              </div>
+            )}
+            {platformType === "codechef" && stats?.rating !== undefined && (
+              <div className="text-xs">
+                <span className="text-muted-foreground">Stars: </span>{" "}
+                <span className="font-semibold" style={{ color: platformColor }}>
+                  {stats.stars}
+                </span>
+              </div>
+            )}
+            {stats?.rating !== undefined && (
+              <div className="text-xs">
+                <span className="text-muted-foreground">Rating:</span>{" "}
+                <span className="font-semibold" style={{ color: platformColor }}>
+                  {stats.rating}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </Card>
