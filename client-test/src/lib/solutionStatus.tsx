@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Eye, Code } from "lucide-react";
+import { Eye, Code, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface ProblemStatusProps {
@@ -33,19 +33,35 @@ const solutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
     navigate(`/challenges/solution/${problem.id}`);
   };
 
+
+  const isSolved = problem.status === "Solved";
+
   return (
     <div className="flex flex-col gap-2 self-start sm:self-center min-w-[100px]">
-      <Button
-        size="sm"
-        variant="outline"
-        className="text-xs py-1 px-2 w-full border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
-        onClick={(e) => {
-          e.stopPropagation();
-          window.open(problem.problemUrl, '_blank');
-        }}
-      >
-        <Code className="h-3 w-3 mr-1" /> Solve Now
-      </Button>
+      {isSolved ? (
+        <Button
+          size="sm"
+          className="text-xs py-1 px-2 w-full bg-green-600 hover:bg-green-700 text-white border-0 transition-colors duration-200"
+          onClick={(e) => {
+            e.stopPropagation();
+            window.open(problem.problemUrl, '_blank');
+          }}
+        >
+          <CheckCircle className="h-3 w-3 mr-1" /> Solved
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          className="text-xs py-1 px-2 w-full border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
+          onClick={(e) => {
+            e.stopPropagation();
+            window.open(problem.problemUrl, '_blank');
+          }}
+        >
+          <Code className="h-3 w-3 mr-1" /> Solve Now
+        </Button>
+      )}
 
       {canShowSolutionButton() && (
         <Button

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { postPotdChallenge} from "@/lib/potdchallenge";
+import { postPotdChallenge } from "@/lib/potdchallenge";
 import ProblemStatus from "@/lib/solutionStatus";
 import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "@/platforms/leetcode";
 import { Award, Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, Code, Filter, Flame, Lightbulb, RefreshCw, Search, Tag, } from "lucide-react";
@@ -70,11 +70,10 @@ const Challenges: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
   const [User, setUser] = useState<User | null>(null);
-  const [showPopup, setShowPopup] = useState(false); 
+  const [showPopup, setShowPopup] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 5;
   const { user } = useAuth();
-  
 
   // function convertTimestampToDate(timestamp: number) {
   //   const date = new Date(timestamp * 1000);
@@ -247,7 +246,7 @@ const Challenges: React.FC = () => {
             localStorage.setItem('potdSolvedDate',dateOnly); // Store today's date
             return true;
           }
-          else{
+          else {
             toast.error("You haven't solved today's problem yet!");
             return false;
           }
@@ -265,12 +264,12 @@ const Challenges: React.FC = () => {
 
           if (solvedProblem) {
             setIsSolved(true);
-            postPotdChallenge(user?.username,dailyProblem?._id,dailyProblem?.difficulty);
+            postPotdChallenge(user?.username, dailyProblem?._id, dailyProblem?.difficulty);
             console.log("potd posted successfully");
             localStorage.setItem('potdSolvedDate', dateOnly);
             return true;
           }
-          else{
+          else {
             toast.error("You haven't solved today's problem yet!");
             return false;
           }
@@ -306,7 +305,6 @@ const Challenges: React.FC = () => {
       console.error("Error checking POTD solved:", error);
     }
   }
- 
 
 
   // Styling for difficulty levels
@@ -340,6 +338,16 @@ const Challenges: React.FC = () => {
     localStorage.setItem(key, "true");
   };
 
+  const isChallengeSolved = (challengeId: string) => {
+    if (!user?.solveChallenges) return false;
+    
+    // Check if the challenge ID exists in any difficulty array
+    return (
+      user.solveChallenges.easy.some(item => item.challenge === challengeId) ||
+      user.solveChallenges.medium.some(item => item.challenge === challengeId) ||
+      user.solveChallenges.hard.some(item => item.challenge === challengeId)
+    );
+  };
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Daily Challenge Section */}
@@ -365,95 +373,95 @@ const Challenges: React.FC = () => {
                 {/* POTD Solved counter */}
                 <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="font-semibold">{user?.solveChallenges?.easy?.length+user?.solveChallenges?.medium?.length+user?.solveChallenges?.hard?.length} solved</span>
+                  <span className="font-semibold">{user?.solveChallenges?.easy?.length + user?.solveChallenges?.medium?.length + user?.solveChallenges?.hard?.length} solved</span>
                 </div>
-                </div>
+              </div>
             ) : null}
-                <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary/60 dark:bg-muted/60 px-3 py-2 rounded-lg">
-                  <Clock className="h-5 w-5 mr-2 text-primary" />
-                  <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
-                    {countdown.hours}
-                  </span>
-                  <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
-                  <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
-                    {countdown.minutes}
-                  </span>
-                  <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
-                  <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
-                    {countdown.seconds}
-                  </span>
-                </div>
-              </div>
+            <div className="flex items-center gap-1 text-base sm:text-lg font-mono bg-secondary/60 dark:bg-muted/60 px-3 py-2 rounded-lg">
+              <Clock className="h-5 w-5 mr-2 text-primary" />
+              <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
+                {countdown.hours}
+              </span>
+              <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
+              <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
+                {countdown.minutes}
+              </span>
+              <span className="text-gray-400 dark:text-muted-foreground px-1">:</span>
+              <span className="bg-card text-gray-200 dark:text-foreground px-3 py-1 rounded shadow-sm">
+                {countdown.seconds}
+              </span>
+            </div>
+          </div>
           {isLoading ? (
-              <div className="flex justify-center items-center h-40">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-              </div>
-            ) : (
-              <div
-                className="mt-6 bg-gray-800 dark:bg-muted rounded-xl p-4 sm:p-6 cursor-pointer"
-                onClick={() => openProblemLink(dailyProblem?.problemUrl)}
-              >
-                <div className="flex flex-col sm:flex-row justify-between gap-6">
-                  <div className="space-y-3 flex-1">
-                    <div className="flex items-center text-sm text-gray-400 dark:text-gray-600">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-600" />
-                      {dailyProblem?.date}
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-gray-200 dark:text-gray-800 line-clamp-1">
-                      {dailyProblem?.title}
-                    </h3>
-                    <p className="text-gray-400 dark:text-gray-600 text-sm line-clamp-2">
-                      {dailyProblem?.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {dailyProblem?.categories.map((cat: boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | Key | null | undefined) => (
-                        <Badge
-                          key={String(cat)}
-                          variant="secondary"
-                          className="text-xs py-1 px-2 bg-secondary dark:bg-white text-gray-300 dark:text-gray-700 rounded-full"
-                        >
-                          {cat}
-                        </Badge>
-                      ))}
-                    </div>
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div
+              className="mt-6 bg-gray-800 dark:bg-muted rounded-xl p-4 sm:p-6 cursor-pointer"
+              onClick={() => openProblemLink(dailyProblem?.problemUrl)}
+            >
+              <div className="flex flex-col sm:flex-row justify-between gap-6">
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center text-sm text-gray-400 dark:text-gray-600">
+                    <Calendar className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-600" />
+                    {dailyProblem?.date}
                   </div>
-                  <div className="flex flex-col gap-4 justify-center">
-                    {isSolved ? (
-                      <Button className="bg-green-600 hover:bg-green-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full">
-                        Solved
-                      </Button>
-                    ) : (
-                      <Button
-                        className="bg-primary hover:bg-primary/90 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openProblemLink(dailyProblem?.problemUrl);
-                        }}
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-200 dark:text-gray-800 line-clamp-1">
+                    {dailyProblem?.title}
+                  </h3>
+                  <p className="text-gray-400 dark:text-gray-600 text-sm line-clamp-2">
+                    {dailyProblem?.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {dailyProblem?.categories.map((cat: boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | Key | null | undefined) => (
+                      <Badge
+                        key={String(cat)}
+                        variant="secondary"
+                        className="text-xs py-1 px-2 bg-secondary dark:bg-white text-gray-300 dark:text-gray-700 rounded-full"
                       >
-                        Solve Now
-                      </Button>
-                    )}
-                    <Button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          checkPotdSolved();
-                        }}
-                        className="bg-primary/20 hover:bg-primary/30 text-primary border-0 shadow-md hover:shadow-lg transition-all duration-300 rounded-full flex items-center gap-2"
-                        disabled={isRefreshing}
-                      >
-                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        Check Status
-                      </Button>
+                        {cat}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-700 dark:border-gray-300 flex flex-wrap gap-3 text-sm">
-                  <span className="flex items-center gap-2 bg-secondary dark:bg-white px-2 py-1 rounded-full text-gray-300 dark:text-gray-700">
-                    <Code className="h-4 w-4 text-primary" />
-                    {dailyProblem?.platform}
-                  </span>
+                <div className="flex flex-col gap-4 justify-center">
+                  {isSolved ? (
+                    <Button className="bg-green-600 hover:bg-green-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full">
+                      Solved
+                    </Button>
+                  ) : (
+                    <Button
+                      className="bg-primary hover:bg-primary/90 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openProblemLink(dailyProblem?.problemUrl);
+                      }}
+                    >
+                      Solve Now
+                    </Button>
+                  )}
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      checkPotdSolved();
+                    }}
+                    className="bg-primary/20 hover:bg-primary/30 text-primary border-0 shadow-md hover:shadow-lg transition-all duration-300 rounded-full flex items-center gap-2"
+                    disabled={isRefreshing}
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    Check Status
+                  </Button>
                 </div>
               </div>
-            )}
+              <div className="mt-4 pt-4 border-t border-gray-700 dark:border-gray-300 flex flex-wrap gap-3 text-sm">
+                <span className="flex items-center gap-2 bg-secondary dark:bg-white px-2 py-1 rounded-full text-gray-300 dark:text-gray-700">
+                  <Code className="h-4 w-4 text-primary" />
+                  {dailyProblem?.platform}
+                </span>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -566,8 +574,8 @@ const Challenges: React.FC = () => {
                   variant={activeTab === tab ? "default" : "outline"}
                   onClick={() => setActiveTab(tab as FilterTab)}
                   className={`text-sm py-2 px-4 w-full sm:w-auto transition-all duration-300 ${activeTab === tab
-                      ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md"
-                      : "border-border hover:border-primary text-foreground"
+                    ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md"
+                    : "border-border hover:border-primary text-foreground"
                     }`}
                 >
                   {tab === "all" ? (
@@ -660,6 +668,9 @@ const Challenges: React.FC = () => {
                               description: problem.description,
                               problemUrl: problem.problemUrl
                             }}
+                            markSolved={() => markSolved(problem.id)}
+                            viewSolution={(id) => {
+                            }}
                           />
                         </div>
                       </CardContent>
@@ -686,7 +697,7 @@ const Challenges: React.FC = () => {
                     disabled={currentPage === 1}
                     className="text-sm py-2 px-6 w-full sm:w-auto border-border hover:border-primary disabled:opacity-50 text-foreground"
                   >
-                    
+
                     <ChevronDown className="h-4 w-4 rotate-90 ml-2" />
                     Previous
                   </Button>
