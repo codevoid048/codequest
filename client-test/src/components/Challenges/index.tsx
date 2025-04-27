@@ -74,13 +74,13 @@ const Challenges: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 5;
   const { user } = useAuth();
-  
-
 
   // function convertTimestampToDate(timestamp: number) {
   //   const date = new Date(timestamp * 1000);
   //   return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
   // }
+
+  
 
   useEffect(() => {
     const fetchProblems = async () => {
@@ -305,7 +305,6 @@ const Challenges: React.FC = () => {
       console.error("Error checking POTD solved:", error);
     }
   }
-
 
 
   // Styling for difficulty levels
