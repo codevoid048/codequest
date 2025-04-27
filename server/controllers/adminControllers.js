@@ -27,6 +27,7 @@ export const addChallenge = async (req, res) => {
             createdAt,
             platform,
             solution,
+            createdAt
         } = req.body;
 
 

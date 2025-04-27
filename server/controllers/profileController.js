@@ -196,18 +196,10 @@ export const postPotdChallenge = async (req, res) => {
     try {
         console.log("Request received:", req.body);
         const { username, timestamp, challengeId, difficulty } = req.body;
-        const dateOnly = timestamp.date;
 
         if (!username || !timestamp || !challengeId || !difficulty) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
-
-//         const today = new Date(dateOnly)
-//             .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
-//             .split('/')
-//             .reverse()
-//             .join('-');
-
         // Extract date from timestamp object
         
         const user = await User.findOne({ username });
