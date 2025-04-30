@@ -201,6 +201,7 @@ export const postPotdChallenge = async (req, res) => {
             return res.status(400).json({ message: 'Missing required fields' });
         }
         // Extract date from timestamp object
+        const dateOnly = timestamp.date;
         
         const user = await User.findOne({ username });
         const challenge = await Challenge.findById(challengeId);
@@ -226,7 +227,7 @@ export const postPotdChallenge = async (req, res) => {
 
         // Check if challenge is already solved
         const solvedList = user.solveChallenges[difficultyKey];
-        const alreadySolved = solvedList && solvedList.some(entry => 
+        const alreadySolved = solvedList && solvedList.some(entry =>
             entry.challenge?.toString() === challengeId.toString()
         );
         
@@ -245,7 +246,7 @@ export const postPotdChallenge = async (req, res) => {
 
             // Check if any challenge was solved today across all difficulties
             const anyChallengeToday = ['easy', 'medium', 'hard']
-                .some(diff => 
+                .some(diff =>
                     diff !== difficultyKey && user.solveChallenges[diff]?.some(entry => {
                         const entryDateStr = entry.timestamp?.split(' ')[0];
                         return entryDateStr === dateOnly;

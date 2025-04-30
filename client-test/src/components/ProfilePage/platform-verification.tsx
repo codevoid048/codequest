@@ -1,6 +1,6 @@
-"use client"
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -25,6 +25,7 @@ interface PlatformVerificationProps {
     solved?: number
     rank?: number | string
     rating?: number
+    stars?: string
   }
   onVerify: (platform: string, username: string) => Promise<boolean>
 }
@@ -58,6 +59,15 @@ export function PlatformVerification({ platformType, isLinked, username, stats, 
     codeforces: "#318CE7",
     gfg: "#2F8D46",
   };
+  const handleCancel = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+    }
+    setIsVerifying(false)
+    setIsLinking(false)
+    setInputUsername("")
+    setVerificationString("")
+  }, [setVerificationString])
 
   useEffect(() => {
     if (isVerifying) {
@@ -79,7 +89,7 @@ export function PlatformVerification({ platformType, isLinked, username, stats, 
         clearInterval(timerRef.current)
       }
     }
-  }, [isVerifying])
+  }, [isVerifying, handleCancel])
 
   const handleLinkClick = () => {
     const randomString = Array.from({ length: 8 }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join('');
@@ -94,16 +104,6 @@ export function PlatformVerification({ platformType, isLinked, username, stats, 
       return
     }
     setIsVerifying(true)
-  }
-
-  const handleCancel = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-    }
-    setIsVerifying(false)
-    setIsLinking(false)
-    setInputUsername("")
-    setVerificationString("") // Reset the verification string
   }
 
   const handleConfirmVerification = async () => {
