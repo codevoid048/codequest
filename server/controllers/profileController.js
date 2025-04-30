@@ -2,6 +2,7 @@ import { User } from "../models/User.js"
 import { Activity } from "../models/Activity.js"
 import cloudinary from "../config/cloudinary.js"
 import { v4 as uuidv4 } from "uuid"
+import { Challenge } from "../models/Challenge.js"
 
 export const getUserProfile = async (req, res) => {
     try {
@@ -192,31 +193,116 @@ export const getUserActivity = async (req, res) => {
 }
 export const postPotdChallenge = async (req, res) => {
     try {
-        const { username, timestamp } = req.body;
-        const date = new Date(timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+        console.log("Request received:", req.body);
+        const { username, timestamp, challengeId, difficulty } = req.body;
+
+        if (!username || !timestamp || !challengeId || !difficulty) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+        const today = new Date(timestamp)
+            .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
+            .split('/')
+            .reverse()
+            .join('-');
+
         const user = await User.findOne({ username });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        const potdExists = user.potdSolved.some(potd => new Date(potd.timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-') === date);
-        if (potdExists) {
-            return res.status(200).json({ message: 'POTD challenge already solved for today' });
+        const challenge = await Challenge.findById(challengeId);
+
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (!challenge) return res.status(404).json({ message: 'Challenge not found' });
+
+        const difficultyKey = difficulty.toLowerCase();
+        // Ensure solveChallenges structure exists
+        if (!user.solveChallenges) {
+            user.solveChallenges = {
+                easy: [],
+                medium: [],
+                hard: []
+            };
         }
 
-        user.potdSolved.push({ timestamp: timestamp });
-        await user.save();
+        // Ensure all arrays exist
+        if (!user.solveChallenges.easy) user.solveChallenges.easy = [];
+        if (!user.solveChallenges.medium) user.solveChallenges.medium = [];
+        if (!user.solveChallenges.hard) user.solveChallenges.hard = [];
 
-        res.status(200).json({ message: 'POTD challenge recorded successfully' });
+        // Check if challenge is already solved today
+        const solvedList = user.solveChallenges[difficultyKey];
+        const alreadySolved = solvedList && solvedList.some(entry => 
+            entry.challenge && entry.challenge.toString() === challengeId.toString() && 
+            entry.timestamp === today
+        );
+        
+        console.log("Already solved:", alreadySolved);
+        if (!alreadySolved) {
+            // Push the solved challenge
+            user.solveChallenges[difficultyKey].push({
+                challenge: challengeId,
+                timestamp: today
+            });
+
+            // Update points
+            const scoreMap = { easy: 5, medium: 10, hard: 20 };
+            user.points += scoreMap[difficultyKey] || 0;
+
+            // Check if any challenge was solved today across all difficulties
+            const anyChallengeTodayBefore = ['easy', 'medium', 'hard']
+                .some(diff => diff !== difficultyKey && 
+                    user.solveChallenges[diff].some(entry => entry.timestamp === today)
+                );
+
+            if (!anyChallengeTodayBefore) {
+                // Calculate streak
+                const yesterday = new Date(timestamp);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = yesterday
+                    .toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
+                    .split('/')
+                    .reverse()
+                    .join('-');
+
+                // Check if any challenge was solved yesterday
+                const anyYesterday = ['easy', 'medium', 'hard']
+                    .some(diff => user.solveChallenges[diff].some(entry => entry.timestamp === yesterdayStr));
+
+                user.streak = anyYesterday ? (user.streak || 0) + 1 : 1;
+                console.log(`Streak updated to ${user.streak}`);
+            } else {
+                console.log("Already solved a challenge today, streak not updated");
+            }
+
+            // Save user
+            await user.save();
+
+            // Avoid duplicates in solvedUsers for the challenge
+            const solvedUserIds = challenge.solvedUsers?.map(id => id.toString()) || [];
+            if (!solvedUserIds.includes(user._id.toString())) {
+                challenge.solvedUsers = challenge.solvedUsers || [];
+                challenge.solvedUsers.push(user._id);
+                await challenge.save();
+            }
+
+            console.log("POTD challenge recorded successfully");
+            return res.status(200).json({ 
+                message: 'POTD challenge recorded successfully',
+                points: user.points,
+                streak: user.streak
+            });
+        } else {
+            console.log("Challenge already solved today");
+            return res.status(200).json({ message: 'Challenge already solved today' });
+        }
     } catch (error) {
         console.error('POTD challenge update error:', error);
-        res.status(500).json({ 
-            message: 'Server error', 
+        res.status(500).json({
+            message: 'Server error',
             error: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
 
     }
 };
+
 
 
 // Get user by username (for public profiles)
@@ -256,7 +342,7 @@ export const updateUserStreak = async (req, res) => {
         const yesterdayStr = yesterday.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
 
         // Check if today's problem was already solved
-        const solvedDates = user.potdSolved.map(potd => 
+        const solvedDates = user.potdSolved.map(potd =>
             new Date(potd.timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-')
         );
 
@@ -271,20 +357,19 @@ export const updateUserStreak = async (req, res) => {
         user.potdSolved.push({ timestamp: new Date().toISOString() });
 
         await user.save();
-        
         // Update leaderboard
         await updateRanks();
-        
-        return res.status(200).json({ 
-            success: true, 
-            streak: user.streak, 
-            message: "Streak updated successfully" 
+
+        return res.status(200).json({
+            success: true,
+            streak: user.streak,
+            message: "Streak updated successfully"
         });
 
     } catch (error) {
         console.error("Error updating streak:", error);
-        return res.status(500).json({ 
-            success: false, 
+        return res.status(500).json({
+            success: false,
             message: "An error occurred",
             error: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
@@ -294,24 +379,24 @@ export const updateUserStreak = async (req, res) => {
 
 export const getUserById = async (req, res) => {
     try {
-      const userId = req.query.userId;
-  
-      if (!userId) {
-        return res.status(400).json({ message: 'User ID is required' });
-      }
-  
-      const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
-      
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-  
-      res.status(200).json({ user });
+        const userId = req.query.userId;
+
+        if (!userId) {
+            return res.status(400).json({ message: 'User ID is required' });
+        }
+
+        const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({ user });
     } catch (error) {
-      console.error("Server error:", error);
-      res.status(500).json({ message: 'Server error' });
+        console.error("Server error:", error);
+        res.status(500).json({ message: 'Server error' });
     }
-  };
+};
 
 //   export const getUserById = async (req, res) => {
 //     try {
@@ -329,4 +414,3 @@ export const getUserById = async (req, res) => {
 //         res.status(500).json({ message: "Server error" });
 //     }
 // }
-  

@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import axios from "axios"
@@ -45,43 +43,90 @@ export default function ProfilePage() {
     branch?: string
     RegistrationNumber?: string
     otherLinks?: { platform: string; url: string }[]
-    solveChallenges?: { challengeId: string; timestamp: string }[]
+    solveChallenges?: {
+      easy: Array<{
+        challenge: string; // MongoDB ObjectId as string
+        timestamp: string;
+      }>,
+      medium: Array<{
+        challenge: string; // MongoDB ObjectId as string
+        timestamp: string;
+      }>,
+      hard: Array<{
+        challenge: string; // MongoDB ObjectId as string
+        timestamp: string;
+      }>
+    }
     points?: number
     streak?: number
     potdSolved?: { timestamp: string }[]
-    heatmap?: { timestamp: string; _id: string }[]
+    // Modified: Removed the old heatmap property and will create it from solveChallenges
   }
 
-  interface Challenge {
-    challengeid: string
-    platform: string
-    difficulty: string
-    _id: string
-  }
+  // interface Challenge {
+  //   challengeid: string
+  //   platform: string
+  //   difficulty: string
+  //   _id: string
+  // }
 
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   //const [rating, setRating] = useState([]);
 
+  // Create a derived heatmap from solveChallenges
+  const generateHeatmapFromSolveChallenges = (user: ProfileUser | null) => {
+    if (!user || !user.solveChallenges) return [];
+
+    const heatmapData: { timestamp: string }[] = [];
+
+    // Add all timestamps from easy challenges
+    if (user.solveChallenges.easy) {
+      user.solveChallenges.easy.forEach(challenge => {
+        if (challenge.timestamp) {
+          heatmapData.push({ timestamp: challenge.timestamp });
+        }
+      });
+    }
+
+    // Add all timestamps from medium challenges
+    if (user.solveChallenges.medium) {
+      user.solveChallenges.medium.forEach(challenge => {
+        if (challenge.timestamp) {
+          heatmapData.push({ timestamp: challenge.timestamp });
+        }
+      });
+    }
+
+    // Add all timestamps from hard challenges
+    if (user.solveChallenges.hard) {
+      user.solveChallenges.hard.forEach(challenge => {
+        if (challenge.timestamp) {
+          heatmapData.push({ timestamp: challenge.timestamp });
+        }
+      });
+    }
+
+    return heatmapData;
+  };
   useEffect(() => {
     const updatePlatforms = async () => {
       if (!profileUser || !profileUser.username) return;
       // Check if the platforms data is stale (older than 30 minutes)
       if (!isPlatformDataStale(profileUser.username, 5)) {
-        console.log("Platforms data is fresh; skipping update.");
+        // console.log("Platforms data is fresh; skipping update.");
         return;
       }
 
       try {
         console.log("Updating platforms...");
-        await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
-        await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
-        await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
-        await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
-        await axios.post('http://localhost:5000/platforms/solvedChallenges', { user: profileUser });
+        if(profileUser.leetCode?.username != "") await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
+        if(profileUser.codeforces?.username != "") await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
+        if(profileUser.codechef?.username != "") await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
+        if(profileUser.gfg?.username != "") await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
+        //await axios.post('http://localhost:5000/platforms/solvedChallenges', { user: profileUser });
         toast.success("Data updated successfully");
         updatePlatformCacheTimestamp(profileUser.username);
       } catch (error) {
@@ -93,22 +138,6 @@ export default function ProfilePage() {
 
 
   useEffect(() => {
-    const fetchChallenges = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/challenges")
-        console.log("Challenges:", response.data)
-        if (Array.isArray(response.data)) {
-          setChallenges(response.data)
-        } else if (response.data && Array.isArray(response.data.challenges)) {
-          setChallenges(response.data.challenges)
-        } else {
-          console.error("Challenges data is not an array:", response.data)
-          setChallenges([])
-        }
-      } catch (err) {
-        console.error("Error fetching challenges:", err)
-      }
-    }
 
     const fetchProfileUser = async () => {
       setLoading(true)
@@ -130,7 +159,6 @@ export default function ProfilePage() {
         setLoading(false)
       }
     }
-    fetchChallenges()
     fetchProfileUser()
     //solvedChallenges(routeUsername || "");
   }, [routeUsername, user?.username])
@@ -138,7 +166,7 @@ export default function ProfilePage() {
 
   // Handle platform verification
   const handleVerifyPlatform = async (platform: string, username: string): Promise<boolean> => {
-    console.log("Verifying platform:", platform, username, verificationString, user?._id);
+    // console.log("Verifying platform:", platform, username, verificationString, user?._id);
     if (!verificationString) {
       console.warn("Verification string is undefined or empty.");
     }
@@ -221,29 +249,18 @@ export default function ProfilePage() {
   }
 
   // Calculate the number of problems solved in each difficulty using the solveChallenges object
-  const allSolved = profileUser?.solveChallenges || [];
-  let easyCount = 0;
-  let mediumCount = 0;
-  let hardCount = 0;
-  allSolved.forEach((solved) => {
-    const challenge = challenges.find(challenge => challenge._id === solved.challengeId);
-    if (challenge) {
-      if (challenge.difficulty === "Easy") {
-        easyCount += 1;
-      } else if (challenge.difficulty === "Medium") {
-        mediumCount += 1;
-      } else if (challenge.difficulty === "Hard") {
-        hardCount += 1;
-      }
-    }
-  });
   const problemsSolved = {
-    total: allSolved?.length || 0,
-    easy: easyCount,
-    medium: mediumCount,
-    hard: hardCount,
+    total:
+      (profileUser.solveChallenges?.easy?.length || 0) +
+      (profileUser.solveChallenges?.medium?.length || 0) +
+      (profileUser.solveChallenges?.hard?.length || 0),
+    easy: profileUser.solveChallenges?.easy?.length || 0,
+    medium: profileUser.solveChallenges?.medium?.length || 0,
+    hard: profileUser.solveChallenges?.hard?.length || 0,
   }
-  // console.log(problemsSolved,"problemsSolved");
+  // Generate the heatmap data from solveChallenges
+  const heatmap = generateHeatmapFromSolveChallenges(profileUser);
+  // console.log("heatmaop", heatmap)
 
   interface GetDaysInMonthParams {
     month: number
@@ -337,83 +354,83 @@ export default function ProfilePage() {
   const githubLink = findSocialLink("github")
 
   {/* Helper function to create the date-contributions mapping from heatmap data */ }
-  function createDateContributionsMap(heatmap: Array<{ timestamp: string; _id: string }>, year: number, monthIndex: number) {
-    if (!heatmap || !heatmap.length) return {};
-
+  interface HeatmapItem {
+    timestamp?: string;
+    _id?: string;
+  }
+  
+  function createDateContributionsMap(
+    heatmap: HeatmapItem[] | undefined, 
+    year: number, 
+    monthIndex: number
+  ): Record<string, number> {
+    if (!heatmap || !heatmap.length) {
+      console.log("No heatmap data available");
+      return {};
+    }
+  
     // Create a map of dates to contribution counts
     const dateContributionsMap: Record<string, number> = {};
-
+  
     // Format monthIndex to 2-digit string for comparison
     const monthStr = String(monthIndex + 1).padStart(2, '0');
-
-    heatmap.forEach(item => {
+    
+    heatmap.forEach((item: HeatmapItem) => {
       try {
-        if (!item.timestamp) return;
-
-        // Convert Unix timestamp (seconds) to milliseconds for Date
-        const timestamp = parseInt(item.timestamp) * 1000;
-        const contributionDate = new Date(timestamp);
-
-        if (isNaN(contributionDate.getTime())) {
-          console.error("Invalid timestamp:", item.timestamp);
+        if (!item.timestamp) {
+          // console.log("Found item without timestamp");
           return;
         }
-
-        // Convert to Indian timezone (UTC+5:30)
-        // First get the date in UTC
-        const utcYear = contributionDate.getUTCFullYear();
-        const utcMonth = contributionDate.getUTCMonth();
-        const utcDay = contributionDate.getUTCDate();
-        const utcHours = contributionDate.getUTCHours();
-        const utcMinutes = contributionDate.getUTCMinutes();
-
-        // Apply the India timezone offset (+5:30)
-        let indianHours = utcHours + 5;
-        let indianMinutes = utcMinutes + 30;
-
-        // Adjust minutes if they exceed 60
-        if (indianMinutes >= 60) {
-          indianHours += 1;
-          indianMinutes -= 60;
-        }
-
-        // Adjust date if needed based on hours
-        let indianDay = utcDay;
-        let indianMonth = utcMonth + 1; // Convert 0-indexed month to 1-indexed
-        let indianYear = utcYear;
-
-        if (indianHours >= 24) {
-          indianHours -= 24;
-          indianDay += 1;
-
-          // Handle month/year transitions
-          const lastDayOfMonth = new Date(indianYear, indianMonth - 1, 0).getDate();
-          if (indianDay > lastDayOfMonth) {
-            indianDay = 1;
-            indianMonth += 1;
-
-            if (indianMonth > 12) {
-              indianMonth = 1;
-              indianYear += 1;
-            }
+        
+        // Check if the timestamp is already in YYYY-MM-DD format
+        if (typeof item.timestamp === 'string' && item.timestamp.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+          // Split the date string
+          const [dateYear, dateMonth, dateDay] = item.timestamp.split('-');
+          
+          // Format month with leading zero if needed
+          const formattedMonth = dateMonth.padStart(2, '0');
+          
+          // Create a standardized date string
+          const dateString = `${dateYear}-${formattedMonth}-${dateDay.padStart(2, '0')}`;
+          
+          
+          // Check if this contribution belongs to the selected month and year
+          if (parseInt(dateYear) === year && formattedMonth === monthStr) {
+            dateContributionsMap[dateString] = 1;
           }
-        }
-
-        // Format the contribution date as YYYY-MM-DD for comparison
-        const indianDateString = `${indianYear}-${String(indianMonth).padStart(2, '0')}-${String(indianDay).padStart(2, '0')}`;
-
-        // Check if this contribution belongs to the selected month and year
-        if (indianYear === year && String(indianMonth).padStart(2, '0') === monthStr) {
-          // Increment the counter for this date
-          dateContributionsMap[indianDateString] = (dateContributionsMap[indianDateString] || 0) + 1;
+        } else {
+          // Handle numeric timestamps or ISO strings as before
+          let contributionDate: Date;
+          
+          if (!isNaN(parseInt(item.timestamp))) {
+            // If it's a Unix timestamp (in seconds), convert to milliseconds
+            contributionDate = new Date(parseInt(item.timestamp) * 1000);
+          } else {
+            // If it's an ISO string
+            contributionDate = new Date(item.timestamp);
+          }
+  
+          if (isNaN(contributionDate.getTime())) {
+            console.error("Invalid timestamp format:", item.timestamp);
+            return;
+          }
+  
+          // Format the contribution date as YYYY-MM-DD
+          const dateStr = contributionDate.toISOString().split('T')[0];
+          const [dateYear, dateMonth] = dateStr.split('-');
+  
+          // Check if this contribution belongs to the selected month and year
+          if (parseInt(dateYear) === year && dateMonth === monthStr) {
+            dateContributionsMap[dateStr] = 1;
+          }
         }
       } catch (err) {
         console.error("Error processing timestamp:", item.timestamp, err);
       }
     });
-
     return dateContributionsMap;
   }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <motion.div
@@ -473,7 +490,7 @@ export default function ProfilePage() {
                     <Button variant="outline" size="icon" className="rounded-full" asChild>
                       {twitterLink && (
                         <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
-                            <Twitter className="h-4 w-4 text-sky-500" />
+                          <Twitter className="h-4 w-4 text-sky-500" />
                         </Link>
                       )}
                     </Button>
@@ -776,7 +793,7 @@ export default function ProfilePage() {
                         ];
 
                         // Create contributions map for the month using the heatmap data
-                        const dateContributionsMap = createDateContributionsMap(profileUser?.heatmap || [], selectedYear, monthIndex);
+                        const dateContributionsMap = createDateContributionsMap(heatmap, selectedYear, monthIndex);
                         return (
                           <div key={monthIndex} className="flex-none">
                             <div className="text-xs text-muted-foreground text-center mb-2">
@@ -804,9 +821,6 @@ export default function ProfilePage() {
                                 // Determine intensity based on count
                                 const getIntensityColor = (count: number) => {
                                   if (count === 0) return "bg-gray-300";
-                                  if (count === 1) return "bg-green-200";
-                                  if (count <= 3) return "bg-green-300";
-                                  if (count <= 5) return "bg-green-400";
                                   return "bg-green-500";
                                 };
 
@@ -849,9 +863,6 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-4">
                     <span>Less</span>
                     <div className="h-3 w-3 rounded-sm bg-gray-300"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-400"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-500"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-600"></div>
                     <div className="h-3 w-3 rounded-sm bg-green-700"></div>
                     <span>More</span>
                   </div>
@@ -865,4 +876,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-

@@ -30,7 +30,7 @@ app.use(cookieParser());
 app.use(passport.initialize());
 app.use(express.urlencoded({ limit: '50mb', extended: false }));
 app.use(morgan('dev'))
-
+app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/challenges', challengeRoutes);
