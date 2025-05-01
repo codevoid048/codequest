@@ -21,7 +21,6 @@ import {
   Trophy,
   Twitter,
 } from "lucide-react"
-import { slovedChallenges } from "@/platforms/leetcode"
 import toast from "react-hot-toast"
 import { solvedChallenges } from "@/lib/potdchallenge"
 import { PlatformManager } from "./platform-manager"
@@ -67,36 +66,16 @@ export default function ProfilePage() {
   const [rating, setRating] = useState([]);
   useEffect(() => {
     const updatePlatforms = async () => {
-      console.log("updated platforms");
       await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
       await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
       await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
       await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
-      const response = await axios.get('http://localhost:5000/platforms/solveChallenges', { withCredentials: true });
-      console.log(response.data);
     }
     toast.success("Data updated successfully");
     updatePlatforms();
   }, [profileUser]);
 
   useEffect(() => {
-    const fetchChallenges = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/challenges")
-        console.log("Challenges:", response.data)
-        if (Array.isArray(response.data)) {
-          setChallenges(response.data)
-        } else if (response.data && Array.isArray(response.data.challenges)) {
-          setChallenges(response.data.challenges)
-        } else {
-          console.error("Challenges data is not an array:", response.data)
-          setChallenges([])
-        }
-      } catch (err) {
-        console.error("Error fetching challenges:", err)
-      }
-    }
-
   const fetchProfileUser = async () => {
     setLoading(true)
     setError(null)
@@ -116,7 +95,7 @@ export default function ProfilePage() {
     const fetchChallenges = async () => {
       try {
         const response = await axios.get("http://localhost:5000/api/challenges");
-        console.log("Challenges:", response.data)
+        // console.log("Challenges:", response.data)
         // Ensure challenges data is an array
         if (Array.isArray(response.data)) {
           setChallenges(response.data)
@@ -134,7 +113,7 @@ export default function ProfilePage() {
     }
     fetchChallenges()
     fetchProfileUser()
-    slovedChallenges();
+    solvedChallenges(routeUsername || "");
   }, [routeUsername, user?.username])
 
 
@@ -241,7 +220,7 @@ export default function ProfilePage() {
     medium: mediumCount,
     hard: hardCount,
   }
-  console.log(problemsSolved,"problemsSolved");
+  // console.log(problemsSolved,"problemsSolved");
 
   const platforms = [
     {

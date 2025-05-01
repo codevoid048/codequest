@@ -9,6 +9,7 @@ export const leetcodeData = async (req, res) => {
   try {
     const username = req.body.username; // Get username from request body
     const user = await User.findOne({ 'leetCode.username': username });
+    console.log(req.body.username);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -49,7 +50,6 @@ export const leetcodeData = async (req, res) => {
             'leetCode.rating': Math.floor(responseData?.data?.userContestRanking?.rating) || -1,
           }
         }
-      }
     );
 
     return res.json({ success: true, message: "LeetCode data updated successfully" });
@@ -71,7 +71,6 @@ export const geeksforgeeksData = async (req, res) => {
       const response = await getGFGName(username);
       if (response.error) {
         console.error(`Error fetching GFG data for user ${username}: ${response.error}`);
-        continue;
       }
       const totalSolved = response.total_problems_solved;
       const instituteRank = response.institute_rank || -1;
@@ -86,7 +85,6 @@ export const geeksforgeeksData = async (req, res) => {
             'gfg.rating': rating
           }
         }
-      }
     );
 
     return res.json({ success: true, message: "GFG data updated successfully" });
@@ -170,7 +168,9 @@ export const codechefData = async (req, res) => {
 
 export const solvedChallenges = async (req, res) => {
   try {
-    const user = req.user;
+    const username = req.body.username;
+    const user = await User.findOne({ 'username': username });
+    // console.log(user , "user");
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });

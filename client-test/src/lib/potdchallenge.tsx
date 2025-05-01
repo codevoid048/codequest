@@ -32,9 +32,10 @@ export const postPotdChallenge = async () => {
 };
 
 
-export const solvedChallenges = async () => {
+export const solvedChallenges = async (username:string) => {
   try {
-    const response = await axios.get('http://localhost:5000/platforms/solvedChallenges', {
+    const response = await axios.post('http://localhost:5000/platforms/solvedChallenges', {
+      username: username,
       withCredentials: true
     });
     return response.data;
@@ -55,16 +56,4 @@ export const streak = async () => {
   }
 }
 
-
-export const solvedChallenges = async () => {
-  try {
-    const response = await axios.get('http://localhost:5000/platforms/solvedChallenges', {
-            withCredentials: true
-    });
-    return response.data;
-  } catch (error) {
-     console.error('Error fetching solved challenges:', error);
-    return null;
-  }
-}
 

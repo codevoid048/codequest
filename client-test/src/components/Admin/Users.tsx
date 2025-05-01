@@ -4,16 +4,16 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { Search, Users, Filter, X, ArrowUpDown } from "lucide-react"
-import axios from "axios"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useAdminStore } from "@/context/AdminContext"
 
 // User type
 interface User {
-  _id: string // Changed from number to string to match MongoDB IDs
+  _id: string
   username: string
   collegeName: string
   branch: string
@@ -25,7 +25,7 @@ interface User {
 type FilterType = "collegeName" | "branch"
 
 export default function UserDashboard() {
-  const [users, setUsers] = useState<User[]>([])
+  const { users, fetchUsers } = useAdminStore()
   const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -41,45 +41,31 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
+  // Fetch users on component mount
   useEffect(() => {
-    const fetchUsers = async () => {
+    const loadUsers = async () => {
       try {
         setLoading(true)
-        const response = await axios.get("http://localhost:5000/admin/users")
-
-        // Check if response.data exists and is an array
-        if (response.data && Array.isArray(response.data)) {
-          setUsers(response.data)
-          setFilteredUsers(response.data)
-        } else if (response.data && typeof response.data === "object") {
-          // If response.data is an object with a nested array of users
-          // This handles cases where the API returns { users: [...] }
-          const userData = response.data.users || response.data.data || []
-          if (Array.isArray(userData)) {
-            setUsers(userData)
-            setFilteredUsers(userData)
-          } else {
-            throw new Error("Invalid data format received from API")
-          }
-        } else {
-          throw new Error("Invalid data format received from API")
-        }
+        await fetchUsers()
+        setLoading(false)
       } catch (err) {
         console.error("Error fetching users:", err)
-        setError((err as Error).message)
-      } finally {
+        setError(err instanceof Error ? err.message : "Failed to fetch users")
         setLoading(false)
       }
     }
+    
+    loadUsers()
+  }, [fetchUsers])
 
-    fetchUsers()
-  }, [])
-
-
+  // Update filteredUsers whenever users data changes
+  useEffect(() => {
+    setFilteredUsers(users || [])
+  }, [users])
 
   const getUniqueValues = (key: FilterType) => {
     if (!Array.isArray(users) || users.length === 0) return []
-    return Array.from(new Set(users.map((user) => user[key])))
+    return Array.from(new Set(users.map((user) => user[key]).filter(Boolean)))
   }
 
   const toggleFilter = (type: FilterType, value: string) => {
@@ -93,7 +79,6 @@ export default function UserDashboard() {
       return newFilters
     })
   }
-
 
   const clearFilters = () => {
     setActiveFilters({ collegeName: [], branch: [] })
@@ -133,7 +118,9 @@ export default function UserDashboard() {
     // Apply category filters
     Object.entries(activeFilters).forEach(([type, values]) => {
       if (values.length > 0) {
-        result = result.filter((user) => user[type as FilterType] && values.includes(user[type as FilterType]))
+        result = result.filter((user) => 
+          user[type as FilterType] && values.includes(user[type as FilterType])
+        )
       }
     })
 
@@ -296,11 +283,10 @@ export default function UserDashboard() {
                       <Badge
                         key={college}
                         variant={activeFilters.collegeName.includes(college) ? "default" : "outline"}
-                        className={`cursor-pointer transition-all duration-300 ${
-                          activeFilters.collegeName.includes(college)
+                        className={`cursor-pointer transition-all duration-300 ${activeFilters.collegeName.includes(college)
                             ? "bg-indigo-500 hover:bg-indigo-600"
                             : "hover:border-indigo-500 hover:text-indigo-600"
-                        }`}
+                          }`}
                         onClick={() => toggleFilter("collegeName", college)}
                       >
                         {college}
@@ -320,11 +306,10 @@ export default function UserDashboard() {
                       <Badge
                         key={branch}
                         variant={activeFilters.branch.includes(branch) ? "default" : "outline"}
-                        className={`cursor-pointer transition-all duration-300 ${
-                          activeFilters.branch.includes(branch)
+                        className={`cursor-pointer transition-all duration-300 ${activeFilters.branch.includes(branch)
                             ? "bg-sky-500 hover:bg-sky-600"
                             : "hover:border-sky-500 hover:text-sky-600"
-                        }`}
+                          }`}
                         onClick={() => toggleFilter("branch", branch)}
                       >
                         {branch}
@@ -344,11 +329,10 @@ export default function UserDashboard() {
                       <Badge
                         key={field}
                         variant={sortBy === field ? "default" : "outline"}
-                        className={`cursor-pointer transition-all duration-300 ${
-                          sortBy === field
+                        className={`cursor-pointer transition-all duration-300 ${sortBy === field
                             ? "bg-teal-500 hover:bg-teal-600"
                             : "hover:border-teal-500 hover:text-teal-600"
-                        }`}
+                          }`}
                         onClick={() => handleSort(field)}
                       >
                         {field === "collegeName" ? "College" : field.charAt(0).toUpperCase() + field.slice(1)}
@@ -430,7 +414,7 @@ export default function UserDashboard() {
                     </Badge>
                     <Badge
                       variant="outline"
-                      className="hidden md:inline-block bg-primary-foreground text-foreground  text-xs py-0"
+                      className="hidden md:inline-block bg-primary-foreground text-foreground text-xs py-0"
                     >
                       {user.branch || "N/A"}
                     </Badge>
@@ -478,4 +462,3 @@ export default function UserDashboard() {
     </div>
   )
 }
-
