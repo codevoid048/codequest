@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuth } from "@/context/AuthContext";
+import { useAdminStore } from "@/context/AdminContext";
 import { useTheme } from "@/context/ThemeContext";
 import { motion } from "framer-motion";
 import { Code, Menu, Moon, Sun, X } from "lucide-react";
@@ -12,8 +12,7 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  const { isAuthenticated, logout } = useAuth();
-
+  const {token,logout} = useAdminStore();
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
@@ -21,7 +20,7 @@ export function Sidebar() {
   }, []);
 
   const navItems = [
-    { href: "/codingclubadmin", label: "Home" },
+    { href: "/codingclubadmin/dashboard", label: "Dashboard" },
     { href: "/codingclubadmin/leaderboard", label: "Leaderboard" },
     { href: "/codingclubadmin/users", label: "Users" },
     { href: "/codingclubadmin/challenges", label: "Challenges" },
@@ -70,13 +69,10 @@ export function Sidebar() {
             <Moon className="h-5 w-5" />
           )}
         </Button>
-        {!isAuthenticated ? (
+        {!token ? (
           <div className="flex flex-col gap-2">
             <Button variant="outline" asChild>
-              <Link to="/login">Log In</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/register">Sign Up</Link>
+              <Link to="/codingclubadmin">Log In</Link>
             </Button>
           </div>
         ) : (
@@ -99,7 +95,7 @@ export function Sidebar() {
       <aside
         className={`hidden md:block fixed top-0 left-0 h-full w-64 z-50 border-r ${
           isScrolled
-            ? "bg-background/80 backdrop-blur-md shadow-lg"
+            ? "bg-background/90 backdrop-blur-md shadow-lg"
             : "bg-background"
         }`}
       >

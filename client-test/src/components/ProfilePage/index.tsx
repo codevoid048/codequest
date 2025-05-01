@@ -138,12 +138,10 @@ export default function ProfilePage() {
 
 
   useEffect(() => {
-
     const fetchProfileUser = async () => {
       setLoading(true)
       setError(null)
       const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
-
       try {
         const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
         console.log("Fetched user data:", response.data)
