@@ -4,7 +4,7 @@ import Home from './components/Home';
 import LoginPage from './components/Login';
 import LogoutPage from './components/Logout';
 import RegisterPage from './components/SignUp';
-import Leaderboard from './components/leaderboard';
+import Leaderboard from './components/Leaderboard';
 import AboutPage from './components/About';
 import ProfilePage from './components/ProfilePage';
 import ResetPassword from './components/ResetPassword.tsx';
@@ -21,6 +21,9 @@ import AdminLogin from './components/Admin/index';
 import Dashboard from './components/Admin/Dashboard.tsx';
 import { useAdminStore } from './context/AdminContext.tsx';
 import AdminChallenges from './components/Admin/AdminChallenges.tsx';
+import CodeQuestSolutionViewer from './components/Challenges/solution.tsx';
+import SolutionPage from './components/Challenges/solutionPage';
+// import NotFoundPage from './components/page404';
 
 function UserApp() {
   return (
@@ -39,6 +42,8 @@ function UserApp() {
         <Route path="/profile/:username" element={<ProfilePage />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/challenges/solution/:problemId" element={<SolutionPage />} />
+        {/* <Route path="*" element={<NotFoundPage />} /> */}
       </Routes>
       <Footer />
     </div>
@@ -80,6 +85,7 @@ function AdminApp() {
           <Route path="/codingclubadmin/addchallenge" element={<AddChallenge />} />
           <Route path="/codingclubadmin/leaderboard" element={<Leaderboard />} />
           <Route path="/codingclubadmin/logout" element={<LogoutPage />} />
+          {/* <Route path="/codingclubadmin/*" element={<NotFoundPage />} /> */}
         </Routes>
       </div>
     </div>

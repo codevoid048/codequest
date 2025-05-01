@@ -1,6 +1,7 @@
 import { User } from "../models/User.js";
 import { Challenge } from "../models/Challenge.js";
-
+import { Solution } from "../models/solution.js";
+// import moment from "moment-timezone";
 export const getUsers = async(req, res) => {
     try{
         const users = await User.find({}).select("-password");
@@ -12,9 +13,22 @@ export const getUsers = async(req, res) => {
     }
 }
 
+
+
 export const addChallenge = async (req, res) => {
     try {
-        const { title, description, category, difficulty, points,createdAt, problemLink ,platform} = req.body;
+        const {
+            title,
+            description,
+            category,
+            difficulty,
+            points,
+            problemLink,
+            createdAt,
+            platform,
+            solution,
+        } = req.body;
+
 
         // Validate required fields
         if (!title || !description || !category || !difficulty || !points || !problemLink || !platform) {
@@ -26,6 +40,11 @@ export const addChallenge = async (req, res) => {
             return res.status(400).json({ success: false, message: "Category must be an array of strings" });
         }
 
+        // Convert current time to IST and store
+        const utcOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in ms
+        const istDate = new Date(Date.now() + utcOffset);
+
+        // Create and save Challenge
         const newChallenge = new Challenge({
             title,
             description,
@@ -33,20 +52,43 @@ export const addChallenge = async (req, res) => {
             difficulty,
             points,
             problemLink,
-            createdAt: createdAt ? new Date(createdAt) : new Date(), // Use current date if not provided
+            createdAt: createdAt ? new Date(createdAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-') : new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'),
             platform
         });
         
-        const result = await newChallenge.save();
+        const savedChallenge = await newChallenge.save();
 
+
+        let savedSolution = null;
+        if (solution) {
+            // Create solution with all fields, including explanation
+            const newSolution = new Solution({
+                explanation: solution.explanation || "No explanation provided",
+                cpp: solution.cpp || "",
+                python: solution.python || "",
+                java: solution.java || "",
+                timeComplexity: solution.timeComplexity || "",
+                spaceComplexity: solution.spaceComplexity || "",
+                challenge: savedChallenge._id
+            });
+
+            savedSolution = await newSolution.save();
+            
+        }
+        
         return res.status(201).json({
             success: true,
-            message: "Challenge added successfully",
-            challenge: result
+            message: "Challenge and solution added successfully",
+            challenge: savedChallenge,
+            solution: savedSolution
         });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: "Server error" });
+        console.error("Error in addChallenge:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error",
+            error: error.message 
+        });
     }
 };

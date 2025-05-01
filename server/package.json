@@ -4,7 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "start": "nodemon server.js",
+    "ts:delete": "docker-compose exec backend node typesense/deleteCollections.js",
+    "ts:create": "docker-compose exec backend node typesense/createCollections.js",
+    "ts:syncDB": "docker-compose exec backend node typesense/syncdataFromDb.js"
   },
   "type": "module",
   "author": "",
@@ -23,15 +26,18 @@
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "jsonwebtoken": "^9.0.2",
+    "moment-timezone": "^0.5.48",
     "mongoose": "^8.12.2",
     "morgan": "^1.10.0",
     "node-cache": "^5.1.2",
+    "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.0",
     "nodemon": "^3.1.9",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
+    "react-timezone": "^2.4.0",
     "session": "^0.1.0",
     "typesense": "^2.0.3",
     "uuid": "^11.1.0"

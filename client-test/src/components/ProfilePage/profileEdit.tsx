@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
-import { Upload, CheckCircle, User, Mail, Hash, BookOpen, Building, Code, X, Crop } from "lucide-react"
+import { Upload, CheckCircle, User, Mail, Hash, BookOpen, Building, Code, X, Crop, Search, ChevronDown, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,11 +12,25 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Slider } from "@/components/ui/slider"
+import { 
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList
+} from "@/components/ui/command"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 import axios from "axios"
 import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-hot-toast"
 import Cropper from "react-easy-crop"
+import institutions from "@/lib/colleges"
 
 interface Point {
     x: number
@@ -71,6 +85,7 @@ export default function ProfileEditForm() {
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
     const [imageSrc, setImageSrc] = useState<string | null>(null)
     const [imageUploading, setImageUploading] = useState(false)
+    const [collegePopoverOpen, setCollegePopoverOpen] = useState(false)
 
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isLoading, setIsLoading] = useState(false)
@@ -521,17 +536,49 @@ export default function ProfileEditForm() {
                                         />
                                     </div>
 
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 overflow-hidden">
                                         <Label htmlFor="college" className="flex items-center gap-2">
                                             <Building className="w-4 h-4" /> College
                                         </Label>
-                                        <Input
-                                            id="college"
-                                            placeholder="Enter your college name"
-                                            className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
-                                            value={formData.college}
-                                            onChange={handleChange}
-                                        />
+                                        <Popover open={collegePopoverOpen} onOpenChange={setCollegePopoverOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    role="combobox"
+                                                    aria-expanded={collegePopoverOpen}
+                                                    className="w-full justify-between bg-background/50 border-input focus:border-primary transition-colors duration-300 h-10"
+                                                >
+                                                    {formData.college ? formData.college : "Select college..."}
+                                                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-full p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
+                                                <Command>
+                                                    <CommandInput placeholder="Search college..." className="h-9" />
+                                                    <CommandList>
+                                                        <CommandEmpty>No college found.</CommandEmpty>
+                                                        <CommandGroup className="max-h-[200px] overflow-y-auto">
+                                                            {institutions.map((college, index) => (
+                                                                <CommandItem
+                                                                    key={index}
+                                                                    value={college.name}
+                                                                    onSelect={() => {
+                                                                        setFormData((prev) => ({ ...prev, college: college.name }))
+                                                                        setCollegePopoverOpen(false)
+                                                                    }}
+                                                                    className="flex items-center"
+                                                                >
+                                                                    {college.name}
+                                                                    {formData.college === college.name && (
+                                                                        <Check className="ml-auto h-4 w-4" />
+                                                                    )}
+                                                                </CommandItem>
+                                                            ))}
+                                                        </CommandGroup>
+                                                    </CommandList>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
                                 </motion.div>
 
@@ -550,17 +597,6 @@ export default function ProfileEditForm() {
                                                     className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
                                                     value={formData.otherLinks.find((link) => link.platform === "leetcode")?.url || ""}
                                                     onChange={(e) => handleLinkChange("leetcode", e.target.value)}
-                                                />
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <Label htmlFor="github">GitHub</Label>
-                                                <Input
-                                                    id="github"
-                                                    placeholder="Your GitHub username"
-                                                    className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
-                                                    value={formData.otherLinks.find((link) => link.platform === "github")?.url || ""}
-                                                    onChange={(e) => handleLinkChange("github", e.target.value)}
                                                 />
                                             </div>
 
@@ -597,16 +633,6 @@ export default function ProfileEditForm() {
                                                 />
                                             </div>
 
-                                            <div className="space-y-2">
-                                                <Label htmlFor="hackerrank">HackerRank</Label>
-                                                <Input
-                                                    id="hackerrank"
-                                                    placeholder="Your HackerRank username"
-                                                    className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
-                                                    value={formData.otherLinks.find((link) => link.platform === "hackerrank")?.url || ""}
-                                                    onChange={(e) => handleLinkChange("hackerrank", e.target.value)}
-                                                />
-                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -646,4 +672,3 @@ export default function ProfileEditForm() {
         </div>
     )
 }
-
