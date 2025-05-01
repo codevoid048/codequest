@@ -157,10 +157,8 @@ const Challenges: React.FC = () => {
         const codeforces = await axios.post('http://localhost:5000/platforms/codeforces',{username:"saiganeshambati000"});
         const codechef = await axios.post('http://localhost:5000/platforms/codechef',{username:"saiganesh999"});
         const gfg = await axios.post('http://localhost:5000/platforms/gfg',{username:"saiganeshafb97"});
+        toast.success("Data updated successfully");
       }
-      toast.success("Data updated successfully");
-      updatePlatforms();
-  }, []);
     const fetchUserData = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/profile/getUser", {
@@ -177,6 +175,7 @@ const Challenges: React.FC = () => {
   
     if (user) {
       fetchUserData();
+      updatePlatforms();
     }
   }, [user]);
 
@@ -306,8 +305,8 @@ const Challenges: React.FC = () => {
         const leetCodeData = await fetchLeetCodeProfile(`${User?.leetCode?.username}`);
         if (leetCodeData?.recentSubmissionList) {
           const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string ;statusDisplay:string}) => {
-            const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-            const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+            const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+            const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             
             return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && submissionDate === today;
           });
@@ -317,7 +316,7 @@ const Challenges: React.FC = () => {
             setIsSolved(true);
             postPotdChallenge();
             streak();
-            solvedChallenges();
+            solvedChallenges(user?.username);
             return;
           }
         }
@@ -326,9 +325,9 @@ const Challenges: React.FC = () => {
         const codeforcesData = await fetchCodeforcesProfile(`${User?.codeforces?.username}`);
         if (codeforcesData?.result) {
           const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string } ;verdict:string}) => {
-            const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+            const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
   
-            const today = new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+            const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
             return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" && 
               submissionDate === today;
           });

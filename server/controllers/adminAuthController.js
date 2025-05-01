@@ -16,7 +16,7 @@ export const adminLogin = async (req, res) => {
             return res.status(400).json({ message: "Wrong Password" });
         }
         const token = await adminGenerateToken(admin);
-        res.cookie('token', token, {
+        res.cookie('Admintoken', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "Strict",
@@ -33,7 +33,7 @@ export const adminLogin = async (req, res) => {
 
 export const adminLogout = async (req, res) => {
     try {
-        res.cookie('token', "").json({ message: "Logged out" });
+        res.cookie('Admintoken', "").json({ message: "Logged out" });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "error in admin logout", details: err.message });
