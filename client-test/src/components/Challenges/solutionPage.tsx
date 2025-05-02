@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
-import {
-  Code, BookOpen, FileCode, Check, Copy,
-  Clock, AlertCircle, Lightbulb,
+import { 
+  Code, BookOpen, FileCode, Check, Copy, 
+  Clock, AlertCircle, Lightbulb, 
   Database, Award, GitBranch, Star, Tag,
   ArrowUpRight, TerminalSquare
 } from "lucide-react";
@@ -100,6 +101,25 @@ const SyntaxHighlighter: React.FC<{ code: string; language: string }> = ({ code,
 };
 
 // Section header component
+// const SectionHeader: React.FC<{ 
+//   icon: React.ReactNode; 
+//   title: string; 
+//   color: string;
+// }> = ({ icon, title, color }) => {
+//   return (
+//     <motion.div 
+//       initial={{ opacity: 0, y: -10 }}
+//       animate={{ opacity: 1, y: 0 }}
+//       transition={{ duration: 0.3 }}
+//       className="flex items-center gap-2 mb-2"
+//     >
+//       <div className={`p-2 rounded-lg ${color}`}>
+//         {icon}
+//       </div>
+//       <h3 className="text-lg font-medium">{title}</h3>
+//     </motion.div>
+//   );
+// };
 // const SectionHeader: React.FC<{ 
 //   icon: React.ReactNode; 
 //   title: string; 
