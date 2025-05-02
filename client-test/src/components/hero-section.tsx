@@ -4,9 +4,11 @@ import { motion } from "framer-motion"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ParticlesBackground } from "@/components/particles-background"
+import { useAuth } from "@/context/AuthContext"
 
 export function HeroSection() {
     const [mounted, setMounted] = useState(false)
+    const { user } = useAuth()
 
     useEffect(() => {
         setMounted(true)
@@ -59,7 +61,7 @@ export function HeroSection() {
                     className="flex flex-col sm:flex-row gap-4 justify-center"
                 >
                     <Button asChild size="lg" className="group">
-                        <Link to="/register">
+                        <Link to={`${!user ? '/register' : '/challenges'}`}>
                             Start Your Journey
                             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </Link>

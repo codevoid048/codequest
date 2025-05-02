@@ -54,9 +54,9 @@ const Challenges: React.FC = () => {
         const res = await axios.get("http://localhost:5000/api/challenges");
         if (res.data && Array.isArray(res.data.challenges)) {
           const data = res.data.challenges.map((challenge: any) => {
-            const isSolved = user?.solveChallenges?.easy.some((item) => item.challenge === challenge._id) ||
-              user?.solveChallenges?.medium.some((item) => item.challenge === challenge._id) ||
-              user?.solveChallenges?.hard.some((item) => item.challenge === challenge._id);
+            const isSolved = user?.solveChallenges?.easy.some((item: { challenge: any; }) => item.challenge === challenge._id) ||
+              user?.solveChallenges?.medium.some((item: { challenge: any; }) => item.challenge === challenge._id) ||
+              user?.solveChallenges?.hard.some((item: { challenge: any; }) => item.challenge === challenge._id);
 
             return {
               id: challenge._id,
@@ -88,13 +88,13 @@ const Challenges: React.FC = () => {
   // Update countdown timer every second
   useEffect(() => {
     const updateCountdown = () => {
-      const now = new Date();
-      const midnight = new Date(now);
-      midnight.setHours(24, 0, 0, 0);
-      const timeDiff = midnight.getTime() - now.getTime();
-      const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+      const now = new Date()
+      const midnight = new Date(now)
+      midnight.setHours(24, 0, 0, 0)
+      const timeDiff = midnight.getTime() - now.getTime()
+      const hours = Math.floor(timeDiff / (1000 * 60 * 60))
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000)
       setCountdown({
         hours: hours.toString().padStart(2, "0"),
         minutes: minutes.toString().padStart(2, "0"),
@@ -113,10 +113,10 @@ const Challenges: React.FC = () => {
     today.setHours(0, 0, 0, 0);
 
     const todayProblem = problemsList.find((problem) => {
-      const problemDate = new Date(problem.date);
-      problemDate.setHours(0, 0, 0, 0);
-      return problemDate.getTime() === today.getTime();
-    });
+      const problemDate = new Date(problem.date)
+      problemDate.setHours(0, 0, 0, 0)
+      return problemDate.getTime() === today.getTime()
+    })
 
     return todayProblem || problemsList[0];
   }, [problemsList]);
@@ -134,30 +134,30 @@ const Challenges: React.FC = () => {
       const problemDate = new Date(problem.date);
       problemDate.setHours(0, 0, 0, 0);
 
-      const isPastOrToday = problemDate <= today;
-      const matchesTab = activeTab === "all" || problem.status.toLowerCase() === activeTab;
-      const matchesDifficulty = selectedDifficulties.length === 0 || selectedDifficulties.includes(problem.difficulty);
+      const isPastOrToday = problemDate <= today
+      const matchesTab = activeTab === "all" || problem.status.toLowerCase() === activeTab
+      const matchesDifficulty = selectedDifficulties.length === 0 || selectedDifficulties.includes(problem.difficulty)
       const matchesCategory =
         selectedCategories.length === 0 || problem.categories.some((cat: string) => selectedCategories.includes(cat));
       const matchesSearch =
         !searchTerm ||
         problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        problem.description.toLowerCase().includes(searchTerm.toLowerCase());
-      return isPastOrToday && matchesTab && matchesDifficulty && matchesCategory && matchesSearch;
-    });
+        problem.description.toLowerCase().includes(searchTerm.toLowerCase())
+      return isPastOrToday && matchesTab && matchesDifficulty && matchesCategory && matchesSearch
+    })
 
     result.sort((a, b) => {
       switch (sortOption) {
         case "date":
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
+          return new Date(b.date).getTime() - new Date(a.date).getTime()
         case "difficulty":
-          return ["Easy", "Medium", "Hard"].indexOf(a.difficulty) - ["Easy", "Medium", "Hard"].indexOf(b.difficulty);
+          return ["Easy", "Medium", "Hard"].indexOf(a.difficulty) - ["Easy", "Medium", "Hard"].indexOf(b.difficulty)
         case "status":
-          return a.status.localeCompare(b.status);
+          return a.status.localeCompare(b.status)
         default:
-          return 0;
+          return 0
       }
-    });
+    })
 
     return result;
   }, [problemsList, activeTab, selectedDifficulties, selectedCategories, searchTerm, sortOption]);
@@ -300,6 +300,16 @@ const Challenges: React.FC = () => {
     localStorage.setItem(key, "true");
   };
 
+  const isChallengeSolved = (challengeId: string) => {
+    if (!user?.solveChallenges) return false;
+    
+    // Check if the challenge ID exists in any difficulty array
+    return (
+      user.solveChallenges.easy.some((item: { challenge: string; }) => item.challenge === challengeId) ||
+      user.solveChallenges.medium.some((item: { challenge: string; }) => item.challenge === challengeId) ||
+      user.solveChallenges.hard.some((item: { challenge: string; }) => item.challenge === challengeId)
+    );
+  };
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Daily Challenge Section */}
@@ -434,6 +444,7 @@ const Challenges: React.FC = () => {
             </Button>
           </div>
           <Card className={`shadow-lg border-0 bg-card ${isFilterOpen ? "block" : "hidden lg:block"}`}>
+            {difficultyLevels.length > 0 ? (
             <CardContent className="p-6 space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
@@ -513,6 +524,33 @@ const Challenges: React.FC = () => {
                 </div>
               </div>
             </CardContent>
+            ) : (
+            <CardContent className="p-6 space-y-6">
+              <div>
+                <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
+                <div className="flex flex-col gap-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
+                      <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="h-1 w-full bg-muted animate-pulse"></div>
+              <div>
+                <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
+                <div className="flex flex-col gap-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
+                      <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+            )}
           </Card>
         </div>
 
@@ -620,6 +658,9 @@ const Challenges: React.FC = () => {
                               description: problem.description,
                               problemUrl: problem.problemUrl
                             }}
+                            markSolved={() => markSolved(problem.id)}
+                            viewSolution={(id: any) => {
+                            }}
                           />
                         </div>
                       </CardContent>
@@ -689,7 +730,7 @@ const Challenges: React.FC = () => {
         />
       )}
     </div>
-  );
-};
+  )
+}
 
 export default Challenges;

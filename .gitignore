@@ -2,3 +2,4 @@
 node_modules
 *.log
 typesense-data/
+.vscode

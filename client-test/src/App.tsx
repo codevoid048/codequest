@@ -2,9 +2,8 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { Toaster } from 'react-hot-toast';
 import Home from './components/Home';
 import LoginPage from './components/Login';
-import LogoutPage from './components/Logout';
 import RegisterPage from './components/SignUp';
-import Leaderboard from './components/Leaderboard';
+import Leaderboard from "./components/leaderboard"
 import AboutPage from './components/About';
 import ProfilePage from './components/ProfilePage';
 import ResetPassword from './components/ResetPassword.tsx';
@@ -16,13 +15,13 @@ import Challenges from './components/Challenges';
 import { Sidebar } from './components/Admin/sidebar';
 import Footer from './components/footer';
 import { Navbar } from './components/Navbar';
-import AdminHome from './components/Admin/home';
 import AdminLogin from './components/Admin/index';
 import Dashboard from './components/Admin/Dashboard.tsx';
 import { useAdminStore } from './context/AdminContext.tsx';
 import AdminChallenges from './components/Admin/AdminChallenges.tsx';
 // import CodeQuestSolutionViewer from './components/Challenges/solution.tsx';
 import SolutionPage from './components/Challenges/solutionPage';
+import { Navigate } from 'react-router-dom';
 // import NotFoundPage from './components/page404';
 
 function UserApp() {
@@ -37,7 +36,6 @@ function UserApp() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/logout" element={<LogoutPage />} />
         <Route path="/profile/edit-profile" element={<EditProfile />} />
         <Route path="/profile/:username" element={<ProfilePage />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -56,11 +54,10 @@ function AdminApp() {
   // If no token, show the login page
   if (!token) {
     return (
-      <div className="flex-grow  p-4 mt-16 md:mt-0">
+      <div className="flex-grow p-4 mt-16 md:mt-0">
         <Routes>
-          
-          {/* Redirect to Admin Login if no token */}
           <Route path="/codingclubadmin" element={<AdminLogin />} />
+          <Route path="*" element={<Navigate to="/codingclubadmin" replace />} />
         </Routes>
         <Toaster position="bottom-right" toastOptions={{ duration: 2000 }} />
       </div>
@@ -78,13 +75,11 @@ function AdminApp() {
         <Toaster position="bottom-right" toastOptions={{ duration: 2000 }} />
         <Routes>
           {/* <Route path="/codingclubadmin" element={<AdminLogin />} /> */}
-          <Route path="/codingclubadmin/home" element={<AdminHome />} />
+          <Route path="/codingclubadmin" element={<Dashboard />} />
           <Route path="/codingclubadmin/users" element={<UserDashboard />} />
-          <Route path="/codingclubadmin/dashboard" element={<Dashboard />} />
           <Route path="/codingclubadmin/challenges" element={<AdminChallenges />} />
           <Route path="/codingclubadmin/addchallenge" element={<AddChallenge />} />
           <Route path="/codingclubadmin/leaderboard" element={<Leaderboard />} />
-          <Route path="/codingclubadmin/logout" element={<LogoutPage />} />
           {/* <Route path="/codingclubadmin/*" element={<NotFoundPage />} /> */}
         </Routes>
       </div>

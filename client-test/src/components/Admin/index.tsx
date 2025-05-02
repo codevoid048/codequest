@@ -28,20 +28,15 @@ export default function LoginPage() {
       return;
     }
 
-    console.log("Email:", email, "Password:", password); // Debugging
-
     try {
       const response = await axios.post("http://localhost:5000/auth/admin/login", 
         { email, password }, 
         { withCredentials: true }
       );
-      console.log("Response:", response); // Debugging
       if (response.status === 200) {
         storeLogin(response.data.token); // Save token in Zustand store
         login(); // Assuming login is a function that sets user state
         toast.success(response.data.message);
-        
-        navigate("/codingclubadmin/dashboard"); // Redirect to homepage
       }
     } catch (error: unknown) {
       const err = error as AxiosError;

@@ -19,6 +19,7 @@ import userRoutes from "./routes/userRoutes.js";
 import typeSenseRoutes from "./routes/typeSenseRoutes.js";
 //import { startStreakCronJob } from './utils/streakResetJob.js';
 dotenv.config();
+
 const app = express();
 
 app.use(cors({ origin: "http://localhost:5173", credentials: true, }));
