@@ -430,7 +430,7 @@ export default function AboutPage() {
                                         animate="visible"
                                     >
                                         <motion.div
-                                            className="flex items-start space-x-4 p-4  border border-primary/30 rounded-xl hover:bg-gray-700 transition-colors duration-300 bg-card text-card-foreground"
+                                            className="flex items-start space-x-4 p-4  border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
                                             variants={itemVariant}
                                         >
                                             <div className="bg-primary/10 p-2 rounded-full">
@@ -469,7 +469,7 @@ export default function AboutPage() {
 
 
                                         <motion.div
-                                            className="flex items-start space-x-4 p-4 border border-primary/30 rounded-xl hover:bg-gray-700 transition-colors duration-300 bg-card text-card-foreground"
+                                            className="flex items-start space-x-4 p-4 border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
                                             variants={itemVariant}
                                         >
                                             <div className="bg-primary/10 p-2 rounded-full ">
@@ -697,7 +697,7 @@ export default function AboutPage() {
                     {/* Major Events */}
                     <motion.section
                         id="events"
-                        className="mb-20 px-5"
+                        className="mb-20 px-5 "
                         initial="hidden"
                         animate={isVisible.events ? "visible" : "hidden"}
                         variants={fadeIn}
@@ -709,7 +709,7 @@ export default function AboutPage() {
                         </motion.h2>
 
                         <motion.div
-                            className="grid grid-cols-1 md:grid-cols-3 gap-10"
+                            className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-10"
                             variants={staggerContainer}
                             initial="hidden"
                             animate="visible"

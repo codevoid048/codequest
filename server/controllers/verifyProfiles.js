@@ -12,27 +12,40 @@ export const verifyProfiles = async (req, res) => {
         const normalizedPlatform = platform.trim().toLowerCase();
 
         if (normalizedPlatform === 'gfg') {
-            //const response = await axios.get(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`);
-            const response = await getGFGName(username);
-            if (response.data.message === 'User not found!') {
+            const response = await axios.get(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`);
+            if (response.data?.message === 'User not found!') {
                 return res.status(400).json({ error: 'User not found on GFG' });
             }
-    
-            const { name, total_problems_solved, institute_rank, rating } = response;
-    
+
+            const name = response.data?.data?.name || "Unknown";
             if (!name) {
                 return res.status(400).json({ error: 'Name not found in GFG profile' });
             }
-            if (name.trim() !== verificationString.trim()) {
+
+            // Debugging logs
+            console.log("GFG name from profile:", JSON.stringify(name));
+            console.log("Verification string:", JSON.stringify(verificationString));
+
+            // Normalize strings for comparison
+            const normalizedName = name.trim().toLowerCase();
+            const normalizedVerificationString = verificationString.trim().toLowerCase();
+
+            if (normalizedName !== normalizedVerificationString) {
                 return res.status(400).json({ error: 'Verification string does not match' });
             }
-    
+
             const user = await User.findById(userId);
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }
+
+            const total_problems_solved = response.data?.data?.total_problems_solved || user.gfg.solved || "Unknown";
+            const institute_rank = response.data?.data?.institute_rank || user.gfg.rank || "Unknown";
+
+            const sc_response = await getGFGName(username);
+            const { rating } = sc_response || user.gfg.rating;
     
-            await user.updateOne({ $set: { 'gfg.username': username, 'gfg.solved': total_problems_solved, 'gfg.rating': rating } });
+            await user.updateOne({ $set: { 'gfg.username': username, 'gfg.solved': total_problems_solved, 'gfg.rank': institute_rank, 'gfg.rating': rating } });
             return res.status(200).json({ message: 'GFG Profile verified successfully' });
         }
         else if (normalizedPlatform === 'codeforces') {
@@ -95,10 +108,10 @@ export const verifyProfiles = async (req, res) => {
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }
-            const rating = Math.floor(responseData?.userContestRanking?.rating) || 0;
-            const rank = responseData?.matchedUser?.profile?.ranking || 0;
-            const stats = responseData?.matchedUser?.submitStatsGlobal?.acSubmissionNum || [];
-            const totalSolved = stats.find((item) => item.difficulty === "All")?.count || 0;
+            const rating = Math.floor(responseData?.userContestRanking?.rating) || user.leetCode.rating || 0;
+            const rank = responseData?.matchedUser?.profile?.ranking || user.leetCode.rank || 0;
+            const stats = responseData?.data?.matchedUser?.submitStats?.acSubmissionNum || [];
+            const totalSolved = stats.find(s => s.difficulty === "All")?.count || user.leetCode.solved || 0;
             console.log("LeetCode data:", username, rating, rank, totalSolved);
             await user.updateOne({ $set: { 'leetCode.username': username, 'leetCode.rating': rating, 'leetCode.rank': rank, 'leetCode.solved': totalSolved } });
             return res.status(200).json({ message: 'Profile verified successfully' });

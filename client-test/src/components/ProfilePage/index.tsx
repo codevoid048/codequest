@@ -34,7 +34,7 @@ export default function ProfilePage() {
     leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
     gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
     codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
-    codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+    codechef?: { username?: string; stars?: string; rank?: number; rating?: number }
     profilePicture?: string
     name?: string
     username?: string
@@ -378,12 +378,30 @@ export default function ProfilePage() {
     heatmap.forEach((item: HeatmapItem) => {
       try {
         if (!item.timestamp) {
-          // console.log("Found item without timestamp");
           return;
         }
         
-        // Check if the timestamp is already in YYYY-MM-DD format
-        if (typeof item.timestamp === 'string' && item.timestamp.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+        // Handle the new format: "2025-04-23 18:39:42"
+        if (typeof item.timestamp === 'string' && item.timestamp.includes(' ')) {
+          // Split the timestamp into date and time parts
+          const [datePart] = item.timestamp.split(' ');
+          
+          // Split the date part
+          const [dateYear, dateMonth, dateDay] = datePart.split('-');
+          
+          // Format month with leading zero if needed
+          const formattedMonth = dateMonth.padStart(2, '0');
+          
+          // Create a standardized date string
+          const dateString = `${dateYear}-${formattedMonth}-${dateDay.padStart(2, '0')}`;
+          
+          // Check if this contribution belongs to the selected month and year
+          if (parseInt(dateYear) === year && formattedMonth === monthStr) {
+            dateContributionsMap[dateString] = (dateContributionsMap[dateString] || 0) + 1;
+          }
+        }
+        // Handle YYYY-MM-DD format
+        else if (typeof item.timestamp === 'string' && item.timestamp.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
           // Split the date string
           const [dateYear, dateMonth, dateDay] = item.timestamp.split('-');
           
@@ -393,10 +411,9 @@ export default function ProfilePage() {
           // Create a standardized date string
           const dateString = `${dateYear}-${formattedMonth}-${dateDay.padStart(2, '0')}`;
           
-          
           // Check if this contribution belongs to the selected month and year
           if (parseInt(dateYear) === year && formattedMonth === monthStr) {
-            dateContributionsMap[dateString] = 1;
+            dateContributionsMap[dateString] = (dateContributionsMap[dateString] || 0) + 1;
           }
         } else {
           // Handle numeric timestamps or ISO strings as before
@@ -406,7 +423,7 @@ export default function ProfilePage() {
             // If it's a Unix timestamp (in seconds), convert to milliseconds
             contributionDate = new Date(parseInt(item.timestamp) * 1000);
           } else {
-            // If it's an ISO string
+            // If it's an ISO string or other format
             contributionDate = new Date(item.timestamp);
           }
   
@@ -421,7 +438,7 @@ export default function ProfilePage() {
   
           // Check if this contribution belongs to the selected month and year
           if (parseInt(dateYear) === year && dateMonth === monthStr) {
-            dateContributionsMap[dateStr] = 1;
+            dateContributionsMap[dateStr] = (dateContributionsMap[dateStr] || 0) + 1;
           }
         }
       } catch (err) {
@@ -551,47 +568,88 @@ export default function ProfilePage() {
                     {
                       name: "LeetCode",
                       handle: profileUser.leetCode?.username || "-",
-                      rating: profileUser.leetCode?.rating || 0,
+                      solved: profileUser.leetCode?.solved,
+                      rating: profileUser.leetCode?.rating,
                       color: "#FFA116",
+                      type: "leetcode",
                     },
                     {
                       name: "GeeksForGeeks",
                       handle: profileUser.gfg?.username || "-",
-                      rating: profileUser.gfg?.rating || 0,
+                      solved: profileUser.gfg?.solved,
+                      rating: profileUser.gfg?.rating,
                       color: "#2F8D46",
+                      type: "gfg",
                     },
                     {
                       name: "CodeForces",
                       handle: profileUser.codeforces?.username || "-",
-                      rating: profileUser.codeforces?.rating || 0,
+                      solved: profileUser.codeforces?.solved,
+                      rating: profileUser.codeforces?.rating,
                       color: "#318CE7",
+                      type: "codeforces",
                     },
                     {
                       name: "CodeChef",
                       handle: profileUser.codechef?.username || "-",
-                      rating: profileUser.codechef?.rating || 0,
+                      stars: profileUser.codechef?.stars || "1*",
+                      rating: profileUser.codechef?.rating,
                       color: "#745D0B",
+                      type: "codechef",
                     },
                   ].map((platform) => (
                     <motion.div
                       key={platform.name}
                       whileHover={{ scale: 1.02 }}
-                      className="border-l-4 rounded-lg shadow-sm p-3"
+                      className="border-l-4 rounded-lg shadow-sm p-2 hover:shadow-md transition-shadow duration-200"
                       style={{ borderLeftColor: platform.color }}
                     >
                       <div className="flex justify-between items-center">
-                        <div>
-                          <div className="font-medium">{platform.name}</div>
-                          <div className="text-sm text-muted-foreground">@{platform.handle}</div>
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{platform.name}</div>
+                          <div className="text-xs text-muted-foreground">@{platform.handle}</div>
                         </div>
-                        <div className="text-lg font-bold" style={{ color: platform.color }}>
-                          {platform.rating}
+                        <div className="flex flex-col items-end space-y-1 text-right">
+                          {platform.solved !== undefined && platform.type !== "codechef" && (
+                            <div className="text-xs">
+                              <span className="text-muted-foreground">Solved:</span>{" "}
+                              {platform.handle !== "-" ? (
+                                <span className="font-semibold">{platform.solved}</span>
+                              ) : (
+                                <span className="font-semibold">--</span>
+                              )
+                            }
+                            </div>
+                          )}
+                          {platform.type === "codechef" && platform.stars !== undefined && (
+                            <div className="text-xs">
+                              <span className="text-muted-foreground">Stars:</span>{" "}
+                              {platform.handle !== "-" ? (
+                                <span className="font-semibold" style={{ color: platform.color }}>{platform.stars}</span>
+                              ) : (
+                                <span className="font-semibold" style={{ color: platform.color }}>--</span>
+                              )
+                            }
+                            </div>
+                          )}
+                          {platform.rating !== undefined && (
+                            <div className="text-xs">
+                              <span className="text-muted-foreground">Rating:</span>{" "}
+                              {platform.handle !== "-" ? (
+                                <span className="font-semibold" style={{ color: platform.color }}>{platform.rating}</span>
+                              ) : (
+                                <span className="font-semibold" style={{ color: platform.color }}>--</span>
+                              )
+                            }
+                            </div>
+                          )}
                         </div>
                       </div>
                     </motion.div>
                   ))}
                 </CardContent>
               </Card>
+
             )}
           </motion.div>
         </motion.div>
