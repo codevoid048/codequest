@@ -54,9 +54,9 @@ const Challenges: React.FC = () => {
         const res = await axios.get("http://localhost:5000/api/challenges");
         if (res.data && Array.isArray(res.data.challenges)) {
           const data = res.data.challenges.map((challenge: any) => {
-            const isSolved = user?.solveChallenges?.easy.some((item) => item.challenge === challenge._id) ||
-              user?.solveChallenges?.medium.some((item) => item.challenge === challenge._id) ||
-              user?.solveChallenges?.hard.some((item) => item.challenge === challenge._id);
+            const isSolved = user?.solveChallenges?.easy.some((item: { challenge: any; }) => item.challenge === challenge._id) ||
+              user?.solveChallenges?.medium.some((item: { challenge: any; }) => item.challenge === challenge._id) ||
+              user?.solveChallenges?.hard.some((item: { challenge: any; }) => item.challenge === challenge._id);
 
             return {
               id: challenge._id,
@@ -305,9 +305,9 @@ const Challenges: React.FC = () => {
     
     // Check if the challenge ID exists in any difficulty array
     return (
-      user.solveChallenges.easy.some(item => item.challenge === challengeId) ||
-      user.solveChallenges.medium.some(item => item.challenge === challengeId) ||
-      user.solveChallenges.hard.some(item => item.challenge === challengeId)
+      user.solveChallenges.easy.some((item: { challenge: string; }) => item.challenge === challengeId) ||
+      user.solveChallenges.medium.some((item: { challenge: string; }) => item.challenge === challengeId) ||
+      user.solveChallenges.hard.some((item: { challenge: string; }) => item.challenge === challengeId)
     );
   };
   return (
@@ -659,7 +659,7 @@ const Challenges: React.FC = () => {
                               problemUrl: problem.problemUrl
                             }}
                             markSolved={() => markSolved(problem.id)}
-                            viewSolution={(id) => {
+                            viewSolution={(id: any) => {
                             }}
                           />
                         </div>

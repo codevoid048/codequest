@@ -22,7 +22,6 @@ interface PlatformVerificationProps {
   isLinked: boolean
   username?: string
   stats?: {
-    stars: ReactNode
     solved?: number
     rank?: number | string
     rating?: number
