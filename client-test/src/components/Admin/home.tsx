@@ -3,7 +3,6 @@ import { Code, Users, Award, BarChart, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 
 interface FeatureItem {
   text: string;
