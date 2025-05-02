@@ -545,7 +545,7 @@ export default function ProfilePage() {
           </Card>
 
           {/* Coding Platforms */}
-          <motion.div variants={cardVariants} className="mt-6">
+          <motion.div variants={cardVariants} className="mt-2">
             {isOwnProfile ? (
               <PlatformManager
                 userPlatforms={{

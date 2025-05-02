@@ -33,7 +33,6 @@ export default function Leaderboard() {
   const [updatedUser, setUpdatedUser] = useState<number | null>(null);
   const [hoveredUser, setHoveredUser] = useState<number | null>(null);
   const confettiRef = useRef(null);
-  const controls = useAnimationControls();
   const searchInputRef = useRef<HTMLInputElement>(null);
   
   // Search states

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -21,6 +21,7 @@ interface PlatformVerificationProps {
   isLinked: boolean
   username?: string
   stats?: {
+    stars: ReactNode
     solved?: number
     rank?: number | string
     rating?: number
@@ -147,7 +148,7 @@ export function PlatformVerification({ platformType, isLinked, username, stats, 
       >
         <div className="flex justify-between items-center">
           <div className="flex-1">
-            <div className="font-medium text-sm">{platformName}</div>
+            <div className="font-medium">{platformName}</div>
             <div className="text-xs text-muted-foreground">@{username}</div>
           </div>
           <div className="flex flex-col items-end space-y-1 text-right">
