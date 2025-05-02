@@ -1,19 +1,12 @@
-"use client";
-
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Award,
   Calendar,
   ChevronDown,
-  Clock,
   Code,
   Filter,
-  Flame,
-  Lightbulb,
   RefreshCw,
   Search,
   SlidersHorizontal,
-  Tag,
   Zap,
 } from "lucide-react";
 import React, {
@@ -603,12 +596,13 @@ const AdminChallenges: React.FC = () => {
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         case "title":
           return a.title.localeCompare(b.title);
-        case "difficulty":
+        case "difficulty": {
           const difficultyOrder = { Easy: 1, Medium: 2, Hard: 3 };
           return (
             difficultyOrder[a.difficulty as keyof typeof difficultyOrder] -
             difficultyOrder[b.difficulty as keyof typeof difficultyOrder]
           );
+        }
         case "completion":
           return (b.solvedPercentage || 0) - (a.solvedPercentage || 0);
         default:

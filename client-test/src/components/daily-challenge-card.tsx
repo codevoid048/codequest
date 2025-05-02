@@ -81,6 +81,7 @@ export function DailyChallengeCard() {
     }[difficulty] || null;
   };
   const [isHovered, setIsHovered] = useState(false)
+  console.log(isHovered);
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -126,8 +127,6 @@ export function DailyChallengeCard() {
                 </Badge>
               ))}
             </div>
-
-
           </div>
         </CardContent>
         <CardFooter className="bg-muted/30 flex justify-between items-center">

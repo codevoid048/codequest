@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import DatePicker from "@/components/Admin/datepicker";
+import toast from 'react-hot-toast'
 
 const difficultyOptions = ["Easy", "Medium", "Hard"];
 const categoryOptions = [
@@ -149,19 +150,19 @@ export default function Admin() {
     }));
   };
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const date = new Date(e.target.value);
-    if (!isNaN(date.getTime())) {
-      setFormData((prev) => ({ ...prev, createdAt: date }));
-    }
-  };
+  // const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const date = new Date(e.target.value);
+  //   if (!isNaN(date.getTime())) {
+  //     setFormData((prev) => ({ ...prev, createdAt: date }));
+  //   }
+  // };
 
-  const formatDateForInput = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
+  // const formatDateForInput = (date: Date) => {
+  //   const year = date.getFullYear();
+  //   const month = String(date.getMonth() + 1).padStart(2, "0");
+  //   const day = String(date.getDate()).padStart(2, "0");
+  //   return `${year}-${month}-${day}`;
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -203,7 +204,11 @@ export default function Admin() {
         `Challenge created! Successfully created "${formData.title}" on ${formData.createdAt.toLocaleDateString()} from ${formData.platform}`
       );
     } catch (error) {
-      alert("Error: Failed to create challenge. Please try again.");
+      if (error instanceof Error) {
+        toast.error(error.message || "An error occurred while creating the challenge.");
+      } else {
+        toast.error("An error occurred while creating the challenge.");
+      }
     } finally {
       setIsSubmitting(false);
     }
