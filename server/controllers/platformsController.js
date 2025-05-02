@@ -84,6 +84,7 @@ export const geeksforgeeksData = async (req, res) => {
           'gfg.rank': instituteRank,
           'gfg.rating': rating
         }
+      }
     );
 
     return res.json({ success: true, message: "GFG data updated successfully" });

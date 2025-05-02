@@ -21,7 +21,7 @@ import AdminLogin from './components/Admin/index';
 import Dashboard from './components/Admin/Dashboard.tsx';
 import { useAdminStore } from './context/AdminContext.tsx';
 import AdminChallenges from './components/Admin/AdminChallenges.tsx';
-import CodeQuestSolutionViewer from './components/Challenges/solution.tsx';
+// import CodeQuestSolutionViewer from './components/Challenges/solution.tsx';
 import SolutionPage from './components/Challenges/solutionPage';
 // import NotFoundPage from './components/page404';
 
@@ -80,7 +80,7 @@ function AdminApp() {
           {/* <Route path="/codingclubadmin" element={<AdminLogin />} /> */}
           <Route path="/codingclubadmin/home" element={<AdminHome />} />
           <Route path="/codingclubadmin/users" element={<UserDashboard />} />
-           <Route path="/codingclubadmin/dashboard" element={<Dashboard />} />
+          <Route path="/codingclubadmin/dashboard" element={<Dashboard />} />
           <Route path="/codingclubadmin/challenges" element={<AdminChallenges />} />
           <Route path="/codingclubadmin/addchallenge" element={<AddChallenge />} />
           <Route path="/codingclubadmin/leaderboard" element={<Leaderboard />} />
