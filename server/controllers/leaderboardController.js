@@ -87,31 +87,50 @@ export const updateUserPoints = async (req, res) => {
 };
 
 
-// export const getLeaderboardData = async (req, res) => {
-//     try {
-//         const dummyUsers = req.body;
-//         const insertedUsers = await User.insertMany(dummyUsers);
-
-//         res.status(201).json({
-//         message: "Dummy users inserted successfully",
-//         data: insertedUsers,
-//         });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: 'Server error' });
-//     }
-// }
 
 export const getLeaderboardData = async (req, res) => {
-try {
-    const users = await User.find({ isVerified: true })
-    .sort({ points: -1 })
-    .select("username points solveChallenges streak");
-    await updateRanks(); // Update ranks before sending data
-    res.json(users);
-} catch (error) {
-    console.error("Error fetching leaderboard:", error);
-    res.status(500).json({ error: "Internal server error" });
-}
-};
+    try {
+      const page = parseInt(req.query.page) || 1; // default to page 1
+      const limit = 10;
+      const skip = (page - 1) * limit;
+  
+      await updateRanks(); // Update ranks before sending data
+  
+      const totalUsers = await User.countDocuments({ isVerified: true });
+      const users = await User.find({ isVerified: true })
+        .sort({ points: -1 })
+        .skip(skip)
+        .limit(limit)
+        .select("username points solveChallenges streak");
+  
+      const leaderboard = users.map(user => {
+        const easy = user.solveChallenges?.easy?.length || 0;
+        const medium = user.solveChallenges?.medium?.length || 0;
+        const hard = user.solveChallenges?.hard?.length || 0;
+  
+        return {
+          username: user.username,
+          points: user.points,
+          streak: user.streak,
+          solveChallenges: {
+            easy,
+            medium,
+            hard,
+            total: easy + medium + hard
+          }
+        };
+      });
+  
+      res.json({
+        currentPage: page,
+        totalPages: Math.ceil(totalUsers / limit),
+        leaderboard
+      });
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  };
+  
+
 

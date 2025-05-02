@@ -8,11 +8,13 @@ const challengeSchema = new mongoose.Schema({
     problemLink: { type: String, required: true },
     platform: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
-    }
-    
-);
-
-
+    solvedUsers: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            
+        }]
+});
 
 
 export const Challenge = mongoose.model('Challenge', challengeSchema);

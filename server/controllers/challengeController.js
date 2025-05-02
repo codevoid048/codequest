@@ -1,5 +1,6 @@
 import { Challenge } from "../models/Challenge.js";
 import { Solution } from "../models/solution.js";
+
 export const getChallenges = async (req, res) => {
     try {
         const { category, difficulty, status } = req.query;

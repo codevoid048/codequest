@@ -3,15 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { 
-   Code, BookOpen, FileCode, Check, Copy, 
-   Clock, AlertCircle, Lightbulb, 
-  Database, Award, GitBranch, Star, Tag,
-   ArrowUpRight, TerminalSquare
+  Eye, Code, BookOpen, FileCode, ChevronRight, Check, Copy, 
+  ThumbsUp, Bookmark, X, Clock, AlertCircle, Lightbulb, 
+  Database, ArrowLeft, Award, Brain, GitBranch, Star, Tag,
+  ChevronLeft, ChevronDown, ArrowUpRight, TerminalSquare
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
+import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 

@@ -10,6 +10,8 @@ services:
       - NODE_ENV=development
     depends_on:
       - typesense
+    networks:
+      - app_network
 
   typesense:
     image: typesense/typesense:28.0
@@ -18,4 +20,10 @@ services:
       - "8108:8108"
     volumes:
       - ./typesense-data:/data
-    command: '--data-dir /data --api-key=xyz --enable-cors'
+    command: '--data-dir /data --api-key=xyz --enable-cors --log-level=error'
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
