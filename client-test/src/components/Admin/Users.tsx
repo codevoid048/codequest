@@ -1,17 +1,132 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, Users, Filter, X, ArrowUpDown } from "lucide-react"
+import { Search, Users, Filter, X, ArrowUpDown, ChevronLeft, ChevronRight, MoreHorizontal, ChevronDown, ChevronUp } from "lucide-react"
 import axios from "axios"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useAuth } from "@/context/AuthContext"
+const limit=10;
+// EnhancedPagination Component
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  className?: string;
+}
 
-// Type definitions
+function EnhancedPagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+  className = "",
+}: PaginationProps) {
+  const [visiblePages, setVisiblePages] = useState<(number | string)[]>([]);
+  
+  useEffect(() => {
+    // Create visible page numbers with ellipses when needed
+    const calculateVisiblePages = () => {
+      // For small number of pages, show all
+      if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, i) => i + 1);
+      }
+      
+      // For many pages, use ellipsis
+      const pages: (number | string)[] = [];
+      
+      // Always show first page
+      pages.push(1);
+      
+      // Handle different cases based on current page position
+      if (currentPage <= 3) {
+        // Near start: show 1, 2, 3, 4, 5, ..., totalPages
+        pages.push(2, 3, 4, 5, "ellipsis", totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        // Near end: show 1, ..., totalPages-4, totalPages-3, totalPages-2, totalPages-1, totalPages
+        pages.push("ellipsis", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        // Middle: show 1, ..., currentPage-1, currentPage, currentPage+1, ..., totalPages
+        pages.push("ellipsis", currentPage - 1, currentPage, currentPage + 1, "ellipsis", totalPages);
+      }
+      
+      return pages;
+    };
+    
+    setVisiblePages(calculateVisiblePages());
+  }, [currentPage, totalPages]);
+
+  if (totalPages <= 1) return null;
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`flex items-center justify-center mt-8 ${className}`}
+    >
+      <div className="flex items-center space-x-1 p-1 bg-background/80 backdrop-blur-sm rounded-lg border border-border/40 shadow-sm">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="h-9 w-9 rounded-md text-muted-foreground hover:text-primary disabled:opacity-50"
+          aria-label="Previous page"
+        >
+          <ChevronLeft size={18} />
+        </Button>
+        
+        <AnimatePresence mode="wait">
+          {visiblePages.map((page, index) => 
+            page === "ellipsis" ? (
+              <div key={`ellipsis-${index}`} className="flex items-center justify-center w-8 h-8">
+                <MoreHorizontal size={16} className="text-muted-foreground" />
+              </div>
+            ) : (
+              <motion.div
+                key={`page-${page}`}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Button
+                  variant={currentPage === page ? "default" : "ghost"}
+                  size="icon"
+                  onClick={() => onPageChange(page as number)}
+                  className={`h-8 w-8 rounded-md font-medium ${
+                    currentPage === page
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-foreground hover:bg-primary/10 hover:text-primary"
+                  }`}
+                >
+                  {page}
+                </Button>
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="h-9 w-9 rounded-md text-muted-foreground hover:text-primary disabled:opacity-50"
+          aria-label="Next page"
+        >
+          <ChevronRight size={18} />
+        </Button>
+      </div>
+    </motion.div>
+  );
+}
+
+// Type definitions for UserDashboard
 interface User {
   _id: string
   username: string
@@ -58,16 +173,24 @@ const ANIMATIONS = {
     initial: { y: -10, opacity: 0 },
     animate: { y: 0, opacity: 1 },
     transition: { delay: 0.2, duration: 0.4 }
+  },
+  pagination: {
+    initial: { y: 20, opacity: 0 },
+    animate: { y: 0, opacity: 1 },
+    transition: { duration: 0.4, delay: 0.3 }
   }
 }
 
 export default function UserDashboard() {
   // State management
   const [users, setUsers] = useState<User[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(20)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const itemsPerPage = 10;
+  const { user } = useAuth();
   const [activeFilters, setActiveFilters] = useState<Record<FilterType, string[]>>({
     collegeName: [],
     branch: []
@@ -76,60 +199,133 @@ export default function UserDashboard() {
   const [sortBy, setSortBy] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [paginationEnabled, setPaginationEnabled] = useState(true)
   
   const navigate = useNavigate()
 
-  // Fetch users on component mount
   useEffect(() => {
-    fetchUsers()
-  }, [])
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        const res = await axios.get(`http://localhost:5000/admin/users?page=${currentPage}&limit=${itemsPerPage}`);
+        console.log("current page data", res.data);
+        if (res.data && Array.isArray(res.data.users)) {
+          setUsers(res.data.users);
+          setTotalPages(res.data.totalPages);
+          setTotalUsers(res.data.totalUsers);
+          setPaginationEnabled(res.data.totalPages > 1)
+        } else if (res.data && typeof res.data === "object") {
+          // Handle nested data structure
+          const userData = res.data.users || res.data.data || []
+          
+          if (Array.isArray(userData)) {
+            setUsers(userData)
+            setTotalPages(res.data.totalPages || 1)
+            setTotalUsers(res.data.totalUsers || userData.length)
+            setPaginationEnabled((res.data.totalPages || 1) > 1)
+          } else {
+            throw new Error("Invalid data format received from API")
+          }
+        } else {
+          throw new Error("Invalid data format received from API")
+        }
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+        setError((error as Error).message)
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUsers();
+  }, [currentPage]);
+
+  // Filter users based on search term
+  const filteredUsersList = useMemo(() => {
+    if (!searchTerm) return users;
+    return users.filter((user) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        user.username.toLowerCase().includes(searchLower) ||
+        user.collegeName.toLowerCase().includes(searchLower) ||
+        user.branch.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [users, searchTerm]);
+
+  // Pagination functions
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages && !isLoading) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1 && !isLoading) {
+      setCurrentPage(prevPage => prevPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages && !isLoading) {
+      setCurrentPage(prevPage => prevPage + 1);
+    }
+  };
+
+  // Get page numbers to display
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+
+    if (totalPages <= maxPagesToShow) {
+      // If we have less pages than max to show, display all
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always include first page
+      pages.push(1);
+
+      // Calculate middle pages
+      let startPage = Math.max(2, currentPage - 1);
+      let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+      // Adjust if at boundaries
+      if (currentPage <= 2) {
+        endPage = 4;
+      } else if (currentPage >= totalPages - 1) {
+        startPage = totalPages - 3;
+      }
+
+      // Add ellipsis if needed
+      if (startPage > 2) {
+        pages.push("...");
+      }
+
+      // Add middle pages
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+
+      // Add ellipsis if needed
+      if (endPage < totalPages - 1) {
+        pages.push("...");
+      }
+
+      // Always include last page
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
 
   // Apply filters and sorting when dependencies change
   useEffect(() => {
     applyFiltersAndSort()
   }, [searchTerm, activeFilters, sortBy, sortDirection, users])
 
-  // Computed properties
-  const totalPages = Math.ceil((filteredUsers?.length || 0) / itemsPerPage)
-  const paginatedUsers = Array.isArray(filteredUsers)
-    ? filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-    : []
-
-  // Fetch users from API
-  const fetchUsers = async () => {
-    try {
-      setLoading(true)
-      const response = await axios.get("http://localhost:5000/admin/users")
-
-      if (response.data && Array.isArray(response.data)) {
-        setUsers(response.data)
-        setFilteredUsers(response.data)
-      } else if (response.data && typeof response.data === "object") {
-        // Handle nested data structure
-        const userData = response.data.users || response.data.data || []
-        
-        if (Array.isArray(userData)) {
-          setUsers(userData)
-          setFilteredUsers(userData)
-        } else {
-          throw new Error("Invalid data format received from API")
-        }
-      } else {
-        throw new Error("Invalid data format received from API")
-      }
-    } catch (err) {
-      console.error("Error fetching users:", err)
-      setError((err as Error).message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // Apply filters and sorting to users
   const applyFiltersAndSort = () => {
     if (!Array.isArray(users) || users.length === 0) {
-      setFilteredUsers([])
       return
     }
 
@@ -171,8 +367,7 @@ export default function UserDashboard() {
       })
     }
 
-    setFilteredUsers(result)
-    setCurrentPage(1)
+    setUsers(result)
   }
 
   // Filter management
@@ -385,7 +580,7 @@ export default function UserDashboard() {
     <div className="mb-2 flex justify-between items-center">
       <h2 className="text-xl font-semibold text-foreground flex items-center">
         <Users size={20} className="mr-2 text-primary" />
-        {filteredUsers.length} {filteredUsers.length === 1 ? "User" : "Users"} Found
+        {filteredUsersList.length} {filteredUsersList.length === 1 ? "User" : "Users"} Found
       </h2>
 
       {hasActiveFilters && (
@@ -437,12 +632,13 @@ export default function UserDashboard() {
 
   const renderUsersList = () => (
     <motion.div 
+      id="users-list"
       variants={ANIMATIONS.container} 
       initial="hidden" 
       animate="visible" 
       className="space-y-2"
     >
-      {paginatedUsers.map((user) => (
+      {filteredUsersList.map((user) => (
         <motion.div key={user._id} variants={ANIMATIONS.item}>
           <Card
             className="overflow-hidden py-0 hover:shadow-md transition-all duration-300 w-full cursor-pointer border-border hover:border-primary/30 group"
@@ -477,42 +673,40 @@ export default function UserDashboard() {
     </motion.div>
   )
 
+  // Enhanced pagination component render
   const renderPagination = () => (
     totalPages > 1 && (
-      <div className="flex justify-center items-center gap-2 mt-6">
+      <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
         <Button
           variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-          disabled={currentPage === 1}
-          className="border-border hover:bg-primary/5 hover:text-primary"
+          onClick={goToPreviousPage}
+          disabled={currentPage === 1 || isLoading}
+          className="text-sm py-2 px-6 w-full sm:w-auto border-border hover:border-primary disabled:opacity-50 text-foreground"
         >
-          Previous
+          <ChevronDown className="h-4 w-4 rotate-90 ml-2" />
+         
         </Button>
-
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <Button
-            key={page}
-            variant={currentPage === page ? "default" : "outline"}
-            size="sm"
-            onClick={() => setCurrentPage(page)}
-            className={currentPage === page 
-              ? "bg-primary text-primary-foreground" 
-              : "border-border hover:bg-primary/5 hover:text-primary"
-            }
-          >
-            {page}
-          </Button>
-        ))}
-
+        <div className="flex items-center gap-1">
+          {getPageNumbers().map((page, index) => (
+            <Button
+              key={index}
+              variant={currentPage === page ? "default" : "outline"}
+              onClick={() => typeof page === 'number' && goToPage(page)}
+              className={`w-8 h-8 p-0 ${currentPage === page ? "bg-primary text-primary-foreground" : "border-border text-foreground"}`}
+              disabled={page === "..." || isLoading}
+            >
+              {page}
+            </Button>
+          ))}
+        </div>
         <Button
           variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-          disabled={currentPage === totalPages}
-          className="border-border hover:bg-primary/5 hover:text-primary"
+          onClick={goToNextPage}
+          disabled={currentPage === totalPages || isLoading}
+          className="text-sm py-2 px-6 w-full sm:w-auto border-border hover:border-primary disabled:opacity-50 text-foreground"
         >
-          Next
+        
+          <ChevronUp className="h-4 w-4 rotate-90 mr-2" />
         </Button>
       </div>
     )
@@ -527,8 +721,8 @@ export default function UserDashboard() {
       {renderResultsHeader()}
       {renderTableHeader()}
 
-      {loading ? renderLoadingState() : 
-        filteredUsers.length === 0 ? renderEmptyState() : renderUsersList()}
+      {isLoading ? renderLoadingState() : 
+        filteredUsersList.length === 0 ? renderEmptyState() : renderUsersList()}
 
       {renderPagination()}
     </div>

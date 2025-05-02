@@ -2,16 +2,31 @@ import { User } from "../models/User.js";
 import { Challenge } from "../models/Challenge.js";
 import { Solution } from "../models/solution.js";
 // import moment from "moment-timezone";
-export const getUsers = async(req, res) => {
-    try{
-        const users = await User.find({}).select("-password");
-        console.log(users)
-        res.json(users);
-    }catch(err){
+export const getUsers = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const startIndex = (page - 1) * limit;
+
+        const totalUsers = await User.countDocuments();
+        const users = await User.find({})
+            .select("-password")
+            .skip(startIndex)
+            .limit(limit)
+            .sort({ createdAt: -1 }); // Optional: Most recent users first
+
+        res.status(200).json({
+            users,
+            currentPage: page,
+            totalPages: Math.ceil(totalUsers / limit),
+            totalUsers
+        });
+    } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "error in getting users", details: err.message });
+        res.status(500).json({ error: "Error in getting users", details: err.message });
     }
-}
+};
+
 
 
 
