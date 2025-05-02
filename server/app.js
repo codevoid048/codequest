@@ -17,7 +17,7 @@ import platformRoute from "./routes/platformsRoute.js";
 import axios from "axios";
 import userRoutes from "./routes/userRoutes.js";
 import typeSenseRoutes from "./routes/typeSenseRoutes.js";
-
+//import { startStreakCronJob } from './utils/streakResetJob.js';
 dotenv.config();
 
 const app = express();
@@ -42,6 +42,7 @@ app.use('/api/user', userRoutes);
 app.use('/api', typeSenseRoutes);
 
 updateRanks();
+//startStreakCronJob();
 
 // Schedule leaderboard update every hour
 setInterval(() => {

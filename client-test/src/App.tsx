@@ -17,6 +17,10 @@ import { Sidebar } from './components/Admin/sidebar';
 import Footer from './components/footer';
 import { Navbar } from './components/Navbar';
 import AdminHome from './components/Admin/home';
+import AdminLogin from './components/Admin/index';
+import Dashboard from './components/Admin/Dashboard.tsx';
+import { useAdminStore } from './context/AdminContext.tsx';
+import AdminChallenges from './components/Admin/AdminChallenges.tsx';
 import CodeQuestSolutionViewer from './components/Challenges/solution.tsx';
 import SolutionPage from './components/Challenges/solutionPage';
 // import NotFoundPage from './components/page404';
@@ -47,6 +51,21 @@ function UserApp() {
 }
 
 function AdminApp() {
+  const { token } = useAdminStore(); // Access the token from the store or context
+
+  // If no token, show the login page
+  if (!token) {
+    return (
+      <div className="flex-grow  p-4 mt-16 md:mt-0">
+        <Routes>
+          
+          {/* Redirect to Admin Login if no token */}
+          <Route path="/codingclubadmin" element={<AdminLogin />} />
+        </Routes>
+        <Toaster position="bottom-right" toastOptions={{ duration: 2000 }} />
+      </div>
+    );
+  }
   return (
     <div className="flex min-h-screen">
       <div className="w-64 min-h-screen fixed left-0 top-0 bg-gray-800 text-white hidden md:block">
@@ -58,9 +77,11 @@ function AdminApp() {
       <div className="flex-grow md:ml-64 p-4 mt-16 md:mt-0">
         <Toaster position="bottom-right" toastOptions={{ duration: 2000 }} />
         <Routes>
-          <Route path="/codingclubadmin" element={<AdminHome />} />
+          {/* <Route path="/codingclubadmin" element={<AdminLogin />} /> */}
+          <Route path="/codingclubadmin/home" element={<AdminHome />} />
           <Route path="/codingclubadmin/users" element={<UserDashboard />} />
-          <Route path="/codingclubadmin/challenges" element={<Challenges />} />
+           <Route path="/codingclubadmin/dashboard" element={<Dashboard />} />
+          <Route path="/codingclubadmin/challenges" element={<AdminChallenges />} />
           <Route path="/codingclubadmin/addchallenge" element={<AddChallenge />} />
           <Route path="/codingclubadmin/leaderboard" element={<Leaderboard />} />
           <Route path="/codingclubadmin/logout" element={<LogoutPage />} />

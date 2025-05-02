@@ -14,7 +14,6 @@ export const leetcodeData = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-
     const url = `https://leetcode.com/graphql`;
     const query = {
         query: `query ($username: String!) {
@@ -85,7 +84,6 @@ export const geeksforgeeksData = async (req, res) => {
           'gfg.rank': instituteRank,
           'gfg.rating': rating
         }
-      }
     );
 
     return res.json({ success: true, message: "GFG data updated successfully" });

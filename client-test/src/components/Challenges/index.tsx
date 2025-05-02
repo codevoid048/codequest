@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
@@ -14,26 +14,6 @@ import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "@/platforms/leetco
 import { Award, Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, Code, Filter, Flame, Lightbulb, RefreshCw, Search, Tag, } from "lucide-react";
 import toast from "react-hot-toast";
 
-interface User {
-  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number };
-  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number };
-  streak?: number;
-  solveChallenges?: {
-    easy: Array<{
-      challenge: string; // MongoDB ObjectId as string
-      timestamp: string;
-    }>,
-    medium: Array<{
-      challenge: string; // MongoDB ObjectId as string
-      timestamp: string;
-    }>,
-    hard: Array<{
-      challenge: string; // MongoDB ObjectId as string
-      timestamp: string;
-    }>
-  }
-}
-
 interface Challenge {
   id: number;
   date: string;
@@ -46,12 +26,6 @@ interface Challenge {
   problemUrl?: string;
   _id: string;
 }
-
-// interface ProblemStatusProps {
-//   problem: { id: string; status: string; createdAt: Date };
-//   markSolved: (id: string) => void;
-//   viewSolution: (id: string) => void;
-// }
 
 type FilterTab = "all" | "solved" | "unsolved";
 
@@ -69,40 +43,38 @@ const Challenges: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
-  const [User, setUser] = useState<User | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 5;
   const { user } = useAuth();
-
-  // function convertTimestampToDate(timestamp: number) {
-  //   const date = new Date(timestamp * 1000);
-  //   return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
-  // }
-
-  
 
   useEffect(() => {
     const fetchProblems = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/challenges");
         if (res.data && Array.isArray(res.data.challenges)) {
-          const data = res.data.challenges.map((challenge: any) => ({
-            id: challenge._id,
-            date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            }),
-            title: challenge.title,
-            categories: challenge.category,
-            difficulty: challenge.difficulty,
-            platform: challenge.platform,
-            status: "Unsolved" as Challenge["status"],
-            description: challenge.description,
-            problemUrl: challenge.problemLink,
-            _id: challenge._id,
-          }));
+          const data = res.data.challenges.map((challenge: any) => {
+            const isSolved = user?.solveChallenges?.easy.some((item) => item.challenge === challenge._id) ||
+              user?.solveChallenges?.medium.some((item) => item.challenge === challenge._id) ||
+              user?.solveChallenges?.hard.some((item) => item.challenge === challenge._id);
+
+            return {
+              id: challenge._id,
+              date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }),
+              title: challenge.title,
+              categories: challenge.category,
+              difficulty: challenge.difficulty,
+              platform: challenge.platform,
+              status: isSolved ? "Solved" : "Unsolved",
+              description: challenge.description,
+              problemUrl: challenge.problemLink,
+              _id: challenge._id,
+            };
+          });
           setProblemsList(data);
           setIsLoading(false);
         }
@@ -111,7 +83,7 @@ const Challenges: React.FC = () => {
       }
     };
     fetchProblems();
-  }, []);
+  }, [user]);
 
   // Update countdown timer every second
   useEffect(() => {
@@ -210,16 +182,6 @@ const Challenges: React.FC = () => {
         ? prev.filter((c) => c !== category)
         : [...prev, category]
     );
-  };
-
-  // Mark a challenge as solved (for non-daily challenges)
-  const markSolved = (id: number) => {
-    setProblemsList((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: "Solved" } : p))
-    );
-    if (dailyProblem?.id !== id) {
-      setShowPopup(true);
-    }
   };
 
   const checkIfProblemSolved = async () => {
@@ -760,7 +722,7 @@ const Challenges: React.FC = () => {
 
       {showPopup && (
         <ChallengePopup
-          userStreak={User?.streak || 0}
+          userStreak={user?.streak || 0}
           onClose={() => {
             setShowPopup(false);
             if (dailyProblem) markPopupShownToday(dailyProblem.id);
