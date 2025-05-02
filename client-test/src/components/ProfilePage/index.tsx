@@ -144,7 +144,6 @@ export default function ProfilePage() {
       const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
       try {
         const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
-        console.log("Fetched user data:", response.data)
         setProfileUser(response.data.user)
       } catch (err) {
         console.error("Error fetching user:", err)

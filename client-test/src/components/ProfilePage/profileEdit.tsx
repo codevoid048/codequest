@@ -318,7 +318,7 @@ export default function ProfileEditForm() {
     }
 
     return (
-        <div className="min-h-screen p-6 flex items-center justify-center bg-background overflow-hidden">
+        <div className="min-h-screen p-6 pb-10 flex items-center justify-center bg-background overflow-hidden">
             <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-background"></div>
 
@@ -579,61 +579,6 @@ export default function ProfileEditForm() {
                                                 </Command>
                                             </PopoverContent>
                                         </Popover>
-                                    </div>
-                                </motion.div>
-
-                                {/* Coding Profiles */}
-                                <motion.div variants={item} className="md:col-span-2">
-                                    <div className="bg-secondary/20 rounded-lg p-4 border border-border/50">
-                                        <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-                                            <Code className="w-5 h-5 text-primary" /> Coding Profiles
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="leetcode">LeetCode</Label>
-                                                <Input
-                                                    id="leetcode"
-                                                    placeholder="Your LeetCode username"
-                                                    className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
-                                                    value={formData.otherLinks.find((link) => link.platform === "leetcode")?.url || ""}
-                                                    onChange={(e) => handleLinkChange("leetcode", e.target.value)}
-                                                />
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <Label htmlFor="codeforces">Codeforces</Label>
-                                                <Input
-                                                    id="codeforces"
-                                                    placeholder="Your Codeforces username"
-                                                    className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
-                                                    value={formData.otherLinks.find((link) => link.platform === "codeforces")?.url || ""}
-                                                    onChange={(e) => handleLinkChange("codeforces", e.target.value)}
-                                                />
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <Label htmlFor="codechef">CodeChef</Label>
-                                                <Input
-                                                    id="codechef"
-                                                    placeholder="Your CodeChef username"
-                                                    className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
-                                                    value={formData.otherLinks.find((link) => link.platform === "codechef")?.url || ""}
-                                                    onChange={(e) => handleLinkChange("codechef", e.target.value)}
-                                                />
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <Label htmlFor="gfg">GeeksForGeeks</Label>
-                                                <Input
-                                                    id="gfg"
-                                                    placeholder="Your GeeksForGeeks username"
-                                                    className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
-                                                    value={formData.otherLinks.find((link) => link.platform === "gfg")?.url || ""}
-                                                    onChange={(e) => handleLinkChange("gfg", e.target.value)}
-                                                />
-                                            </div>
-
-                                        </div>
                                     </div>
                                 </motion.div>
 

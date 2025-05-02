@@ -367,16 +367,7 @@ export function Navbar() {
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3">
                       {renderUserAvatar()}
-                      <div>
-                        <p className="font-medium">{user?.name || user?.username}</p>
-                        <p className="text-sm text-muted-foreground">@{user?.username}</p>
-                      </div>
                     </div>
-                    <Link to={`/profile/${user?.username}`}>
-                      <Button variant="outline" className="w-full">
-                        View Profile
-                      </Button>
-                    </Link>
                     <Button onClick={logout} variant="outline" className="w-full">
                       Logout
                     </Button>

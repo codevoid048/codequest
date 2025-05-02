@@ -5,12 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DailyChallengeCard } from "@/components/daily-challenge-card"
 import { HeroSection } from "@/components/hero-section"
 import { FeatureCard } from "@/components/feature-card"
+import { useAuth } from "@/context/AuthContext"
 
 
 const Home = () => {
-
-
-        return (
+    const { user } = useAuth();
+    
+    return (
         <div>
             <HeroSection />
 
@@ -109,7 +110,7 @@ const Home = () => {
 
                 <div className="flex justify-center pt-8 w-full">
                     <Button asChild size="lg" variant="secondary" className="group">
-                        <Link to="/register">
+                        <Link to={`${!user ? '/register' : '/challenges'}`}>
                             Start Coding Today
                             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </Link>
