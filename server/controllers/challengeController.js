@@ -2,36 +2,39 @@ import { Challenge } from "../models/Challenge.js";
 import { Solution } from "../models/solution.js";
 
 export const getChallenges = async (req, res) => {
-    try {
-        const { category, difficulty, status } = req.query;
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const filter = {};
+  try {
+      const { category, difficulty } = req.query;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 5;
 
-        if (category) filter.category = category;
-        if (difficulty) filter.difficulty = difficulty;
+      const filter = {};
+      if (category) filter.category = category;
+      if (difficulty) filter.difficulty = difficulty;
 
-        const startIndex = (page - 1) * limit;
+      const startIndex = (page - 1) * limit;
 
-        const challenges = await Challenge.find(filter)
-            .limit(limit)
-            .skip(startIndex)
-            .sort({ createdAt: -1 });
+      // Get total documents first for pagination info
+      const totalChallenges = await Challenge.countDocuments(filter);
 
-        const total = await Challenge.countDocuments(filter);
+      // Fetch challenges with sorting, skipping, and limiting
+      const challenges = await Challenge.find(filter)
+          .sort({ createdAt: -1 }) // Most recent first
+          .skip(startIndex)
+          .limit(limit);
 
-        return res.status(200).json({
-            challenges,
-            totalPages: Math.ceil(total / limit),
-            currentPage: page,
-            totalChallenges: total
-        });
+      return res.status(200).json({
+          challenges,
+          currentPage: page,
+          totalPages: Math.ceil(totalChallenges / limit),
+          totalChallenges
+      });
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
-    }
-}
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+  }
+};
+
 
 export const getChallengeById = async (req, res) => {
     try {
