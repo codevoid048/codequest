@@ -54,9 +54,9 @@ const Challenges: React.FC = () => {
         const res = await axios.get("http://localhost:5000/api/challenges");
         if (res.data && Array.isArray(res.data.challenges)) {
           const data = res.data.challenges.map((challenge: any) => {
-            const isSolved = user?.solveChallenges?.easy.some((item: { challenge: any; }) => item.challenge === challenge._id) ||
-              user?.solveChallenges?.medium.some((item: { challenge: any; }) => item.challenge === challenge._id) ||
-              user?.solveChallenges?.hard.some((item: { challenge: any; }) => item.challenge === challenge._id);
+            const isSolved: boolean = user?.solveChallenges?.easy.some((item: { challenge: string }) => item.challenge === challenge._id) ||
+              user?.solveChallenges?.medium.some((item: { challenge: string }) => item.challenge === challenge._id) ||
+              user?.solveChallenges?.hard.some((item: { challenge: string }) => item.challenge === challenge._id);
 
             return {
               id: challenge._id,
@@ -300,16 +300,6 @@ const Challenges: React.FC = () => {
     localStorage.setItem(key, "true");
   };
 
-  const isChallengeSolved = (challengeId: string) => {
-    if (!user?.solveChallenges) return false;
-    
-    // Check if the challenge ID exists in any difficulty array
-    return (
-      user.solveChallenges.easy.some((item: { challenge: string; }) => item.challenge === challengeId) ||
-      user.solveChallenges.medium.some((item: { challenge: string; }) => item.challenge === challengeId) ||
-      user.solveChallenges.hard.some((item: { challenge: string; }) => item.challenge === challengeId)
-    );
-  };
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Daily Challenge Section */}
@@ -658,9 +648,8 @@ const Challenges: React.FC = () => {
                               description: problem.description,
                               problemUrl: problem.problemUrl
                             }}
-                            markSolved={() => markSolved(problem.id)}
-                            viewSolution={(id: any) => {
-                            }}
+                            // markSolved={() => markSolved(problem.id)}
+                            // viewSolution={(id: any) => {}}
                           />
                         </div>
                       </CardContent>

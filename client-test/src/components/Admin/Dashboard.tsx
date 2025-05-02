@@ -342,42 +342,42 @@ export default function Dashboard() {
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart
-                      data={collegeData}
+                      data={collegeData as { name: string; users: number }[]}
                       layout="vertical"
                       margin={{ left: 50, right: 30, top: 20, bottom: 20 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={true} />
                       <XAxis
-                        type="number"
-                        domain={[0, dataMax => Math.ceil(dataMax * 1.2)]} // Add 20% padding to max value
-                        allowDecimals={false} // Ensure only whole numbers
-                        axisLine={{ stroke: '#666' }}
-                        tick={{ fill: '#888', fontSize: 12 }}
+                      type="number"
+                      domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]} // Add 20% padding to max value
+                      allowDecimals={false} // Ensure only whole numbers
+                      axisLine={{ stroke: '#666' }}
+                      tick={{ fill: '#888', fontSize: 12 }}
                       />
                       <YAxis
-                        type="category"
-                        dataKey="name"
-                        width={140}
-                        axisLine={{ stroke: '#666' }}
-                        tick={{ fill: '#888', fontSize: 12 }}
-                        tickFormatter={(value) => value.length > 20 ? `${value.substring(0, 18)}...` : value}
+                      type="category"
+                      dataKey="name"
+                      width={140}
+                      axisLine={{ stroke: '#666' }}
+                      tick={{ fill: '#888', fontSize: 12 }}
+                      tickFormatter={(value: string) => value.length > 20 ? `${value.substring(0, 18)}...` : value}
                       />
                       <Tooltip
-                        formatter={(value) => [`${value} users`, 'Users']}
-                        labelFormatter={(label) => `College: ${label}`}
-                        contentStyle={{ backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #ccc' }}
+                      formatter={(value: number) => [`${value} users`, 'Users']}
+                      labelFormatter={(label: string) => `College: ${label}`}
+                      contentStyle={{ backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #ccc' }}
                       />
                       <Bar
-                        dataKey="users"
-                        fill="#8884d8"
-                        maxBarSize={25}
-                        radius={[0, 4, 4, 0]}
-                        label={{
-                          position: 'right',
-                          fill: '#666',
-                          fontSize: 12,
-                          formatter: (value) => value.users
-                        }}
+                      dataKey="users"
+                      fill="#8884d8"
+                      maxBarSize={25}
+                      radius={[0, 4, 4, 0]}
+                      label={{
+                        position: 'right',
+                        fill: '#666',
+                        fontSize: 12,
+                        formatter: (value: { users: number }) => value.users
+                      }}
                       />
                     </BarChart>
                   </ResponsiveContainer>

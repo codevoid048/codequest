@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
-import { Upload, CheckCircle, User, Mail, Hash, BookOpen, Building, Code, X, Crop, Search, ChevronDown, Check } from "lucide-react"
+import { Upload, CheckCircle, User, Mail, Hash, BookOpen, Building, X, Crop, ChevronDown, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -163,7 +163,7 @@ export default function ProfileEditForm() {
         }
     }
 
-    const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: Area) => {
+    const onCropComplete = useCallback((croppedAreaPixels: Area) => {
         setCroppedAreaPixels(croppedAreaPixels)
     }, [])
 
@@ -176,7 +176,7 @@ export default function ProfileEditForm() {
             image.src = url
         })
 
-    const getCroppedImg = async (imageSrc: string, pixelCrop: Area, rotation = 0): Promise<string> => {
+    const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string> => {
         const image = await createImage(imageSrc)
         const canvas = document.createElement("canvas")
         const ctx = canvas.getContext("2d")
@@ -301,13 +301,9 @@ export default function ProfileEditForm() {
                 setTimeout(() => setButtonText("Save Profile"), 3000)
             }
             navigate(-1);
-        } catch (error: any) {
-            console.error("Error updating profile:", error)
-
-            if (error.response) {
-                toast.error(error.response.data.message || "Failed to update profile")
-            } else if (error.request) {
-                toast.error("No response from server. Please check your network connection.")
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                toast.error(error.response.data.message);
             } else {
                 toast.error("Failed to update profile. Please try again.")
             }

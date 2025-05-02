@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { 
-  Eye, Code, BookOpen, FileCode, ChevronRight, Check, Copy, 
-  ThumbsUp, Bookmark, X, Clock, AlertCircle, Lightbulb, 
-  Database, ArrowLeft, Award, Brain, GitBranch, Star, Tag,
-  ChevronLeft, ChevronDown, ArrowUpRight, TerminalSquare
+  Code, BookOpen, FileCode, Check, Copy, 
+  Clock, AlertCircle, Lightbulb, 
+  Database, Award, GitBranch, Star, Tag,
+  ArrowUpRight, TerminalSquare
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -101,25 +101,25 @@ const SyntaxHighlighter: React.FC<{ code: string; language: string }> = ({ code,
 };
 
 // Section header component
-const SectionHeader: React.FC<{ 
-  icon: React.ReactNode; 
-  title: string; 
-  color: string;
-}> = ({ icon, title, color }) => {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex items-center gap-2 mb-2"
-    >
-      <div className={`p-2 rounded-lg ${color}`}>
-        {icon}
-      </div>
-      <h3 className="text-lg font-medium">{title}</h3>
-    </motion.div>
-  );
-};
+// const SectionHeader: React.FC<{ 
+//   icon: React.ReactNode; 
+//   title: string; 
+//   color: string;
+// }> = ({ icon, title, color }) => {
+//   return (
+//     <motion.div 
+//       initial={{ opacity: 0, y: -10 }}
+//       animate={{ opacity: 1, y: 0 }}
+//       transition={{ duration: 0.3 }}
+//       className="flex items-center gap-2 mb-2"
+//     >
+//       <div className={`p-2 rounded-lg ${color}`}>
+//         {icon}
+//       </div>
+//       <h3 className="text-lg font-medium">{title}</h3>
+//     </motion.div>
+//   );
+// };
 
 // New Category Pill component
 const CategoryPill: React.FC<{ category: string; index: number }> = ({ category, index }) => {
@@ -150,13 +150,15 @@ const SolutionPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState("java");
-  const codeContainerRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState("description");
-  const [isHeaderSticky, setIsHeaderSticky] = useState(false);
+  //const codeContainerRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<string>("description");
+  const [isHeaderSticky, setIsHeaderSticky] = useState<boolean>(false);
+  
 
   useEffect(() => {
     const handleScroll = () => {
       setIsHeaderSticky(window.scrollY > 10);
+      console.log(isHeaderSticky, activeTab);
     };
     
     window.addEventListener('scroll', handleScroll);

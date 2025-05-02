@@ -189,9 +189,9 @@ export default function ProfilePage() {
             ...prev,
             [platform]: {
               username,
-              solved: response.data.platformData?.solved || prev[platform]?.solved,
-              rank: response.data.platformData?.rank || prev[platform]?.rank,
-              rating: response.data.platformData?.rating || prev[platform]?.rating,
+              solved: response.data.platformData?.solved || 0,
+              rank: response.data.platformData?.rank || 0,
+              rating: response.data.platformData?.rating || 0,
             },
           };
         });

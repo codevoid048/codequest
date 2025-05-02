@@ -9,7 +9,6 @@ import {
     BookOpen,
     Zap,
     ChevronDown,
-    Star,
     Award,
     Rocket,
 } from "lucide-react"

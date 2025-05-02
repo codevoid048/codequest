@@ -1,4 +1,4 @@
-// import cron from 'node-cron';
+import cron from 'node-cron';
 import { User } from '../models/User.js';
 
 const getLastSolvedDate = (challenges = []) => {
@@ -39,8 +39,8 @@ const resetUserStreaks = async () => {
 };
 
 // Runs daily at 00:01 AM IST (Adjust timezone on server or handle with `TZ`)
-// export const startStreakCronJob = () => {
-//   cron.schedule('01 0 * * *', resetUserStreaks, {
-//     timezone: "Asia/Kolkata"
-//   });
-// };
+export const startStreakCronJob = () => {
+  cron.schedule('01 0 * * *', resetUserStreaks, {
+    timezone: "Asia/Kolkata"
+  });
+};
