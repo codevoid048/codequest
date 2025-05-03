@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAdminStore } from "@/context/AdminContext";
+import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Code, Menu, Moon, Sun, X } from "lucide-react";
@@ -12,7 +12,7 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  const { token, logout } = useAdminStore();
+  const { isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,10 +21,10 @@ export function Sidebar() {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isScrolled]);
 
   const navItems = [
-    { href: "/codingclubadmin", label: "Home" },
+    { href: "/codingclubadmin/", label: "Home" },
     { href: "/codingclubadmin/leaderboard", label: "Leaderboard" },
     { href: "/codingclubadmin/users", label: "Users" },
     { href: "/codingclubadmin/challenges", label: "Challenges" },
@@ -32,7 +32,7 @@ export function Sidebar() {
   ];
 
   const SidebarContent = () => (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -61,10 +61,10 @@ export function Sidebar() {
           >
             <Link
               to={item.href}
-              className={`block py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`block py-2 px-4 rounded-lg text-sm text-white dark:text-foreground font-medium transition-all duration-200 ${
                 location.pathname === item.href
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "text-muted-foreground hover:bg-muted hover:text-primary"
+                  ? "bg-primary/10 text-primary  font-semibold"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary dark:hover:bg-muted dark:hover:text-primary"
               }`}
               onClick={() => setIsOpen(false)}
             >
@@ -93,7 +93,7 @@ export function Sidebar() {
         </motion.div>
 
         <AnimatePresence>
-          {!token ? (
+          {!isAuthenticated ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -105,7 +105,7 @@ export function Sidebar() {
                 asChild
                 className="w-full bg-primary/10 text-primary"
               >
-                <Link to="/login" onClick={() => setIsOpen(false)}>Log In</Link>
+                <Link to="/codingclubadmin" onClick={() => setIsOpen(false)}>Log In</Link>
               </Button>
             </motion.div>
           ) : (
@@ -156,20 +156,20 @@ export function Sidebar() {
           </Link>
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="hover:bg-muted">
+              <Button variant="ghost" size="icon" className="  hover:bg-muted">
                 <motion.div
                   animate={{ rotate: isOpen ? 90 : 0 }}
                   transition={{ duration: 0.2 }}
                 >
                   {isOpen ? (
-                    <X className="h-5 w-5 text-primary" />
+                    <X className="h-5 w-5 text-primary dark:text-primary" />
                   ) : (
-                    <Menu className="h-5 w-5 text-primary" />
+                    <Menu className="h-5 w-5 text-primary dark:text-primary" />
                   )}
                 </motion.div>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0 border-r bg-background">
+            <SheetContent side="left" className="w-72 p-0 border-r bg-primary">
               <SidebarContent />
             </SheetContent>
           </Sheet>

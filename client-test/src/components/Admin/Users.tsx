@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
@@ -191,7 +189,7 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-4">
+    <div className="container mx-3 px-4 py-4">
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -395,7 +393,7 @@ export default function UserDashboard() {
             <motion.div key={user._id} variants={itemVariants}>
               <Card
                 className="overflow-hidden py-0 hover:shadow-md transition-shadow duration-300 w-full cursor-pointer"
-                onClick={() => navigate(`/profile/${user.username}`)}
+                onClick={() => navigate(`/codingclubadmin/users/profile/${user.username}`)}
               >
                 <CardContent className="flex flex-row items-center p-2">
                   <Avatar className="h-8 w-8 mr-3">

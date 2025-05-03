@@ -658,8 +658,6 @@ const Challenges: React.FC = () => {
                               description: problem.description,
                               problemUrl: problem.problemUrl
                             }}
-                            // markSolved={() => markSolved(problem.id)}
-                            // viewSolution={(id: any) => {}}
                           />
                         </div>
                       </CardContent>
