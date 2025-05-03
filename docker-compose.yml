@@ -1,10 +1,22 @@
 services:
+
+  frontend:
+    build:
+      context: ./client-test
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
   backend:
-    build: .
+    build: ./server
     ports:
       - "5000:5000"
     volumes:
-      - .:/app
+      - ./server:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
@@ -19,7 +31,7 @@ services:
     ports:
       - "8108:8108"
     volumes:
-      - ./typesense-data:/data
+      - ./server/typesense-data:/data
     command: '--data-dir /data --api-key=xyz --enable-cors --log-level=error'
     networks:
       - app_network

@@ -1,10 +1,10 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ParticlesBackground } from "@/components/particles-background";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios, { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
@@ -15,7 +15,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { login } = useAuth();
-  const navigate = useNavigate();
   const { login: storeLogin} = useAdminStore(); // Access store login action
   
 

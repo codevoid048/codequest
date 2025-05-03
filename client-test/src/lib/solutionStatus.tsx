@@ -37,9 +37,9 @@ const SolutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
     
     // Check if the challenge ID exists in any difficulty array
     return (
-      user.solveChallenges.easy.some(item => item.challenge === challengeId) ||
-      user.solveChallenges.medium.some(item => item.challenge === challengeId) ||
-      user.solveChallenges.hard.some(item => item.challenge === challengeId)
+      user.solveChallenges.easy.some((item: { challenge: string }) => item.challenge === challengeId) ||
+      user.solveChallenges.medium.some((item: { challenge: string }) => item.challenge === challengeId) ||
+      user.solveChallenges.hard.some((item: { challenge: string }) => item.challenge === challengeId)
     );
   };
 

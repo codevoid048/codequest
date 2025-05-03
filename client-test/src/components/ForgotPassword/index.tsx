@@ -13,7 +13,7 @@ export default function ForgotPassword() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setMessage("");
         setError("");
@@ -22,8 +22,12 @@ export default function ForgotPassword() {
         try {
             const res = await axios.post("http://localhost:5000/api/auth/forgot-password", { email });
             setMessage(res.data.message);
-        } catch (error) {
-            setError(error.response?.data?.message || "Something went wrong");
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                setError(error.response.data.message);
+            } else {
+                setError("Something went wrong");
+            }
         } finally {
             setLoading(false);
         }

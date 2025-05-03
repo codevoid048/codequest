@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, X, Code, Clock, Database, TagIcon } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "react-hot-toast";
 import axios from 'axios';
 
 interface Category {
@@ -15,7 +15,6 @@ interface Category {
 }
 
 const AddChallenge: React.FC = () => {
-  const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState('');
@@ -53,11 +52,7 @@ const AddChallenge: React.FC = () => {
       });
 
       if (response.status === 201) {
-        toast({
-          title: "Success",
-          description: "Challenge added successfully!",
-          variant: "default",
-        });
+        toast.success("Challenge added successfully!");
         // Reset form
         setTitle('');
         setDescription('');
@@ -69,11 +64,7 @@ const AddChallenge: React.FC = () => {
       }
     } catch (error) {
       console.error('Error adding challenge:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add challenge. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to add challenge. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

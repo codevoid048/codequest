@@ -25,18 +25,13 @@ export default function Leaderboard() {
   const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [updatedUser, setUpdatedUser] = useState<number | null>(null);
-  const [hoveredUser, setHoveredUser] = useState<string | null>(null);
   const confettiRef = useRef(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Search states
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [usernameHovered, setUsernameHovered] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   // Calculate total pages based on filtered users
   const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
@@ -114,7 +109,7 @@ export default function Leaderboard() {
   // Reset search
   const clearSearch = () => {
     setSearchTerm("");
-    setIsSearching(false);
+    //setIsSearching(false);
     if (searchInputRef.current) {
       searchInputRef.current.blur();
     }
@@ -284,7 +279,6 @@ export default function Leaderboard() {
                     // Safely update search term
                     const value = e.target.value;
                     setSearchTerm(value);
-                    setIsSearching(value.trim() !== "");
                   }}
                   className="flex-1 bg-transparent py-3 px-3 outline-none transition-all duration-300
     text-sm text-white dark:text-gray-800 placeholder:text-gray-400 dark:placeholder:text-gray-500"
@@ -393,7 +387,7 @@ export default function Leaderboard() {
             )}
           >
             <AnimatePresence>
-              {getCurrentUsers().map((user, index) => {
+              {getCurrentUsers().map((user) => {
                 const isTop3 = user.rank <= 3;
                 const isUpdated = user.id === updatedUser;
                 const isSearchMatch = searchTerm && user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase());
@@ -661,33 +655,4 @@ export default function Leaderboard() {
     </div>
 
   );
-}
-
-
-
-// Optimized highlight search match function
-function highlightSearchMatch(text: string, searchTerm: string) {
-  if (!searchTerm || !text) return <>{text}</>;
-
-  try {
-    const parts = text.split(new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'));
-
-    return (
-      <>
-        {parts.map((part, index) => {
-          if (typeof part === "string" && part.toLowerCase() === searchTerm.toLowerCase()) {
-            return (
-              <span key={index} className="bg-primary/40 font-bold rounded px-1">
-                {part}
-              </span>
-            );
-          }
-          return <span key={index}>{part}</span>;
-        })}
-      </>
-    );
-  } catch (error) {
-    console.error("Error highlighting text:", error);
-    return <>{text}</>; // Fallback to regular text
-  }
 }
