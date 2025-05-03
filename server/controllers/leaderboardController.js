@@ -129,8 +129,6 @@ export const getLeaderboardData = async (req, res) => {
             };
         });
 
-        console.log("Leaderboard data:", leaderboard);
-
         res.json(leaderboard);
     } catch (error) {
         console.error("Error fetching leaderboard:", error);
