@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
@@ -14,26 +14,6 @@ import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "@/platforms/leetco
 import { Award, Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, Code, Filter, Flame, Lightbulb, RefreshCw, Search, Tag, } from "lucide-react";
 import toast from "react-hot-toast";
 
-interface User {
-  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number };
-  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number };
-  streak?: number;
-  solveChallenges?: {
-    easy: Array<{
-      challenge: string; // MongoDB ObjectId as string
-      timestamp: string;
-    }>,
-    medium: Array<{
-      challenge: string; // MongoDB ObjectId as string
-      timestamp: string;
-    }>,
-    hard: Array<{
-      challenge: string; // MongoDB ObjectId as string
-      timestamp: string;
-    }>
-  }
-}
-
 interface Challenge {
   id: number;
   date: string;
@@ -46,12 +26,6 @@ interface Challenge {
   problemUrl?: string;
   _id: string;
 }
-
-// interface ProblemStatusProps {
-//   problem: { id: string; status: string; createdAt: Date };
-//   markSolved: (id: string) => void;
-//   viewSolution: (id: string) => void;
-// }
 
 type FilterTab = "all" | "solved" | "unsolved";
 
@@ -69,40 +43,38 @@ const Challenges: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
-  const [User, setUser] = useState<User | null>(null);
   const [showPopup, setShowPopup] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const itemsPerPage = 5;
   const { user } = useAuth();
-
-  // function convertTimestampToDate(timestamp: number) {
-  //   const date = new Date(timestamp * 1000);
-  //   return date.toISOString().replace("T", " ").split(".")[0] + " UTC";
-  // }
-
-  
 
   useEffect(() => {
     const fetchProblems = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/challenges");
         if (res.data && Array.isArray(res.data.challenges)) {
-          const data = res.data.challenges.map((challenge: any) => ({
-            id: challenge._id,
-            date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            }),
-            title: challenge.title,
-            categories: challenge.category,
-            difficulty: challenge.difficulty,
-            platform: challenge.platform,
-            status: "Unsolved" as Challenge["status"],
-            description: challenge.description,
-            problemUrl: challenge.problemLink,
-            _id: challenge._id,
-          }));
+          const data = res.data.challenges.map((challenge: any) => {
+            const isSolved: boolean = user?.solveChallenges?.easy.some((item: { challenge: string }) => item.challenge === challenge._id) ||
+              user?.solveChallenges?.medium.some((item: { challenge: string }) => item.challenge === challenge._id) ||
+              user?.solveChallenges?.hard.some((item: { challenge: string }) => item.challenge === challenge._id);
+
+            return {
+              id: challenge._id,
+              date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }),
+              title: challenge.title,
+              categories: challenge.category,
+              difficulty: challenge.difficulty,
+              platform: challenge.platform,
+              status: isSolved ? "Solved" : "Unsolved",
+              description: challenge.description,
+              problemUrl: challenge.problemLink,
+              _id: challenge._id,
+            };
+          });
           setProblemsList(data);
           setIsLoading(false);
         }
@@ -111,18 +83,18 @@ const Challenges: React.FC = () => {
       }
     };
     fetchProblems();
-  }, []);
+  }, [user]);
 
   // Update countdown timer every second
   useEffect(() => {
     const updateCountdown = () => {
-      const now = new Date();
-      const midnight = new Date(now);
-      midnight.setHours(24, 0, 0, 0);
-      const timeDiff = midnight.getTime() - now.getTime();
-      const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+      const now = new Date()
+      const midnight = new Date(now)
+      midnight.setHours(24, 0, 0, 0)
+      const timeDiff = midnight.getTime() - now.getTime()
+      const hours = Math.floor(timeDiff / (1000 * 60 * 60))
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000)
       setCountdown({
         hours: hours.toString().padStart(2, "0"),
         minutes: minutes.toString().padStart(2, "0"),
@@ -141,10 +113,10 @@ const Challenges: React.FC = () => {
     today.setHours(0, 0, 0, 0);
 
     const todayProblem = problemsList.find((problem) => {
-      const problemDate = new Date(problem.date);
-      problemDate.setHours(0, 0, 0, 0);
-      return problemDate.getTime() === today.getTime();
-    });
+      const problemDate = new Date(problem.date)
+      problemDate.setHours(0, 0, 0, 0)
+      return problemDate.getTime() === today.getTime()
+    })
 
     return todayProblem || problemsList[0];
   }, [problemsList]);
@@ -162,30 +134,30 @@ const Challenges: React.FC = () => {
       const problemDate = new Date(problem.date);
       problemDate.setHours(0, 0, 0, 0);
 
-      const isPastOrToday = problemDate <= today;
-      const matchesTab = activeTab === "all" || problem.status.toLowerCase() === activeTab;
-      const matchesDifficulty = selectedDifficulties.length === 0 || selectedDifficulties.includes(problem.difficulty);
+      const isPastOrToday = problemDate <= today
+      const matchesTab = activeTab === "all" || problem.status.toLowerCase() === activeTab
+      const matchesDifficulty = selectedDifficulties.length === 0 || selectedDifficulties.includes(problem.difficulty)
       const matchesCategory =
         selectedCategories.length === 0 || problem.categories.some((cat: string) => selectedCategories.includes(cat));
       const matchesSearch =
         !searchTerm ||
         problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        problem.description.toLowerCase().includes(searchTerm.toLowerCase());
-      return isPastOrToday && matchesTab && matchesDifficulty && matchesCategory && matchesSearch;
-    });
+        problem.description.toLowerCase().includes(searchTerm.toLowerCase())
+      return isPastOrToday && matchesTab && matchesDifficulty && matchesCategory && matchesSearch
+    })
 
     result.sort((a, b) => {
       switch (sortOption) {
         case "date":
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
+          return new Date(b.date).getTime() - new Date(a.date).getTime()
         case "difficulty":
-          return ["Easy", "Medium", "Hard"].indexOf(a.difficulty) - ["Easy", "Medium", "Hard"].indexOf(b.difficulty);
+          return ["Easy", "Medium", "Hard"].indexOf(a.difficulty) - ["Easy", "Medium", "Hard"].indexOf(b.difficulty)
         case "status":
-          return a.status.localeCompare(b.status);
+          return a.status.localeCompare(b.status)
         default:
-          return 0;
+          return 0
       }
-    });
+    })
 
     return result;
   }, [problemsList, activeTab, selectedDifficulties, selectedCategories, searchTerm, sortOption]);
@@ -210,16 +182,6 @@ const Challenges: React.FC = () => {
         ? prev.filter((c) => c !== category)
         : [...prev, category]
     );
-  };
-
-  // Mark a challenge as solved (for non-daily challenges)
-  const markSolved = (id: number) => {
-    setProblemsList((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: "Solved" } : p))
-    );
-    if (dailyProblem?.id !== id) {
-      setShowPopup(true);
-    }
   };
 
   const checkIfProblemSolved = async () => {
@@ -482,6 +444,7 @@ const Challenges: React.FC = () => {
             </Button>
           </div>
           <Card className={`shadow-lg border-0 bg-card ${isFilterOpen ? "block" : "hidden lg:block"}`}>
+            {difficultyLevels.length > 0 ? (
             <CardContent className="p-6 space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
@@ -561,6 +524,33 @@ const Challenges: React.FC = () => {
                 </div>
               </div>
             </CardContent>
+            ) : (
+            <CardContent className="p-6 space-y-6">
+              <div>
+                <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
+                <div className="flex flex-col gap-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
+                      <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="h-1 w-full bg-muted animate-pulse"></div>
+              <div>
+                <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
+                <div className="flex flex-col gap-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
+                      <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+            )}
           </Card>
         </div>
 
@@ -668,9 +658,6 @@ const Challenges: React.FC = () => {
                               description: problem.description,
                               problemUrl: problem.problemUrl
                             }}
-                            markSolved={() => markSolved(problem.id)}
-                            viewSolution={(id) => {
-                            }}
                           />
                         </div>
                       </CardContent>
@@ -732,7 +719,7 @@ const Challenges: React.FC = () => {
 
       {showPopup && (
         <ChallengePopup
-          userStreak={User?.streak || 0}
+          userStreak={user?.streak || 0}
           onClose={() => {
             setShowPopup(false);
             if (dailyProblem) markPopupShownToday(dailyProblem.id);
@@ -740,7 +727,7 @@ const Challenges: React.FC = () => {
         />
       )}
     </div>
-  );
-};
+  )
+}
 
 export default Challenges;

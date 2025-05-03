@@ -1,4 +1,5 @@
-import { Github, Linkedin, Twitter, Instagram, MessageCircle, User, Mail } from 'lucide-react';
+import { Linkedin, Instagram, User, Mail } from 'lucide-react';
+import { FaXTwitter, FaYoutube, FaWhatsapp } from 'react-icons/fa6';
 
 const Footer = () => {
     return (
@@ -22,20 +23,40 @@ const Footer = () => {
                             Empowering future developers through coding challenges, hackathons, and collaborative learning. Join our community to enhance your skills and connect with like-minded enthusiasts.
                         </p>
                         <div className="flex space-x-4 mt-6">
-                            <a className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300" href="#">
-                                <Github className="w-6 h-6" />
-                            </a>
-                            <a className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300" href="#">
+                            <a
+                                className="text-muted-500 hover:text-[#0077B5] transition-transform hover:scale-110 duration-300"
+                                href="https://www.linkedin.com/in/srkr-coding-club-549799293?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
+                                aria-label="LinkedIn"
+                            >
                                 <Linkedin className="w-6 h-6" />
                             </a>
-                            <a className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300" href="#">
-                                <Twitter className="w-6 h-6" />
+                            <a
+                                className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300"
+                                href="https://twitter.com/srkr_coding_club"
+                                aria-label="Twitter"
+                            >
+                                <FaXTwitter className="w-6 h-6" />
                             </a>
-                            <a className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300" href="#">
+                            <a
+                                className="text-muted-500 hover:text-pink-500 transition-transform hover:scale-110 duration-300"
+                                href="https://www.instagram.com/srkr_coding_club?igsh=MWRoZGd5OHM0ZnZ4ZA=="
+                                aria-label="Instagram"
+                            >
                                 <Instagram className="w-6 h-6" />
                             </a>
-                            <a className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300" href="#">
-                                <MessageCircle className="w-6 h-6" />
+                            <a
+                                className="text-muted-500 hover:text-green-600 transition-transform hover:scale-110 duration-300"
+                                href="https://whatsapp.com/channel/0029VaAHYUQCnA7ph3c6mK3n"
+                                aria-label="WhatsApp"
+                            >
+                                <FaWhatsapp className="w-6 h-6" />
+                            </a>
+                            <a
+                                className="text-muted-500 hover:text-red-600 transition-transform hover:scale-110 duration-300"
+                                href="https://youtube.com/@srkrcodingclub?si=97vLyVvdDeBopM17"
+                                aria-label="YouTube"
+                            >
+                                <FaYoutube className="w-6 h-7" />
                             </a>
                         </div>
                     </div>
@@ -68,9 +89,9 @@ const Footer = () => {
                                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg text-white mr-3 group-hover:scale-110 transition-transform duration-300">
                                     <User className="w-5 h-5" />
                                 </div>
-                                <div className='mt-0'>
-                                    <h4 className="text-blue-700 font-medium">Dr. Ramakrishna</h4>
-                                    <p className="text-muted-500 text-sm">+91 76543 21098</p>
+                                <div className="mt-0">
+                                    <h4 className="text-blue-700 font-medium">William Keri</h4>
+                                    <p className="text-muted-500 text-sm">+91 99665 42463</p>
                                 </div>
                             </li>
                         </ul>
@@ -85,7 +106,7 @@ const Footer = () => {
                             <span className="text-muted-500 text-sm">srkrcodingclubofficial@gmail.com</span>
                         </div>
                         <p className="text-muted-500 text-sm">
-                            &copy; {new Date().getFullYear()} SrkrCodingClub. All rights reserved.
+                            &copy; {new Date().getFullYear()} SRKRCodingClub. All rights reserved.
                         </p>
                     </div>
                 </div>

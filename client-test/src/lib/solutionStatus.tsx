@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Eye, Code, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+import { useAuth } from "@/context/AuthContext";
 interface ProblemStatusProps {
   problem: {
     id: string;
@@ -14,8 +14,7 @@ interface ProblemStatusProps {
   };
 }
 
-const solutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
-  const navigate = useNavigate();
+const SolutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
   // Function to check if solution button should be displayed
   const canShowSolutionButton = () => {
     const createdDate = new Date(problem.createdAt);
@@ -33,22 +32,38 @@ const solutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
     navigate(`/challenges/solution/${problem.id}`);
   };
 
+  const isChallengeSolved = (challengeId: string) => {
+    if (!user?.solveChallenges) return false;
+    
+    // Check if the challenge ID exists in any difficulty array
+    return (
+      user.solveChallenges.easy.some((item: { challenge: string }) => item.challenge === challengeId) ||
+      user.solveChallenges.medium.some((item: { challenge: string }) => item.challenge === challengeId) ||
+      user.solveChallenges.hard.some((item: { challenge: string }) => item.challenge === challengeId)
+    );
+  };
 
-  const isSolved = problem.status === "Solved";
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const isSolved = isChallengeSolved(problem.id) ? "Solved" : "Not Solved";
 
   return (
     <div className="flex flex-col gap-2 self-start sm:self-center min-w-[100px]">
-      {isSolved ? (
-        <Button
-          size="sm"
-          className="text-xs py-1 px-2 w-full bg-green-600 hover:bg-green-700 text-white border-0 transition-colors duration-200"
-          onClick={(e) => {
-            e.stopPropagation();
-            window.open(problem.problemUrl, '_blank');
-          }}
-        >
-          <CheckCircle className="h-3 w-3 mr-1" /> Solved
-        </Button>
+      {isSolved === "Solved" ? (
+        <>
+          {problem.status = "Solved"}
+          <Button
+            size="sm"
+            className="text-xs py-1 px-2 w-full bg-green-600 hover:bg-green-700 text-white border-0 transition-colors duration-200"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(problem.problemUrl, '_blank');
+            }}
+          >
+            <CheckCircle className="h-3 w-3 mr-1" /> Solved
+          </Button>
+        </>
       ) : (
         <Button
           size="sm"
@@ -77,4 +92,4 @@ const solutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
   );
 };
 
-export default solutionStatus;
+export default SolutionStatus;

@@ -138,15 +138,12 @@ export default function ProfilePage() {
 
 
   useEffect(() => {
-
     const fetchProfileUser = async () => {
       setLoading(true)
       setError(null)
       const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
-
       try {
         const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
-        console.log("Fetched user data:", response.data)
         setProfileUser(response.data.user)
       } catch (err) {
         console.error("Error fetching user:", err)
@@ -192,9 +189,9 @@ export default function ProfilePage() {
             ...prev,
             [platform]: {
               username,
-              solved: response.data.platformData?.solved || prev[platform]?.solved,
-              rank: response.data.platformData?.rank || prev[platform]?.rank,
-              rating: response.data.platformData?.rating || prev[platform]?.rating,
+              solved: response.data.platformData?.solved || 0,
+              rank: response.data.platformData?.rank || 0,
+              rating: response.data.platformData?.rating || 0,
             },
           };
         });
@@ -545,7 +542,7 @@ export default function ProfilePage() {
           </Card>
 
           {/* Coding Platforms */}
-          <motion.div variants={cardVariants} className="mt-6">
+          <motion.div variants={cardVariants} className="mt-2">
             {isOwnProfile ? (
               <PlatformManager
                 userPlatforms={{
