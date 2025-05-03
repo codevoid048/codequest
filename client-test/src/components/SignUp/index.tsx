@@ -7,6 +7,8 @@ import { ParticlesBackground } from "@/components/particles-background";
 import { useState } from "react";
 import axios from "axios";
 import { toast } from 'react-hot-toast';
+import { Eye, EyeOff } from "lucide-react"; // Import Eye icons
+
 
 interface FormData {
     name: string;
@@ -29,6 +31,17 @@ export default function RegisterPage() {
     const [isOtpSent, setIsOtpSent] = useState<boolean>(false); // Track if OTP is sent
     const [error, setError] = useState<string>("");
     const [tempUserData, setTempUserData] = useState<FormData | null>(null); // State for temporary user data
+    const [showPassword, setShowPassword] = useState(false); // State for password visibility
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State for confirm password visibility
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
+    const toggleConfirmPasswordVisibility = () => {
+        setShowConfirmPassword(!showConfirmPassword);
+    };
+
     const navigate = useNavigate();
 
     // Handle input changes
@@ -152,12 +165,32 @@ export default function RegisterPage() {
 
                             <div className="space-y-2">
                                 <Label htmlFor="password">Password</Label>
-                                <Input name="password" id="password" type="password" value={formData.password} onChange={handleChange} required />
+                                {/* <Input name="password" id="password" type="password" value={formData.password} onChange={handleChange} required /> */}
+                                <div className="relative">
+                                    <Input name="password" id="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleChange} required />
+                                    <Button type="button" variant="ghost" size="icon"
+                                        className="absolute right-0 top-0 h-full px-3 py-2 text-gray-400 hover:text-gray-600"
+                                        onClick={togglePasswordVisibility}
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="space-y-2">
                                 <Label htmlFor="confirmPassword">Confirm password</Label>
-                                <Input name="confirmPassword" id="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} required />
+                                {/* <Input name="confirmPassword" id="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} required /> */}
+                                <div className="relative">
+                                    <Input name="confirmPassword" id="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={formData.confirmPassword} onChange={handleChange} required />
+                                    <Button type="button" variant="ghost" size="icon"
+                                        className="absolute right-0 top-0 h-full px-3 py-2 text-gray-400 hover:text-gray-600"
+                                        onClick={toggleConfirmPasswordVisibility}
+                                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </Button>
+                                </div>
                             </div>
 
                             {error && <p className="text-red-500 text-sm">{error}</p>}
