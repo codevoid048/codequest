@@ -26,7 +26,7 @@ export function DailyChallengeCard() {
     const fetchProblems = async () => {
       try {
         const res = await axios.get('http://localhost:5000/api/challenges');
-        console.log(res.data);
+
         if (res.data && Array.isArray(res.data.challenges)) {
           const data = res.data.challenges.map((challenge: any) => ({
             id: challenge._id,
@@ -80,16 +80,13 @@ export function DailyChallengeCard() {
       Hard: <Award className="h-4 w-4 text-rose-400 dark:text-rose-600" />,
     }[difficulty] || null;
   };
-  const [isHovered, setIsHovered] = useState(false)
-  console.log(isHovered);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
       className="mx-auto"
     > {isLoading ? (
       <div className="flex justify-center items-center h-40">
