@@ -47,9 +47,10 @@ export const registerUser = async (req, res) => {
 
     const { valid, reason, validators } = await isEmailValid(email);
 
-    console.log("Email Validation Response:", { valid, reason, validators });
+    console.log("Email Validation Response:", { reason: validators[reason].reason });
+    const validationReason = validators[reason].reason;
 
-    if (!valid) return res.status(400).json({ message: "Please provide a valid email address", reason: validators[reason].reason });
+    if (!valid) return res.status(400).json({ message: `Please provide a valid email address, ${validationReason}` });
 
     const usernameRegex = /^[a-z][a-z0-9_]*$/;
     if (!usernameRegex.test(username)) {

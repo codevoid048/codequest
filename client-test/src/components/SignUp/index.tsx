@@ -92,8 +92,8 @@ export default function RegisterPage() {
         } catch (err: any) {
             console.error("Registration error:", err);
             if (err.response) {
-                toast.error(err.response.data.error);
-                setError(err.response.data.error || "Something went wrong. Please try again.");
+                toast.error(err.response.data.message);
+                setError(err.response.data.message || "Something went wrong. Please try again.");
             } else if (err.request) {
                 toast.error("No response from server. Check if backend is running");
                 setError("No response from server. Check if backend is running.");
