@@ -7,7 +7,7 @@ import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import challengeRoutes from "./routes/challengeRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
-import { updateRanks } from "./utils/leaderBoardCache.js";
+import { warmupLeaderboardCache } from "./utils/leaderBoardCache.js";
 import passport from "passport";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
@@ -41,13 +41,13 @@ app.use('/platforms', platformRoute);
 app.use('/api/user', userRoutes);
 app.use('/api', typeSenseRoutes);
 
-updateRanks();
+warmupLeaderboardCache();
 startStreakCronJob();
 
-// Schedule leaderboard update every hour
+// Schedule leaderboard update every half-hour
 setInterval(() => {
-  updateRanks();
-}, 300000);
+  warmupLeaderboardCache();
+}, 30 * 60 * 1000);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

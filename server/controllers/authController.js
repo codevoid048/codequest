@@ -3,9 +3,9 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto"; // For generating OTP
 import { User } from "../models/User.js"
 import { Activity } from "../models/Activity.js"
-import { sendVerificationEmail } from "../utils/emailService.js"
+import { sendOTPEmail } from "../utils/emailService.js"
 import { isEmailValid } from "../utils/isEmailValid.js";
-import { sendEmail } from "../utils/sendEmail.js"
+// import { sendEmail } from "../utils/sendEmail.js"
 
 // Generate JWT token function
 const generateToken = (user) => {
@@ -47,9 +47,10 @@ export const registerUser = async (req, res) => {
 
     const { valid, reason, validators } = await isEmailValid(email);
 
-    console.log("Email Validation Response:", { valid, reason, validators });
+    console.log("Email Validation Response:", { reason: validators[reason].reason });
+    const validationReason = validators[reason].reason;
 
-    if (!valid) return res.status(400).json({ message: "Please provide a valid email address", reason: validators[reason].reason });
+    if (!valid) return res.status(400).json({ message: `Please provide a valid email address, ${validationReason}` });
 
     const usernameRegex = /^[a-z][a-z0-9_]*$/;
     if (!usernameRegex.test(username)) {
@@ -91,12 +92,12 @@ export const registerUser = async (req, res) => {
     };
 
     // Send OTP to user's email
-    await sendEmail(email, "Email Verification OTP", `Your OTP is: ${otp}`);
+    await sendOTPEmail(email, otp);
 
     res.status(201).json({ message: "OTP sent to email. Verify to complete registration.", tempUserData });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Server error", details: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -123,8 +124,8 @@ export const verifyEmail = async (req, res) => {
 
     res.status(200).json({ message: "Email verified and user registered successfully!" });
   } catch (error) {
-    console.error("Verification error:", error);
-    res.status(500).json({ error: "Server error" });
+    //console.error("Verification error:", error);
+    res.status(500).json({ error: error.message });
   }
 };
 
