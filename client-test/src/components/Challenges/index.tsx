@@ -300,16 +300,17 @@ const Challenges: React.FC = () => {
     localStorage.setItem(key, "true");
   };
 
-  const isChallengeSolved = (challengeId: string) => {
-    if (!user?.solveChallenges) return false;
+  // const isChallengeSolved = (challengeId: string) => {
+  //   if (!user?.solveChallenges) return false;
     
-    // Check if the challenge ID exists in any difficulty array
-    return (
-      user.solveChallenges.easy.some((item: { challenge: string; }) => item.challenge === challengeId) ||
-      user.solveChallenges.medium.some((item: { challenge: string; }) => item.challenge === challengeId) ||
-      user.solveChallenges.hard.some((item: { challenge: string; }) => item.challenge === challengeId)
-    );
-  };
+  //   // Check if the challenge ID exists in any difficulty array
+  //   return (
+  //     user.solveChallenges.easy.some((item: { challenge: string; }) => item.challenge === challengeId) ||
+  //     user.solveChallenges.medium.some((item: { challenge: string; }) => item.challenge === challengeId) ||
+  //     user.solveChallenges.hard.some((item: { challenge: string; }) => item.challenge === challengeId)
+  //   );
+  // };
+  
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Daily Challenge Section */}

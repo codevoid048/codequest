@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
 import { 
@@ -163,7 +163,7 @@ const CategoryPill: React.FC<{ category: string; index: number }> = ({ category,
 };
 
 const SolutionPage: React.FC = () => {
-  const { problemId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [solution, setSolution] = useState<SolutionData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -173,6 +173,7 @@ const SolutionPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("description");
   const [isHeaderSticky, setIsHeaderSticky] = useState<boolean>(false);
   
+  const { problemId } = location.state as { problemId: string };
 
   useEffect(() => {
     const handleScroll = () => {

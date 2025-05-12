@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Eye, Code, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { slugify } from './slugify';
+
 interface ProblemStatusProps {
   problem: {
     id: string;
@@ -29,7 +31,12 @@ const SolutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
   const handleViewSolution = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/challenges/solution/${problem.id}`);
+    const slug = slugify(problem.title || '');
+    navigate(`/challenges/solution/${slug}`, {
+      state: {
+        problemId: problem.id,
+      }
+    });
   };
 
   const isChallengeSolved = (challengeId: string) => {

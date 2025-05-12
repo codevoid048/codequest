@@ -1,8 +1,6 @@
 import express from "express";
-import session from "express-session";
 import cors from "cors";
 import morgan from "morgan";
-import path from "path";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import challengeRoutes from "./routes/challengeRoutes.js";
@@ -14,7 +12,6 @@ import dotenv from "dotenv";
 import adminAuthRoutes from "./routes/adminAuthRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import platformRoute from "./routes/platformsRoute.js";
-import axios from "axios";
 import userRoutes from "./routes/userRoutes.js";
 import typeSenseRoutes from "./routes/typeSenseRoutes.js";
 import { startStreakCronJob } from './utils/streakResetJob.js';
