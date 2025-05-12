@@ -4,7 +4,7 @@ import { getChallenges, getChallengeById,getSolutionByChallengeId} from "../cont
 const router = express.Router();
 
 router.get('/', getChallenges);
-router.get('/:id', protect,getChallengeById);
+router.get('/:id', protect, getChallengeById);
 router.get('/solution/:id', getSolutionByChallengeId);
 
 export default router;
