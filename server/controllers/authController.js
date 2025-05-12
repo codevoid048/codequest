@@ -3,9 +3,9 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto"; // For generating OTP
 import { User } from "../models/User.js"
 import { Activity } from "../models/Activity.js"
-import { sendVerificationEmail } from "../utils/emailService.js"
+import { sendOTPEmail } from "../utils/emailService.js"
 import { isEmailValid } from "../utils/isEmailValid.js";
-import { sendEmail } from "../utils/sendEmail.js"
+// import { sendEmail } from "../utils/sendEmail.js"
 
 // Generate JWT token function
 const generateToken = (user) => {
@@ -91,12 +91,12 @@ export const registerUser = async (req, res) => {
     };
 
     // Send OTP to user's email
-    await sendEmail(email, "Email Verification OTP", `Your OTP is: ${otp}`);
+    await sendOTPEmail(email, otp);
 
     res.status(201).json({ message: "OTP sent to email. Verify to complete registration.", tempUserData });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Server error", details: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -123,8 +123,8 @@ export const verifyEmail = async (req, res) => {
 
     res.status(200).json({ message: "Email verified and user registered successfully!" });
   } catch (error) {
-    console.error("Verification error:", error);
-    res.status(500).json({ error: "Server error" });
+    //console.error("Verification error:", error);
+    res.status(500).json({ error: error.message });
   }
 };
 
