@@ -3,9 +3,11 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto"; // For generating OTP
 import { User } from "../models/User.js"
 import { Activity } from "../models/Activity.js"
-import { sendOTPEmail } from "../utils/emailService.js"
+import { sendOTPEmail, deleteConfirmationMail } from "../utils/emailService.js"
 import { isEmailValid } from "../utils/isEmailValid.js";
-// import { sendEmail } from "../utils/sendEmail.js"
+import mongoose from "mongoose";
+import { client } from "../utils/typesenseClient.js";
+import { warmupLeaderboardCache } from "../utils/leaderBoardCache.js";
 
 // Generate JWT token function
 const generateToken = (user) => {
@@ -17,18 +19,18 @@ const generateToken = (user) => {
 const setAuthCookies = (res, user, token) => {
   // Store JWT in HTTP-only cookie
   res.cookie("jwt", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   // Store full user object in HTTP-only cookie
   res.cookie("user", JSON.stringify(user), {
-      httpOnly: true, // Prevent JavaScript access
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    httpOnly: true, // Prevent JavaScript access
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 };
 
@@ -47,8 +49,8 @@ export const registerUser = async (req, res) => {
 
     const { valid, reason, validators } = await isEmailValid(email);
 
-    console.log("Email Validation Response:", { reason: validators[reason].reason });
-    const validationReason = validators[reason].reason;
+    //console.log("Email Validation Response:", { reason: validators[reason].reason });
+    const validationReason = validators[reason] ? validators[reason].reason : "unknown reason";
 
     if (!valid) return res.status(400).json({ message: `Please provide a valid email address, ${validationReason}` });
 
@@ -179,16 +181,16 @@ export const logoutUser = async (req, res) => {
 
   // Clear JWT cookie
   res.clearCookie("jwt", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax",
   });
 
   // Clear user cookie
   res.clearCookie("user", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Lax",
   });
 
   res.status(200).json({ message: "Logged out successfully" });
@@ -199,58 +201,58 @@ export const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-      const user = await User.findOne({ email });
-      if (!user) return res.status(404).json({ message: "User not found" });
-      if (!user.isVerified) return res.status(404).json({ message: "Verify your email first" });
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user.isVerified) return res.status(404).json({ message: "Verify your email first" });
 
-      // Generate Reset Token (JWT)
-      const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.RESET_TOKEN_EXPIRY });
+    // Generate Reset Token (JWT)
+    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.RESET_TOKEN_EXPIRY });
 
-      // Save Token & Expiry in DB
-      user.resetPasswordToken = resetToken;
-      user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 min expiry
-      await user.save();
+    // Save Token & Expiry in DB
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
+    await user.save();
 
-      // Send Reset Link via Email
-      const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
-      await sendEmail(user.email, "Password Reset Request", `Click the link to reset password: ${resetLink}`);
+    // Send Reset Link via Email
+    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+    await sendEmail(user.email, "Password Reset Request", `Click the link to reset password: ${resetLink}`);
 
-      res.status(200).json({ message: "Reset link sent to email" });
+    res.status(200).json({ message: "Reset link sent to email" });
   } catch (error) {
-      res.status(500).json({ message: "Server Error1", error });
+    res.status(500).json({ message: "Server Error1", error });
   }
 };
 
 export const resetPassword = async (req, res) => {
-    const { token } = req.params;
-    const { newPassword } = req.body;
-    console.log(token);
+  const { token } = req.params;
+  const { newPassword } = req.body;
+  console.log(token);
 
-    try {
-        // Verify JWT Token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id);
+  try {
+    // Verify JWT Token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
 
-        if (!user || user.resetPasswordToken !== token || user.resetPasswordExpires < Date.now()) {
-            return res.status(400).json({ message: "Invalid or expired token" });
-        }
-        // Hash New Password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-        // Update Password in DB
-        user.password = hashedPassword;
-        user.resetPasswordToken = null;
-        user.resetPasswordExpires = null;
-        await user.save();
-
-        res.status(200).json({ message: "Password reset successful" });
-    } catch (error) {
-        res.status(400).json({ message: "Invalid or expired token1", error });
+    if (!user || user.resetPasswordToken !== token || user.resetPasswordExpires < Date.now()) {
+      return res.status(400).json({ message: "Invalid or expired token" });
     }
+    // Hash New Password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update Password in DB
+    user.password = hashedPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successful" });
+  } catch (error) {
+    res.status(400).json({ message: "Invalid or expired token1", error });
+  }
 };
 
-export const getCurrentUser = async(req, res) => {
+export const getCurrentUser = async (req, res) => {
   try {
     const token = req.cookies.jwt;
     if (!token) {
@@ -259,7 +261,7 @@ export const getCurrentUser = async(req, res) => {
 
     // Decode the JWT to get the user ID
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id; 
+    const userId = decoded.id;
 
     // Fetch full user data from database
     const user = await User.findById(userId).select("-password"); // Exclude password
@@ -272,5 +274,79 @@ export const getCurrentUser = async(req, res) => {
   } catch (error) {
     console.error("Error fetching user:", error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const requestingUserId = req.user._id;
+
+    // Authorization check
+    if (id !== requestingUserId.toString()) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({ error: 'Unauthorized to delete this account' });
+    }
+
+    // Verify user exists
+    const user = await User.findById(id);
+    if (!user) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    try {
+      await client.collections("users").documents(id.toString()).delete();
+      console.log(`Deleted user ${id} from Typesense`);
+    } catch (typesenseError) {
+      // Only ignore "Not Found" errors
+      if (!typesenseError.message.includes("Not Found")) {
+        await session.abortTransaction();
+        session.endSession();
+        throw typesenseError;
+      }
+      console.log(`User ${id} already removed from Typesense`);
+    }
+
+    const mail = user.email;
+    // Perform deletion
+    await User.findByIdAndDelete(id).session(session);
+
+    await session.commitTransaction();
+    await session.endSession();
+
+    await warmupLeaderboardCache();
+
+    res.clearCookie('jwt', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    res.clearCookie('user', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    deleteConfirmationMail(mail);
+    
+    return res.status(204).end(); // Proper status code for deletions
+
+  } catch (error) {
+    await session.abortTransaction().catch(abortError => {
+      console.error('Abort transaction failed:', abortError);
+    });
+    session.endSession();
+    console.error('Error deleting user:', error);
+    return res.status(500).json({
+      error: 'Internal server error',
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    });
   }
 };

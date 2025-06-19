@@ -1,11 +1,12 @@
 import express from "express"
-import { registerUser, loginUser, verifyEmail, logoutUser, googleAuthCallback, githubAuthCallback, forgotPassword, resetPassword, getCurrentUser } from "../controllers/authController.js"
+import { registerUser, loginUser, verifyEmail, logoutUser, googleAuthCallback, githubAuthCallback, forgotPassword, resetPassword, getCurrentUser, deleteUser } from "../controllers/authController.js"
 const router = express.Router();
 import passport from "../config/passport.js";
 import { verifyProfiles } from "../controllers/verifyProfiles.js";
+import { protect } from "../middleware/auth.js";
 
 router.post('/register', registerUser);
-router.post('/verify', verifyEmail); // Change to POST for OTP verification
+router.post('/verify', verifyEmail);
 router.post('/login', loginUser);
 
 router.get("/google",passport.authenticate("google", { scope: ["profile", "email"], session: false}));
@@ -19,5 +20,7 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 router.get("/me", getCurrentUser);
 router.post("/verifyacc", verifyProfiles);
+
+router.delete('/users/:id', protect, deleteUser);
 
 export default router;

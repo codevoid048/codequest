@@ -92,7 +92,7 @@ export default function RegisterPage() {
         } catch (err: any) {
             console.error("Registration error:", err);
             if (err.response) {
-                toast.error(err.response.data.message);
+                toast.error(err.response.data.message || "Something went wromg, Please try again.");
                 setError(err.response.data.message || "Something went wrong. Please try again.");
             } else if (err.request) {
                 toast.error("No response from server. Check if backend is running");

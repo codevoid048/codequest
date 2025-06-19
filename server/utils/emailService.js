@@ -1,33 +1,3 @@
-// import nodemailer from "nodemailer";
-// import dotenv from "dotenv";
-// dotenv.config();
-
-// export const sendVerificationEmail = async (email, token) => {
-//   try {
-//       //console.log("Sending email to:", email);  // Debugging log
-//       //console.log("Verification token:", token);  // Debugging log
-//       const transporter = nodemailer.createTransport({
-//           service: "gmail",
-//           auth: {
-//               user: process.env.EMAIL_USER,
-//               pass: process.env.EMAIL_PASS,
-//           },
-//       });
-//       const verificationLink = `${process.env.BASE_URL}/api/auth/verify/${token}`;
-//       const mailOptions = {
-//           from: process.env.EMAIL_USER,
-//           to: email,
-//           subject: "Verify Your Email",
-//           html: `<p>Click <a href="${verificationLink}">here</a> to verify your email.</p>`,
-//       };
-
-//       await transporter.sendMail(mailOptions);
-//       console.log(`Verification email sent to ${email}`);
-//   } catch (error) {
-//       console.error("Error sending email:", error);
-//   }
-// };
-
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
@@ -124,6 +94,44 @@ export const sendOTPEmail = async (email, otp) => {
 
     // Update rate limit only after successful send
     updateRateLimit(email);
+
+    return true;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const deleteConfirmationMail = async (email) => {
+  if (!email) {
+    throw new Error("Email is required");
+  }
+
+  try {
+    const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+    await transporter.verify();
+
+    const mailOptions = {
+      from: `"CodeQuest" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Your Account Has Been Deleted",
+      text: `We're sorry to see you go. Your account has been successfully deleted.\n\nIf this wasn't you, please contact our support team immediately.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+          <h2>Account Deletion Confirmation</h2>
+          <p>We're sorry to see you go. Your account has been successfully deleted.</p>
+          <p>All your data has been removed from our systems in accordance with our privacy policy.</p>
+          <p>If this wasn't you, please contact our support team immediately at support@codequest.com.</p>
+          <p>Thank you for being part of our community.</p>
+          <p style="margin-top: 30px; color: #666;">
+            <small>The CodeQuest Team</small>
+          </p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    //console.log(`Deletion confirmation email sent to ${email}`);
 
     return true;
   } catch (error) {

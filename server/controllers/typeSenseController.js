@@ -3,9 +3,9 @@ import { client } from "../utils/typesenseClient.js";
 export const test = async () => {
     try {
         const res = await client.health.retrieve();
-        console.log("Typesense is alive 🚀:", res);
+        console.log("Typesense is alive:", res);
     } catch (err) {
-        console.error("Connection failed ❌:", err);
+        console.error("Connection failed:", err);
     }
 };
 
@@ -68,7 +68,6 @@ export const searchUser = async (req, res) => {
             ...hit.document,
             type: "user",
         }));
-        // Merge & send
         res.json([...users]);
     } catch (err) {
         console.error(err);

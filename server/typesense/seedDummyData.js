@@ -47,15 +47,15 @@ const seedData = async () => {
       batch_size: 100
     });
 
-    console.log("✅ Successfully seeded data to Typesense");
+    console.log("Successfully seeded data to Typesense");
   } catch (err) {
-    //console.error("❌ Failed to seed data:", err);
+    //console.error("Failed to seed data:", err);
     console.log("Detailed Import Errors:", err.importResults);
   }
 };
 
 const start = async () => {
-console.log("⏳ Waiting for Typesense to be ready...");
+console.log("Waiting for Typesense to be ready...");
 await sleep(8000); // wait 8 seconds
 await seedData();
 };

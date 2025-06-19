@@ -16,6 +16,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
+  logoutWhileDeletingUser: () => Promise<void>;
   token: string | null;
   fetchUser: () => Promise<void>; // Export fetchUser to allow manual refresh
   verificationString: string;
@@ -99,11 +100,23 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setToken(null);
       localStorage.removeItem('auth_token');
 
-      window.location.href = "/login"; // Redirect to login page
+      window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
+
+  const logoutWhileDeletingUser = async () => {
+    try {
+      setUser(null);
+      setIsAuthenticated(false);
+      setToken(null);
+      localStorage.removeItem('auth_token');
+    }
+    catch (error) {
+      console.error("Logout Failed: ", error);
+    }
+  }
 
   // Create the context value object
   const contextValue: AuthContextType = {
@@ -111,6 +124,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     isAuthenticated,
     login,
     logout,
+    logoutWhileDeletingUser,
     token,
     verificationString,
     setVerificationString,

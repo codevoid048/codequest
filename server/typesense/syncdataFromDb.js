@@ -13,7 +13,7 @@ const syncAllChallenges = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log("✅ Connected to MongoDB");
+    console.log("Connected to MongoDB");
 
     const challenges = await Challenge.find();
 
@@ -30,12 +30,12 @@ const syncAllChallenges = async () => {
       action: "upsert",
     });
 
-    console.log("✅ Synced all challenges:", result);
+    console.log("Synced all challenges:", result);
 
     await mongoose.disconnect();
-    console.log("🔌 Disconnected from MongoDB");
+    console.log("Disconnected from MongoDB");
   } catch (err) {
-    console.error("❌ Error syncing challenges:", err);
+    console.error("Error syncing challenges:", err);
   }
 };
 
@@ -45,7 +45,7 @@ const syncAllUsers = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log("✅ Connected to MongoDB");
+    console.log("Connected to MongoDB");
 
     const users = await User.find();
 
@@ -64,12 +64,12 @@ const syncAllUsers = async () => {
       action: "upsert",
     });
 
-    console.log("✅ Synced all users:", result);
+    console.log("Synced all users:", result);
 
     await mongoose.disconnect();
-    console.log("🔌 Disconnected from MongoDB");
+    console.log("Disconnected from MongoDB");
   } catch (err) {
-    console.error("❌ Error syncing users:", err);
+    console.error("Error syncing users:", err);
   }
 };
 

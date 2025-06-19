@@ -9,14 +9,14 @@ const createCollection = async (schema) => {
     const exists = collections.find((c) => c.name === schema.name);
     if (exists) {
       await client.collections(schema.name).delete();
-      console.log(`🗑️ Deleted old collection: ${schema.name}`);
+      console.log(` Deleted old collection: ${schema.name}`);
     }
 
     // Create fresh
     await client.collections().create(schema);
-    console.log(`✅ Collection created: ${schema.name}`);
+    console.log(` Collection created: ${schema.name}`);
   } catch (err) {
-    console.error(`❌ Error (collection: ${schema.name}):`, err.message);
+    console.error(` Error (collection: ${schema.name}):`, err.message);
   }
 };
 
@@ -25,7 +25,7 @@ const setup = async () => {
     await createCollection(userSchema);
     await createCollection(challengeSchema);
   } catch (err) {
-    console.error("❌ Error:", err);
+    console.error(" Error:", err);
   }
 };
 
