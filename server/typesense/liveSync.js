@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { client } from "../utils/typesenseClient.js";
 import { getResumeToken, saveResumeToken } from "../utils/resumeTokenStore.js";
 
-const withRetry = async (fn, retries = 5, delay = 500) => {
+const withRetry = async (fn, retries = 5, delay = 2000) => {
   for (let i = 0; i < retries; i++) {
     try {
       return await fn();
@@ -46,13 +46,13 @@ export const setupMongoChangeStream = async () => {
         await withRetry(() =>
           client.collections("users").documents(documentKey._id.toString()).delete()
         );
-        console.log("❌ Deleted user from Typesense");
+        console.log(" Deleted user from Typesense");
       }
 
       //await saveResumeToken("users", _id);
       await new Promise((res) => setTimeout(res, 100));
     } catch (err) {
-      //console.error("⚠️ User ChangeStream Error:", err.message);
+      //console.error(" User ChangeStream Error:", err.message);
     }
   });
 
@@ -83,15 +83,15 @@ export const setupMongoChangeStream = async () => {
         await withRetry(() =>
           client.collections("challenges").documents(documentKey._id.toString()).delete()
         );
-        console.log("❌ Deleted challenge from Typesense");
+        console.log(" Deleted challenge from Typesense");
       }
 
       //await saveResumeToken("challenges", _id);
       await new Promise((res) => setTimeout(res, 100));
     } catch (err) {
-      //console.error("⚠️ Challenge ChangeStream Error:", err.message);
+      //console.error(" Challenge ChangeStream Error:", err.message);
     }
   });
 
-  console.log("🔄 Listening to MongoDB changes with resume tokens and retry logic...");
+  console.log("Listening to MongoDB changes with resume tokens and retry logic...");
 };

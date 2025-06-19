@@ -38,8 +38,8 @@ function UserApp() {
         <Route path="/profile/:username" element={<ProfilePage />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/challenges/solution/:problemId" element={<SolutionPage />} />
-        {/* <Route path="*" element={<NotFoundPage />} /> */}
+        <Route path="/challenges/solution/:slug" element={<SolutionPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <Footer />
     </div>
@@ -78,7 +78,7 @@ function AdminApp() {
           <Route path="/codingclubadmin/users/profile/:username" element={<ProfilePage />} />
           <Route path="/codingclubadmin/addchallenge" element={<AddChallenge />} />
           <Route path="/codingclubadmin/leaderboard" element={<Leaderboard />} />
-          {/* <Route path="/codingclubadmin/*" element={<NotFoundPage />} /> */}
+          <Route path="/codingclubadmin/*" element={<NotFoundPage />} />
         </Routes>
       </div>
     </div>
@@ -87,33 +87,6 @@ function AdminApp() {
 
 function App() {
   const location = useLocation();
-  const isInvalidRoute = ![
-    '/',
-    '/challenges',
-    '/login',
-    '/about',
-    '/register',
-    '/leaderboard',
-    '/profile/edit-profile',
-    '/forgot-password',
-    '/codingclubadmin',
-    '/codingclubadmin/home',
-    '/codingclubadmin/users',
-    '/codingclubadmin/challenges',
-    '/codingclubadmin/addchallenge',
-    '/codingclubadmin/leaderboard',
-    '/codingclubadmin/logout',
-    '/codingclubadmin/users/profile/:username',
-  ].some((route) => 
-    location.pathname === route || 
-    location.pathname.startsWith('/profile/') || 
-    location.pathname.startsWith('/reset-password/')
-  );
-
-  // Render NotFoundPage directly for invalid routes
-  if (isInvalidRoute) {
-    return <NotFoundPage />;
-  }
 
   // Render AdminApp or UserApp based on path
   return location.pathname.startsWith("/codingclubadmin") ? (

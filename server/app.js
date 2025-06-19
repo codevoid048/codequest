@@ -1,20 +1,17 @@
 import express from "express";
-import session from "express-session";
 import cors from "cors";
 import morgan from "morgan";
-import path from "path";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import challengeRoutes from "./routes/challengeRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
-import { updateRanks } from "./utils/leaderBoardCache.js";
+import { warmupLeaderboardCache } from "./utils/leaderBoardCache.js";
 import passport from "passport";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import adminAuthRoutes from "./routes/adminAuthRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import platformRoute from "./routes/platformsRoute.js";
-import axios from "axios";
 import userRoutes from "./routes/userRoutes.js";
 import typeSenseRoutes from "./routes/typeSenseRoutes.js";
 import { startStreakCronJob } from './utils/streakResetJob.js';
@@ -41,13 +38,13 @@ app.use('/platforms', platformRoute);
 app.use('/api/user', userRoutes);
 app.use('/api', typeSenseRoutes);
 
-updateRanks();
+warmupLeaderboardCache();
 startStreakCronJob();
 
-// Schedule leaderboard update every hour
+// Schedule leaderboard update every half-hour
 setInterval(() => {
-  updateRanks();
-}, 300000);
+  warmupLeaderboardCache();
+}, 30 * 60 * 1000);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
