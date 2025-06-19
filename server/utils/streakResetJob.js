@@ -37,8 +37,6 @@ const resetUserStreaks = async () => {
     console.error("Error resetting streaks:", err.message);
   }
 };
-
-// Runs daily at 00:01 AM IST
 export const startStreakCronJob = () => {
   cron.schedule('01 0 * * *', resetUserStreaks, {
     timezone: "Asia/Kolkata"

@@ -287,7 +287,7 @@ export default function Leaderboard() {
           </AnimatePresence>
         </div>
       </div>
-
+        
       {/* Leaderboard */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

@@ -4,7 +4,6 @@ import { Eye, Code, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { slugify } from './slugify';
-
 interface ProblemStatusProps {
   problem: {
     id: string;

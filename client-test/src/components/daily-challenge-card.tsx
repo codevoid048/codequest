@@ -87,6 +87,7 @@ export function DailyChallengeCard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
+
       className="mx-auto"
     > {isLoading ? (
       <div className="flex justify-center items-center h-40">
