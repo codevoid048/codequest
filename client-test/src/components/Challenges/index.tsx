@@ -315,7 +315,6 @@ const Challenges: React.FC = () => {
 
   // const isChallengeSolved = (challengeId: string) => {
   //   if (!user?.solveChallenges) return false;
-
   //   // Check if the challenge ID exists in any difficulty array
   //   return (
   //     user.solveChallenges.easy.some((item: { challenge: string; }) => item.challenge === challengeId) ||
