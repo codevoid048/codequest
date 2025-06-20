@@ -166,6 +166,19 @@ const Challenges: React.FC = () => {
   const currentItems = filteredProblems.slice(firstItemIndex, lastItemIndex);
   const totalPages = Math.ceil(filteredProblems.length / itemsPerPage);
 
+  const selectedDifficultiesKey = selectedDifficulties.join(",");
+  const selectedCategoriesKey = selectedCategories.join(",");
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    activeTab,
+    selectedDifficultiesKey,   // or just selectedDifficulties
+    selectedCategoriesKey,     // same here
+    searchTerm,
+    sortOption,
+  ]);
+
   // Toggle difficulty filter
   const toggleDifficulty = (difficulty: string) => {
     setSelectedDifficulties((prev) =>
@@ -204,8 +217,8 @@ const Challenges: React.FC = () => {
 
           if (solvedProblem) {
             setIsSolved(true);
-            postPotdChallenge(user?.username,dailyProblem?._id,dailyProblem?.difficulty);
-            localStorage.setItem('potdSolvedDate',dateOnly); // Store today's date
+            postPotdChallenge(user?.username, dailyProblem?._id, dailyProblem?.difficulty);
+            localStorage.setItem('potdSolvedDate', dateOnly); // Store today's date
             return true;
           }
           else {
@@ -251,9 +264,9 @@ const Challenges: React.FC = () => {
         year: "numeric",
         month: "2-digit",
         day: "2-digit"
-      }).format(new Date()).split('/').reverse().join('-');  
+      }).format(new Date()).split('/').reverse().join('-');
       const storedDate = localStorage.getItem('potdSolvedDate');
-      console.log("checkPotdSolved",today);
+      console.log("checkPotdSolved", today);
       if (storedDate === today) {
         toast.success("You have already solved today's problem!");
         setIsSolved(true);
@@ -302,7 +315,7 @@ const Challenges: React.FC = () => {
 
   // const isChallengeSolved = (challengeId: string) => {
   //   if (!user?.solveChallenges) return false;
-    
+
   //   // Check if the challenge ID exists in any difficulty array
   //   return (
   //     user.solveChallenges.easy.some((item: { challenge: string; }) => item.challenge === challengeId) ||
@@ -310,7 +323,7 @@ const Challenges: React.FC = () => {
   //     user.solveChallenges.hard.some((item: { challenge: string; }) => item.challenge === challengeId)
   //   );
   // };
-  
+
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Daily Challenge Section */}
@@ -446,111 +459,111 @@ const Challenges: React.FC = () => {
           </div>
           <Card className={`shadow-lg border-0 bg-card ${isFilterOpen ? "block" : "hidden lg:block"}`}>
             {difficultyLevels.length > 0 ? (
-            <CardContent className="p-6 space-y-6">
-              <div>
-                <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
-                  <Flame className="h-5 w-5 mr-2 text-amber-400 dark:text-amber-900" /> Difficulty
-                </h3>
-                <div className="flex flex-col gap-3">
-                  {difficultyLevels.map((level) => (
-                    <div key={level} className="flex items-center gap-3">
-                      <button
-                        onClick={() => toggleDifficulty(level)}
-                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedDifficulties.includes(level) ? "bg-primary border-primary" : "border-border"
-                          }`}
-                      >
-                        {selectedDifficulties.includes(level) && (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="h-3 w-3 text-primary-foreground"
-                          >
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        )}
-                      </button>
-                      <label
-                        htmlFor={level}
-                        className="text-sm font-medium flex items-center gap-2 cursor-pointer text-foreground"
-                        onClick={() => toggleDifficulty(level)}
-                      >
-                        {getDifficultyIcon(level)}
-                        <span>{level}</span>
-                      </label>
-                    </div>
-                  ))}
+              <CardContent className="p-6 space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
+                    <Flame className="h-5 w-5 mr-2 text-amber-400 dark:text-amber-900" /> Difficulty
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    {difficultyLevels.map((level) => (
+                      <div key={level} className="flex items-center gap-3">
+                        <button
+                          onClick={() => toggleDifficulty(level)}
+                          className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedDifficulties.includes(level) ? "bg-primary border-primary" : "border-border"
+                            }`}
+                        >
+                          {selectedDifficulties.includes(level) && (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="h-3 w-3 text-primary-foreground"
+                            >
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          )}
+                        </button>
+                        <label
+                          htmlFor={level}
+                          className="text-sm font-medium flex items-center gap-2 cursor-pointer text-foreground"
+                          onClick={() => toggleDifficulty(level)}
+                        >
+                          {getDifficultyIcon(level)}
+                          <span>{level}</span>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="border-t border-border pt-6">
-                <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
-                  <Tag className="h-5 w-5 mr-2 text-primary" /> Categories
-                </h3>
-                <div className="flex flex-col gap-3">
-                  {uniqueCategories.map((cat) => (
-                    <div key={cat} className="flex items-center gap-3">
-                      <button
-                        onClick={() => toggleCategory(cat)}
-                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedCategories.includes(cat) ? "bg-primary border-primary" : "border-border"
-                          }`}
-                      >
-                        {selectedCategories.includes(cat) && (
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="h-3 w-3 text-primary-foreground"
-                          >
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        )}
-                      </button>
-                      <label
-                        htmlFor={cat}
-                        className="text-sm font-medium cursor-pointer text-foreground"
-                        onClick={() => toggleCategory(cat)}
-                      >
-                        {cat}
-                      </label>
-                    </div>
-                  ))}
+                <div className="border-t border-border pt-6">
+                  <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
+                    <Tag className="h-5 w-5 mr-2 text-primary" /> Categories
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    {uniqueCategories.map((cat) => (
+                      <div key={cat} className="flex items-center gap-3">
+                        <button
+                          onClick={() => toggleCategory(cat)}
+                          className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedCategories.includes(cat) ? "bg-primary border-primary" : "border-border"
+                            }`}
+                        >
+                          {selectedCategories.includes(cat) && (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="h-3 w-3 text-primary-foreground"
+                            >
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          )}
+                        </button>
+                        <label
+                          htmlFor={cat}
+                          className="text-sm font-medium cursor-pointer text-foreground"
+                          onClick={() => toggleCategory(cat)}
+                        >
+                          {cat}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
+              </CardContent>
             ) : (
-            <CardContent className="p-6 space-y-6">
-              <div>
-                <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
-                <div className="flex flex-col gap-3">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
-                      <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
-                    </div>
-                  ))}
+              <CardContent className="p-6 space-y-6">
+                <div>
+                  <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
+                  <div className="flex flex-col gap-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
+                        <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="h-1 w-full bg-muted animate-pulse"></div>
-              <div>
-                <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
-                <div className="flex flex-col gap-3">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
-                      <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
-                    </div>
-                  ))}
+                <div className="h-1 w-full bg-muted animate-pulse"></div>
+                <div>
+                  <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
+                  <div className="flex flex-col gap-3">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
+                        <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
+              </CardContent>
             )}
           </Card>
         </div>
