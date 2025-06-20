@@ -37,6 +37,7 @@ import {
 import DatePicker from "@/components/Admin/datepicker";
 import toast from 'react-hot-toast'
 
+
 const difficultyOptions = ["Easy", "Medium", "Hard"];
 const categoryOptions = [
   "Arrays",
@@ -62,7 +63,7 @@ export default function Admin() {
     description: "",
     category: [] as string[],
     difficulty: "Easy",
-    points: 100,
+    points: 5,
     problemLink: "",
     createdAt: currentDate,
     platform: "",
@@ -115,9 +116,17 @@ export default function Admin() {
       }));
     };
 
+  // const handleDifficultyChange = (value: string) => {
+  //   setFormData((prev) => ({ ...prev, difficulty: value }));
+  // };
   const handleDifficultyChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, difficulty: value }));
-  };
+  const points = calculatePoints(value);
+  setFormData((prev) => ({ 
+    ...prev, 
+    difficulty: value,
+    points: points 
+  }));
+};
 
   const handlePlatformChange = (value: string) => {
     setFormData((prev) => ({ ...prev, platform: value }));
@@ -241,6 +250,19 @@ export default function Admin() {
     if (difficulty === "Medium") return "text-amber-500 border-amber-500";
     return "text-rose-500 border-rose-500";
   };
+
+  const calculatePoints = (difficulty: string) => {
+  switch (difficulty) {
+    case 'Easy':
+      return 5;
+    case 'Medium':
+      return 10;
+    case 'Hard': 
+      return 15;
+    default:
+      return 0;
+  }
+};
 
   return (
     <motion.div
@@ -464,11 +486,11 @@ export default function Admin() {
                             <motion.div
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className={`flex cursor-pointer items-center gap-2 rounded-full border-2 px-4 py-2 ${formData.difficulty === difficulty
-                                ? getDifficultyColor(difficulty) + " bg-secondary/20"
-                                : "border-gray-600"
-                                }`}
-                              onClick={() => handleDifficultyChange(difficulty)}
+                              className={`flex cursor-pointer items-center gap-2 rounded-full border-2 px-4 py-2 transition-all ${
+                                formData.difficulty === difficulty
+                                  ? getDifficultyColor(difficulty) + " bg-secondary/20"
+                                  : "border-gray-600 hover:border-gray-500"
+                              }`}
                             >
                               <RadioGroupItem
                                 value={difficulty}
@@ -477,10 +499,11 @@ export default function Admin() {
                               />
                               <Label
                                 htmlFor={`difficulty-${difficulty.toLowerCase()}`}
-                                className={`cursor-pointer font-medium ${formData.difficulty === difficulty
-                                  ? getDifficultyColor(difficulty)
-                                  : ""
-                                  }`}
+                                className={`cursor-pointer font-medium ${
+                                  formData.difficulty === difficulty
+                                    ? getDifficultyColor(difficulty)
+                                    : "text-foreground"
+                                }`}
                               >
                                 {difficulty}
                               </Label>
@@ -490,26 +513,31 @@ export default function Admin() {
                       </RadioGroup>
                     </div>
                   </motion.div>
+                    
 
+                    
                   <motion.div variants={itemVariants} className="space-y-2">
-                    <Label
-                      htmlFor="points"
-                      className="flex items-center text-lg font-medium text-foreground"
-                    >
-                      <Award className="mr-2 h-5 w-5" />
-                      Points
-                    </Label>
-                    <Input
-                      id="points"
-                      name="points"
-                      type="number"
-                      min="1"
-                      value={formData.points}
-                      onChange={handleChange}
-                      required
-                      className="border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
-                    />
-                  </motion.div>
+  <Label
+    htmlFor="points"
+    className="flex items-center text-lg font-medium text-foreground"
+  >
+    <Award className="mr-2 h-5 w-5" />
+    Points (Auto-calculated)
+  </Label>
+  <Input
+    id="points"
+    name="points"
+    type="number"
+    min="1"
+    value={formData.points}
+    onChange={handleChange}
+    disabled
+    className="border-gray-600 bg-muted text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary opacity-75"
+  />
+  <p className="text-sm text-muted-foreground">
+    Points are automatically set based on difficulty: Easy (5), Medium (10), Hard (15)
+  </p>
+</motion.div>
 
                   <div className="flex justify-between">
                     <Button
