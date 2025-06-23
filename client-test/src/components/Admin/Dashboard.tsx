@@ -20,6 +20,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAdminStore } from "@/context/AdminContext"
 import { useEffect, useState } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 
 // Define chart data interfaces
 interface UserWeeklyData {
@@ -213,6 +215,52 @@ export default function Dashboard() {
   // Calculate number of unique colleges
   const uniqueCollegesCount = collegeData.length;
 
+
+  type SolvedStats = {
+    date: string;
+    solved: number;
+  };
+
+  const [solvedFilter, setSolvedFilter] = useState<"week" | "month" | "year">("week");
+  const [solvedStatsData, setSolvedStatsData] = useState<SolvedStats[]>([]);
+
+
+  useEffect(() => {
+    if (challenges.length > 0) {
+      const now = new Date();
+      let fromDate = new Date();
+
+      if (solvedFilter === "week") fromDate.setDate(now.getDate() - 6); // 7 days including today
+      if (solvedFilter === "month") fromDate.setMonth(now.getMonth() - 1);
+      if (solvedFilter === "year") fromDate.setFullYear(now.getFullYear() - 1);
+
+      const filteredChallenges = challenges.filter(ch => new Date(ch.createdAt) >= fromDate);
+
+      // Group by date
+      const solvedByDate: Record<string, number> = {};
+
+      filteredChallenges.forEach(ch => {
+        const dateKey = new Date(ch.createdAt).toISOString().split("T")[0]; // YYYY-MM-DD
+        const count = ch.solvedUsers?.length || 0;
+        if (solvedByDate[dateKey]) {
+          solvedByDate[dateKey] += count;
+        } else {
+          solvedByDate[dateKey] = count;
+        }
+      });
+
+      const result: SolvedStats[] = Object.keys(solvedByDate)
+        .sort()
+        .map(date => ({
+          date,
+          solved: solvedByDate[date],
+        }));
+
+      setSolvedStatsData(result);
+    }
+  }, [challenges, solvedFilter]);
+
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -341,15 +389,15 @@ export default function Dashboard() {
                           className="h-full bg-primary"
                           style={{
                             width: todayChallenge.attempted > 0
-                              ? `${(todayChallenge.solved / todayChallenge.attempted) * 100}%`
+                              ? `${(todayChallenge.solved / users.length) * 100}%`
                               : '0%'
                           }}
                         />
                       </div>
                       <div className="mt-2 text-xs text-center text-muted-foreground dark:text-black">
-                        {todayChallenge.attempted > 0
-                          ? Math.round((todayChallenge.solved / todayChallenge.attempted) * 100)
-                          : 0}% success rate
+                        {users.length > 0
+                          ? ` ${Math.round((todayChallenge.solved / users.length) * 100)}% Success Rate (${todayChallenge.solved}/${users.length} users)`
+                          : "0 / 0 users"}
                       </div>
                     </div>
                   </div>
@@ -470,7 +518,7 @@ export default function Dashboard() {
                       <XAxis dataKey="name" />
                       <YAxis allowDecimals={false} />
                       <Tooltip formatter={(v: number) => [`${v} users`, "Solved"]} />
-                      <Legend />
+                      <Legend  />
                       <Bar dataKey="users" fill="#38bdf8" maxBarSize={80} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -478,6 +526,47 @@ export default function Dashboard() {
               </CardContent>
             </Card>
             {/* (Optional) keep or remove the placeholder card you had before) */}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>POTD Solved Overview</CardTitle>
+                <CardDescription>
+                  Total number of users who solved the Problem of the Day
+                </CardDescription>
+                <div className="mt-4">
+                  <Select value={solvedFilter} onValueChange={(value) => setSolvedFilter(value as "week" | "month" | "year")}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder="Select Range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="week">Last 7 Days</SelectItem>
+                      <SelectItem value="month">Last 30 Days</SelectItem>
+                      <SelectItem value="year">Last 1 Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+
+              <CardContent>
+                {solvedStatsData.length === 0 ? (
+                  <p className="text-center text-muted-foreground dark:text-black">
+                    No solved data found for this range.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={solvedStatsData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip formatter={(v: number) => [`${v} users`, "Solved"]} />
+                      <Legend />
+                      <Bar dataKey="solved" fill="#4ade80" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
           </TabsContent>
         </Tabs>
       </main>
