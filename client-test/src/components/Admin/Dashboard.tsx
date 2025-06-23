@@ -20,12 +20,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAdminStore } from "@/context/AdminContext"
 import { useEffect, useState } from "react"
-// import { ThemeToggle } from "@/components/theme-toggle"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 
 // Define chart data interfaces
 interface UserWeeklyData {
   name: string;
   users: number;
+}
+
+// Add User interface to include createdAt and other used properties
+interface User {
+  createdAt: string;
+  isAffiliate?: boolean;
+  collegeName?: string;
+  // Add other properties as needed
 }
 
 interface ProblemDifficultyData {
@@ -49,9 +58,10 @@ interface TodayChallenge {
 }
 
 export default function Dashboard() {
-  const { users,challenges, fetchUsers, fetchChallenges } = useAdminStore();
+  const { users, challenges, fetchUsers, fetchChallenges } = useAdminStore();
   const [collegeData, setCollegeData] = useState<CollegeData[]>([]);
   const [problemDifficultyData, setProblemDifficultyData] = useState<ProblemDifficultyData[]>([]);
+  const [userWeeklyData, setUserWeeklyData] = useState<UserWeeklyData[]>([]);
   const [todayChallenge, setTodayChallenge] = useState<TodayChallenge>({
     title: "",
     solved: 0,
@@ -60,8 +70,10 @@ export default function Dashboard() {
     difficulty: "",
     description: ""
   });
-  
-  
+  const potdSolvedData = [
+    { name: "Solved", users: todayChallenge.solved },
+    { name: "Attempted", users: todayChallenge.attempted }
+  ];
 
   // Fetch data when component mounts
   useEffect(() => {
@@ -69,20 +81,46 @@ export default function Dashboard() {
     fetchChallenges();
   }, [fetchUsers, fetchChallenges]);
 
-  // Sample data for weekly user activity
-  const userWeeklyData: UserWeeklyData[] = [
-    { name: "Mon", users: 120 },
-    { name: "Tue", users: 150 },
-    { name: "Wed", users: 180 },
-    { name: "Thu", users: 220 },
-    { name: "Fri", users: 280 },
-    { name: "Sat", users: 250 },
-    { name: "Sun", users: 200 },
-  ]
+  // Calculate weekly user registration data from actual database
+  useEffect(() => {
+    if (users.length > 0) {
+      console.log("Processing weekly user data...", users);
+
+      // Get the last 7 days
+      const today = new Date();
+      const weeklyData: UserWeeklyData[] = [];
+
+      // Create array for last 7 days
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+        const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+        // Count users registered on this specific day
+        const usersOnThisDay = users.filter(user => {
+          if (!user.createdAt) return false;
+
+          const userDate = new Date(user.createdAt);
+          const userDateString = userDate.toISOString().split('T')[0];
+
+          return userDateString === dateString;
+        }).length;
+
+        weeklyData.push({
+          name: dayName,
+          users: usersOnThisDay
+        });
+      }
+
+      console.log("Weekly user data calculated:", weeklyData);
+      setUserWeeklyData(weeklyData);
+    }
+  }, [users]);
 
   // Count number of affiliates
   const affiliatesCount = users.filter(user => user.isAffiliate === true).length;
-
 
   // Updated college data processing function
   useEffect(() => {
@@ -90,6 +128,7 @@ export default function Dashboard() {
       // Create college distribution data
       const collegeDistribution: Record<string, number> = {};
       console.log(users, "users data in dashboard")
+
       users.forEach(user => {
         if (user.collegeName) {
           if (collegeDistribution[user.collegeName]) {
@@ -118,9 +157,11 @@ export default function Dashboard() {
     }
   }, [users]);
 
-  // Calculate challenge difficulty distribution
+  // Calculate challenge difficulty distribution from actual database
   useEffect(() => {
     if (challenges.length > 0) {
+      console.log("Processing challenge difficulty data...", challenges);
+
       const difficultyCount: Record<string, number> = {
         Easy: 0,
         Medium: 0,
@@ -130,23 +171,32 @@ export default function Dashboard() {
       challenges.forEach(challenge => {
         if (challenge.difficulty) {
           // Make sure we only count valid difficulties
-          if (difficultyCount[challenge.difficulty] !== undefined) {
-            difficultyCount[challenge.difficulty]++;
+          const difficulty = challenge.difficulty.trim();
+          if (difficultyCount[difficulty] !== undefined) {
+            difficultyCount[difficulty]++;
+          } else {
+            // Handle case variations (easy, EASY, etc.)
+            const normalizedDifficulty = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
+            if (difficultyCount[normalizedDifficulty] !== undefined) {
+              difficultyCount[normalizedDifficulty]++;
+            }
           }
         }
       });
 
       const difficultyData: ProblemDifficultyData[] = [
-        { name: "Easy", value: difficultyCount.Easy, color: '#82ca9d' },
-        { name: "Medium", value: difficultyCount.Medium, color: '#8884d8' },
-        { name: "Hard", value: difficultyCount.Hard, color: '#ff7300' }
+        { name: "Easy", value: difficultyCount.Easy, color: '#10b981' }, // Green
+        { name: "Medium", value: difficultyCount.Medium, color: '#f59e0b' }, // Amber
+        { name: "Hard", value: difficultyCount.Hard, color: '#ef4444' } // Red
       ];
 
+      console.log("Difficulty distribution calculated:", difficultyData);
       setProblemDifficultyData(difficultyData);
+
+      // Set today's challenge data
       const latestChallenge = challenges[0];
       if (latestChallenge) {
         const solvedCount = latestChallenge.solvedUsers?.length || 0;
-
 
         setTodayChallenge({
           title: latestChallenge.title || "No title available",
@@ -158,13 +208,58 @@ export default function Dashboard() {
           difficulty: latestChallenge.difficulty || "Medium",
           description: latestChallenge.description || "No description available for this problem."
         });
-
       }
     }
   }, [challenges]);
 
   // Calculate number of unique colleges
   const uniqueCollegesCount = collegeData.length;
+
+
+  type SolvedStats = {
+    date: string;
+    solved: number;
+  };
+
+  const [solvedFilter, setSolvedFilter] = useState<"week" | "month" | "year">("week");
+  const [solvedStatsData, setSolvedStatsData] = useState<SolvedStats[]>([]);
+
+
+  useEffect(() => {
+    if (challenges.length > 0) {
+      const now = new Date();
+      let fromDate = new Date();
+
+      if (solvedFilter === "week") fromDate.setDate(now.getDate() - 6); // 7 days including today
+      if (solvedFilter === "month") fromDate.setMonth(now.getMonth() - 1);
+      if (solvedFilter === "year") fromDate.setFullYear(now.getFullYear() - 1);
+
+      const filteredChallenges = challenges.filter(ch => new Date(ch.createdAt) >= fromDate);
+
+      // Group by date
+      const solvedByDate: Record<string, number> = {};
+
+      filteredChallenges.forEach(ch => {
+        const dateKey = new Date(ch.createdAt).toISOString().split("T")[0]; // YYYY-MM-DD
+        const count = ch.solvedUsers?.length || 0;
+        if (solvedByDate[dateKey]) {
+          solvedByDate[dateKey] += count;
+        } else {
+          solvedByDate[dateKey] = count;
+        }
+      });
+
+      const result: SolvedStats[] = Object.keys(solvedByDate)
+        .sort()
+        .map(date => ({
+          date,
+          solved: solvedByDate[date],
+        }));
+
+      setSolvedStatsData(result);
+    }
+  }, [challenges, solvedFilter]);
+
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -220,16 +315,20 @@ export default function Dashboard() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
               <Card className="md:col-span-4">
                 <CardHeader>
-                  <CardTitle>Weekly User Activity</CardTitle>
-                  <CardDescription>User registrations and activity over the past week</CardDescription>
+                  <CardTitle>Weekly User Registrations</CardTitle>
+                  <CardDescription>New user registrations over the past 7 days</CardDescription>
                 </CardHeader>
                 <CardContent className="pl-2">
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={userWeeklyData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip
+                        formatter={(value: number) => [`${value} users`, 'New Registrations']}
+                        labelFormatter={(label: string) => `Day: ${label}`}
+                        contentStyle={{ backgroundColor: 'black', color: 'white' }} // Add this line
+                      />
                       <Legend />
                       <Line
                         type="monotone"
@@ -237,6 +336,7 @@ export default function Dashboard() {
                         stroke="#416cc2"
                         strokeWidth={3}
                         activeDot={{ r: 8 }}
+                        name="New Users"
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -289,15 +389,15 @@ export default function Dashboard() {
                           className="h-full bg-primary"
                           style={{
                             width: todayChallenge.attempted > 0
-                              ? `${(todayChallenge.solved / todayChallenge.attempted) * 100}%`
+                              ? `${(todayChallenge.solved / users.length) * 100}%`
                               : '0%'
                           }}
                         />
                       </div>
                       <div className="mt-2 text-xs text-center text-muted-foreground dark:text-black">
-                        {todayChallenge.attempted > 0
-                          ? Math.round((todayChallenge.solved / todayChallenge.attempted) * 100)
-                          : 0}% success rate
+                        {users.length > 0
+                          ? ` ${Math.round((todayChallenge.solved / users.length) * 100)}% Success Rate (${todayChallenge.solved}/${users.length} users)`
+                          : "0 / 0 users"}
                       </div>
                     </div>
                   </div>
@@ -309,7 +409,7 @@ export default function Dashboard() {
               <Card className="md:col-span-3">
                 <CardHeader>
                   <CardTitle>Problem Difficulty Distribution</CardTitle>
-                  <CardDescription>Breakdown of problems by difficulty level</CardDescription>
+                  <CardDescription>Breakdown of problems by difficulty level from database</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -319,7 +419,9 @@ export default function Dashboard() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent, value }) =>
+                          value > 0 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
+                        }
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
@@ -328,10 +430,16 @@ export default function Dashboard() {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip
+                        formatter={(value: number, name: string) => [`${value}`, `${name}`]}
+                      />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
+                  {/* Show total count */}
+                  <div className="mt-2 text-center text-sm text-muted-foreground">
+                    Total Problems: {problemDifficultyData.reduce((sum, item) => sum + item.value, 0)}
+                  </div>
                 </CardContent>
               </Card>
               <Card className="md:col-span-4">
@@ -348,36 +456,36 @@ export default function Dashboard() {
                     >
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={true} />
                       <XAxis
-                      type="number"
-                      domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]} // Add 20% padding to max value
-                      allowDecimals={false} // Ensure only whole numbers
-                      axisLine={{ stroke: '#666' }}
-                      tick={{ fill: '#888', fontSize: 12 }}
+                        type="number"
+                        domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]} // Add 20% padding to max value
+                        allowDecimals={false} // Ensure only whole numbers
+                        axisLine={{ stroke: '#666' }}
+                        tick={{ fill: '#888', fontSize: 12 }}
                       />
                       <YAxis
-                      type="category"
-                      dataKey="name"
-                      width={140}
-                      axisLine={{ stroke: '#666' }}
-                      tick={{ fill: '#888', fontSize: 12 }}
-                      tickFormatter={(value: string) => value.length > 20 ? `${value.substring(0, 18)}...` : value}
+                        type="category"
+                        dataKey="name"
+                        width={140}
+                        axisLine={{ stroke: '#666' }}
+                        tick={{ fill: '#888', fontSize: 12 }}
+                        tickFormatter={(value: string) => value.length > 20 ? `${value.substring(0, 18)}...` : value}
                       />
                       <Tooltip
-                      formatter={(value: number) => [`${value} users`, 'Users']}
-                      labelFormatter={(label: string) => `College: ${label}`}
-                      contentStyle={{ backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #ccc' }}
+                        formatter={(value: number) => [`${value} users`, 'Users']}
+                        labelFormatter={(label: string) => `College: ${label}`}
+                        contentStyle={{ backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #ccc' }}
                       />
                       <Bar
-                      dataKey="users"
-                      fill="#8884d8"
-                      maxBarSize={25}
-                      radius={[0, 4, 4, 0]}
-                      label={{
-                        position: 'right',
-                        fill: '#666',
-                        fontSize: 12,
-                        formatter: (value: { users: number }) => value.users
-                      }}
+                        dataKey="users"
+                        fill="#8884d8"
+                        maxBarSize={25}
+                        radius={[0, 4, 4, 0]}
+                        label={{
+                          position: 'right',
+                          fill: '#666',
+                          fontSize: 12,
+                          formatter: (value: { users: number }) => value.users
+                        }}
                       />
                     </BarChart>
                   </ResponsiveContainer>
@@ -386,17 +494,79 @@ export default function Dashboard() {
             </div>
           </TabsContent>
           <TabsContent value="analytics" className="space-y-4">
+            {/* POTD Solved Graph */}
             <Card>
               <CardHeader>
-                <CardTitle>Advanced Analytics</CardTitle>
-                <CardDescription>Detailed metrics and insights will be displayed here</CardDescription>
+                <CardTitle>POTD Solved Count</CardTitle>
+                <CardDescription>
+                  How many users solved today&rsquo;s challenge
+                </CardDescription>
               </CardHeader>
+
               <CardContent>
-                <div className="h-[400px] flex items-center justify-center border rounded-md">
-                  <p className="text-muted-foreground">Advanced analytics coming soon</p>
-                </div>
+                {todayChallenge.solved === 0 ? (
+                  <p className="text-center text-muted-foreground">
+                    No one has solved today&rsquo;s problem yet.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart
+                      data={potdSolvedData}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip formatter={(v: number) => [`${v} users`, "Solved"]} />
+                      <Legend  />
+                      <Bar dataKey="users" fill="#38bdf8" maxBarSize={80} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
+            {/* (Optional) keep or remove the placeholder card you had before) */}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>POTD Solved Overview</CardTitle>
+                <CardDescription>
+                  Total number of users who solved the Problem of the Day
+                </CardDescription>
+                <div className="mt-4">
+                  <Select value={solvedFilter} onValueChange={(value) => setSolvedFilter(value as "week" | "month" | "year")}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder="Select Range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="week">Last 7 Days</SelectItem>
+                      <SelectItem value="month">Last 30 Days</SelectItem>
+                      <SelectItem value="year">Last 1 Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+
+              <CardContent>
+                {solvedStatsData.length === 0 ? (
+                  <p className="text-center text-muted-foreground dark:text-black">
+                    No solved data found for this range.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={solvedStatsData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip formatter={(v: number) => [`${v} users`, "Solved"]} />
+                      <Legend />
+                      <Bar dataKey="solved" fill="#4ade80" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
           </TabsContent>
         </Tabs>
       </main>
