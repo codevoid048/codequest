@@ -129,19 +129,19 @@ export default function ProfilePage() {
         const platformPromises = [];
       
         if (profileUser.leetCode?.username) {
-          platformPromises.push(axios.post("http://localhost:5000/platforms/leetcode", { username: profileUser.leetCode.username }));
+          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/leetcode`, { username: profileUser.leetCode.username }));
         }
         
         if (profileUser.codeforces?.username) {
-          platformPromises.push(axios.post("http://localhost:5000/platforms/codeforces", { username: profileUser.codeforces.username }));
+          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/codeforces`, { username: profileUser.codeforces.username }));
         }
         
         if (profileUser.codechef?.username) {
-          platformPromises.push(axios.post("http://localhost:5000/platforms/codechef", { username: profileUser.codechef.username }));
+          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/codechef`, { username: profileUser.codechef.username }));
         }
         
         if (profileUser.gfg?.username) {
-          platformPromises.push(axios.post("http://localhost:5000/platforms/gfg", {username: profileUser.gfg.username }));
+          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/gfg`, {username: profileUser.gfg.username }));
         }
 
       // Execute all promises in parallel
@@ -162,7 +162,7 @@ export default function ProfilePage() {
       setError(null)
       const usernameToFetch = routeUsername || user?.username || "default"
       try {
-        const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/user/${usernameToFetch}`)
         setProfileUser(response.data.user)
       } catch (err) {
         console.error("Error fetching user:", err)
@@ -185,7 +185,7 @@ export default function ProfilePage() {
     }
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/verifyacc",
+        `${import.meta.env.VITE_API_BASE_URL}/api/auth/verifyacc`,
         {
           platform,
           username,
@@ -235,7 +235,7 @@ export default function ProfilePage() {
     setDeleteError("")
 
     try {
-      const response = await axios.delete(`http://localhost:5000/api/auth/users/${profileUser._id}`, { withCredentials: true })
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/auth/users/${profileUser._id}`, { withCredentials: true })
 
       if (response.status === 204) {
         toast.success("Account deleted successfully")

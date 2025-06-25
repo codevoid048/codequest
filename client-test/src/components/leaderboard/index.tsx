@@ -1,5 +1,3 @@
-"use client"
-
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import axios from "axios"
@@ -11,11 +9,27 @@ import { Link } from "react-router-dom"
 // Number of users per page
 const USERS_PER_PAGE = 8
 
+interface LeaderboardUser {
+  username: string,
+  points: number,
+  rank: number,
+  streak: number,
+  lastSolvedAt: string,
+  solveChallenges: {
+    easy: number,
+    medium: number,
+    hard: number,
+    total: number,
+  },
+  id: number,
+  _id: string
+}
+
 export default function Leaderboard() {
-  const [users, setUsers] = useState<any[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<any[]>([])
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const [updatedUser, setUpdatedUser] = useState<number | null>(null)
+  const [users, setUsers] = useState<LeaderboardUser[]>([])
+  const [filteredUsers, setFilteredUsers] = useState<LeaderboardUser[]>([])
+  const [isDarkMode] = useState(false)
+  const [updatedUser] = useState<number | null>(null)
   const confettiRef = useRef(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -56,7 +70,7 @@ export default function Leaderboard() {
         return
       }
 
-      const response = await axios.get(`http://localhost:5000/api/search-user?q=${encodeURIComponent(query)}`)
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/search-user?q=${encodeURIComponent(query)}`)
 
       if (response.data && Array.isArray(response.data)) {
         // The API returns users with the 'type' field, so we need to map them
@@ -74,7 +88,7 @@ export default function Leaderboard() {
   // Fetch leaderboard data
   const fetchLeaderboard = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/leaderboard")
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/leaderboard`)
       setUsers(res.data)
       setFilteredUsers(res.data)
     } catch (error) {

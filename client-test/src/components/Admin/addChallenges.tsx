@@ -181,7 +181,7 @@ export default function Admin() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const response = await axios.post(
-        "http://localhost:5000/admin/add-challenges",
+        `${import.meta.env.VITE_API_BASE_URL}/admin/add-challenges`,
         {
           title: formData.title,
           description: formData.description,

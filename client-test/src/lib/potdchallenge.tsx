@@ -30,7 +30,7 @@ export const postPotdChallenge = async (username:string,challengeId : string , d
     };
     
     console.log("today", today);
-    const response = await axios.post('http://localhost:5000/api/profile/potd', {
+    const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/profile/potd`, {
       username,
       challengeId,
       difficulty,
@@ -49,7 +49,7 @@ export const postPotdChallenge = async (username:string,challengeId : string , d
 
 export const solvedChallenges = async (username:string) => {
   try {
-    const response = await axios.post('http://localhost:5000/platforms/solvedChallenges', {
+    const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/solvedChallenges`, {
       username: username,
       withCredentials: true
     });
@@ -61,7 +61,7 @@ export const solvedChallenges = async (username:string) => {
 }
 export const streak = async () => {
   try {
-    const response = await axios.get('http://localhost:5000/api/profile/streak', {
+    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/profile/streak`, {
       withCredentials: true
     });
     if (response.data.success) {

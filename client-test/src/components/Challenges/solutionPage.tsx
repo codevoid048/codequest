@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@/components/ui/button";
-import { 
-  Code, BookOpen, FileCode, Check, Copy, 
-  Clock, AlertCircle, Lightbulb, 
+import {
+  Code, BookOpen, FileCode, Check, Copy,
+  Clock, AlertCircle, Lightbulb,
   Database, Award, GitBranch, Star, Tag,
   ArrowUpRight, TerminalSquare
 } from "lucide-react";
@@ -192,8 +191,7 @@ const SolutionPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`http://localhost:5000/api/challenges/solution/${problemId}`);
-       
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/challenges/solution/${problemId}`);
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || `HTTP error! status: ${response.status}`);

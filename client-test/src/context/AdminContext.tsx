@@ -11,6 +11,7 @@ interface User {
   avatar: string;
   college: string;
   isAffiliate: boolean;
+  createdAt: string;
 }
 
 interface Challenge {
@@ -52,7 +53,7 @@ export const useAdminStore = create<AdminState>((set) => {
       try {
         set({ loading: true, error: null });
 
-        const response = await axios.get("http://localhost:5000/admin/users");
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/users`);
 
         let users: User[] = [];
 
@@ -83,7 +84,7 @@ export const useAdminStore = create<AdminState>((set) => {
       try {
         set({ loading: true, error: null });
 
-        const response = await axios.get("http://localhost:5000/api/challenges");
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges`);
 
         // Store the raw challenges data
         if (response.data && Array.isArray(response.data.challenges)) {

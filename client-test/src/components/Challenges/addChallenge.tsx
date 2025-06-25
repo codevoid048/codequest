@@ -41,7 +41,7 @@ const AddChallenge: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/challenges', {
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/challenges`, {
         title,
         description,
         difficulty,

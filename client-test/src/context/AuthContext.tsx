@@ -35,11 +35,8 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Function to fetch user data from the backend
   const fetchUser = async () => {
     try {
-      // const res = await axios.get("http://localhost:5000/api/auth/me", { 
-      //   withCredentials: true 
-      // });
       const storedToken = localStorage.getItem("auth_token");
-    const res = await axios.get("http://localhost:5000/api/auth/me", {
+    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/me`, {
       withCredentials: true,
       headers: { Authorization: `Bearer ${storedToken}` }, // Ensure token is sent
     });
@@ -91,7 +88,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Logout function
   const logout = async () => {
     try {
-      await axios.post("http://localhost:5000/api/auth/logout", {}, {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/logout`, {}, {
         withCredentials: true
       });
 

@@ -29,13 +29,13 @@ interface UserWeeklyData {
   users: number;
 }
 
-// Add User interface to include createdAt and other used properties
-interface User {
-  createdAt: string;
-  isAffiliate?: boolean;
-  collegeName?: string;
-  // Add other properties as needed
-}
+// // Add User interface to include createdAt and other used properties
+// interface users {
+//   createdAt: string;
+//   isAffiliate?: boolean;
+//   collegeName?: string;
+//   // Add other properties as needed
+// }
 
 interface ProblemDifficultyData {
   name: string;
@@ -228,7 +228,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (challenges.length > 0) {
       const now = new Date();
-      let fromDate = new Date();
+      const fromDate = new Date();
 
       if (solvedFilter === "week") fromDate.setDate(now.getDate() - 6); // 7 days including today
       if (solvedFilter === "month") fromDate.setMonth(now.getMonth() - 1);
@@ -497,7 +497,7 @@ export default function Dashboard() {
             {/* POTD Solved Graph */}
             <Card>
               <CardHeader>
-                <CardTitle>POTD Solved Count</CardTitle>
+                <CardTitle>POTDSolved Count</CardTitle>
                 <CardDescription>
                   How many users solved today&rsquo;s challenge
                 </CardDescription>

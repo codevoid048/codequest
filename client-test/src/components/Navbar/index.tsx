@@ -68,7 +68,7 @@ export function Navbar() {
         setLoading(true);
         setShowDropdown(true);
 
-        const res = await fetch(`http://localhost:5000/api/search?q=${debouncedQuery}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/search?q=${debouncedQuery}`, {
           credentials: "include",
         });
         const data = await res.json();

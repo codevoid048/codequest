@@ -37,8 +37,8 @@ export default function LoginPage() {
     console.log("Email:", email, "Password:", password); // Debugging
 
     try {
-      const response = await axios.post("http://localhost:5000/auth/admin/login", 
-        { email, password }, 
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/admin/login`, 
+        { email, password },
         { withCredentials: true }
       );
       console.log("Response:", response); // Debugging

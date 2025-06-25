@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
@@ -38,7 +38,7 @@ const Challenges: React.FC = () => {
   const [problemsList, setProblemsList] = useState<Challenge[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   type SortOption = "date" | "difficulty" | "status";
-  const [sortOption, setSortOption] = useState<SortOption>("date");
+  const [sortOption] = useState<SortOption>("date");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -51,7 +51,7 @@ const Challenges: React.FC = () => {
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/challenges");
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges`);
         if (res.data && Array.isArray(res.data.challenges)) {
           const data = res.data.challenges.map((challenge: any) => {
             const isSolved: boolean = user?.solveChallenges?.easy.some((item: { challenge: string }) => item.challenge === challenge._id) ||

@@ -25,7 +25,7 @@ export function DailyChallengeCard() {
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/challenges');
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges`);
 
         if (res.data && Array.isArray(res.data.challenges)) {
           const data = res.data.challenges.map((challenge: any) => ({

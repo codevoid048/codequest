@@ -10,7 +10,7 @@
     "ts:syncDB": "docker-compose exec backend node typesense/syncdataFromDb.js"
   },
   "type": "module",
-  "author": "",
+  "author": "SRKR CODING CLUB",
   "license": "ISC",
   "description": "",
   "dependencies": {
