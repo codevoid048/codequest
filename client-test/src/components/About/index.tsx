@@ -51,7 +51,7 @@ export default function AboutPage() {
         }
 
         window.addEventListener("scroll", handleScroll)
-        handleScroll() 
+        handleScroll()
 
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
@@ -59,53 +59,77 @@ export default function AboutPage() {
     const teamMembers = [
         {
             id: 1,
-            name: "Vigna Ramtej",
+            name: "William Keri",
             role: "Software Developer",
-            image: "/placeholder.svg?height=150&width=150",
+            image: "/public/William.jpg",
+            linkedin: "https://linkedin.com/in/codevoid",
+            email: "williamkeri007@gmail.com",
+            github: "https://github.com/codevoid048"
         },
         {
             id: 2,
             name: "Ambati Sai Ganesh",
             role: "Software Developer",
-            image: "/placeholder.svg?height=150&width=150",
+            image: "/public/Ganesh.jpg",
+            ilinkedin: "http://www.linkedin.com/in/sai-ganesh-ambati-8218a328a",
+            email: "saiganeshambati000@gmail.com",
+            github: "https://github.com/saiganesh4151"
         },
         {
             id: 3,
-            name: "William Keri",
+            name: "Chemakurthi Sai Praveen",
             role: "Software Developer",
-            image: "/placeholder.svg?height=150&width=150",
+            image: "/public/Praveen.jpg",
+            linkedin: "http://www.linkedin.com/in/praveen-cheemakurthy-149271317",
+            email: "cheemakurthypraveen@gmail.com",
+            github: "https://github.com/Saipraveen49"
         },
         {
             id: 4,
             name: "Ramisetti Chakrarao",
             role: "Software Developer",
-            image: "/placeholder.svg?height=150&width=150",
+            image: "/public/Chakri.jpg",
+            linkedin: "https://www.linkedin.com/in/chakri555/",
+            email: "chakriramisetti555@gmail.com",
+            github: "https://github.com/Chakri2759"
         },
         {
             id: 5,
             name: "Saripalli Harshavardhan",
             role: "Software Developer",
-            image: "/placeholder.svg?height=150&width=150",
+            image: "/public/Harsha.jpg",
+            linkedin: "https://www.linkedin.com/in/harshavardhansaripalli/",
+            email: "harshavardhansaripalli21@gmail.com",
+            github: "https://github.com/harsha2143"
         },
         {
             id: 6,
-            name: "Chemakurthi Sai Praveen",
+            name: "Relangi Siva Ramaraju",
             role: "Software Developer",
-            image: "/placeholder.svg?height=150&width=150",
+            image: "/public/Siva.jpg",
+            linkedin: "http://www.linkedin.com/in/veera-siva-rama-raju-relangi-2130ba259",
+            email: "https://twitter.com/ambatiganesh",
+            github: "https://github.com/Siva-Relangi",
         },
         {
             id: 7,
-            name: "Relangi Siva Ramaraju",
+            name: "Pulavarthi Sanjay",
             role: "Software Developer",
-            image: "/placeholder.svg?height=150&width=150",
+            image: "/public/Sanjay1.jpg",
+            linkedin: "http://www.linkedin.com/in/pulavarthi-sanjay-92ba93287",
+            email: "pnnksanjay@gmail.com",
+            github: "https://github.com/Sanjaypulavarthi"
         },
         {
             id: 8,
-            name: "Pulavarthi Sanjay",
+            name: "Vigna Ramtej",
             role: "Software Developer",
-            image: "/placeholder.svg?height=150&width=150",
+            image: "/public/Ramtej.jpg",
+            linkedin: "https://www.linkedin.com/in/vignaramtej",
+            email: "vignaramtej46@gmail.com",
+            github: "https://github.com/ramtejvigna"
         },
-        
+
     ]
 
     const faqItems = [
@@ -161,7 +185,7 @@ export default function AboutPage() {
             date: "October",
             icon: <Users className="h-6 w-6" />,
         },
-        
+
     ]
 
     const fadeIn = {
@@ -447,7 +471,7 @@ export default function AboutPage() {
                                             variants={itemVariant}
                                         >
                                             <div className="bg-primary/10 p-2 rounded-full">
-                                            <Award className="h-6 w-6 text-primary" />
+                                                <Award className="h-6 w-6 text-primary" />
                                             </div>
                                             <div>
                                                 <p className="font-medium text-muted-foreground">Successfully organized two hackathons and three coding competitions, enhancing engagement and technical skill growth among participants</p>
@@ -524,9 +548,9 @@ export default function AboutPage() {
                                             {/* Icon Container */}
                                             <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
                                             group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                        <Code className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 duration-300" />
+                                                <Code className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 duration-300" />
 
-                                        </div>
+                                            </div>
                                         </div>
 
                                         {/* Title */}
@@ -537,7 +561,7 @@ export default function AboutPage() {
 
                                     {/* Description (Below) */}
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
-                                    Sharpen your skills with daily problems (POTD) on the CodeQuest platform, curated for all levels — from beginner to advanced.                                    </p>
+                                        Sharpen your skills with daily problems (POTD) on the CodeQuest platform, curated for all levels — from beginner to advanced.                                    </p>
 
                                 </div>
 
@@ -564,11 +588,11 @@ export default function AboutPage() {
                                             </div>
                                         </div>
                                         <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                        Hackathons 
+                                            Hackathons
                                         </h3>
                                     </div>
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
-                                    Collaborate and innovate at HackOverflow — our club's hackathon where participants team up to build real-world tech solutions.                                    </p>
+                                        Collaborate and innovate at HackOverflow — our club's hackathon where participants team up to build real-world tech solutions.                                    </p>
 
                                 </div>
                             </motion.div>
@@ -597,7 +621,7 @@ export default function AboutPage() {
                                         </h3>
                                     </div>
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
-                                    Test your coding skills through competitions like IconCoders, organized by our club to solve challenging problems and win exciting prizes.
+                                        Test your coding skills through competitions like IconCoders, organized by our club to solve challenging problems and win exciting prizes.
                                     </p>
 
                                 </div>
@@ -623,11 +647,11 @@ export default function AboutPage() {
                                             </div>
                                         </div>
                                         <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                        Workshops
+                                            Workshops
                                         </h3>
                                     </div>
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
-                                    Gain practical knowledge through hands-on workshops organized by our club, focusing on modern technologies and industry practices.                                    </p>
+                                        Gain practical knowledge through hands-on workshops organized by our club, focusing on modern technologies and industry practices.                                    </p>
 
                                 </div>
                             </motion.div>
@@ -656,7 +680,7 @@ export default function AboutPage() {
                                         </h3>
                                     </div>
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
-                                    Learn through courses conducted by our club, with live sessions covering the latest technologies and industry-relevant skills.                                    </p>
+                                        Learn through courses conducted by our club, with live sessions covering the latest technologies and industry-relevant skills.                                    </p>
 
                                 </div>
                             </motion.div>
@@ -681,11 +705,11 @@ export default function AboutPage() {
                                             </div>
                                         </div>
                                         <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                        Project Collaboration
+                                            Project Collaboration
                                         </h3>
                                     </div>
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
-                                    Developed multiple open-source projects with real-world applications, including the CodeQuest platform and the SRKR Coding Club website.
+                                        Developed multiple open-source projects with real-world applications, including the CodeQuest platform and the SRKR Coding Club website.
                                     </p>
 
                                 </div>
@@ -783,7 +807,7 @@ export default function AboutPage() {
                                             <div className="flex justify-center">
                                                 <div className="relative">
                                                     <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-primary/60 rounded-full blur opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
-                                                    <Avatar className="h-32 w-32 border-2 border-primary/20 group-hover:border-primary/50 transition-all duration-300">
+                                                    <Avatar className="h-40 w-42 border-2 border-primary/20 group-hover:border-primary/50 transition-all duration-300">
                                                         <AvatarImage src={member.image} alt={member.name} />
                                                         <AvatarFallback className="bg-primary/10 text-primary">
                                                             {member.name
@@ -797,7 +821,7 @@ export default function AboutPage() {
                                             <h3 className="text-xl font-semibold text-primary">{member.name}</h3>
                                             <p className="text-muted-foreground text-sm">{member.role}</p>
                                             <div className=" pt-2 border-t border-primary/10 flex justify-center space-x-3 opacity-100 transition-opacity duration-300">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => window.open(member.linkedin, "_blank")}>
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         width="16"
@@ -815,7 +839,7 @@ export default function AboutPage() {
                                                         <circle cx="4" cy="4" r="2"></circle>
                                                     </svg>
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full " onClick={() => window.open(member.github, "_blank")}>
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         width="16"
@@ -828,11 +852,11 @@ export default function AboutPage() {
                                                         strokeLinejoin="round"
                                                         className="text-primary"
                                                     >
-                                                        <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+                                                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7a3.37 3.37 0 0 0-.94 2.61V22" />
                                                     </svg>
                                                 </Button>
-                                                
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => window.open(member.email, "_blank")}>
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         width="16"
