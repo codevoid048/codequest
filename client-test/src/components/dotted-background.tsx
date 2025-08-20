@@ -9,6 +9,7 @@ export function DottedBackground() {
   const [engineReady, setEngineReady] = useState(false);
 
   useEffect(() => {
+    // Initialize engine once
     initParticlesEngine(async (engine) => {
       await loadSlim(engine);
     }).then(() => setEngineReady(true));

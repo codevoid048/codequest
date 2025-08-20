@@ -6,7 +6,7 @@
 - Install [Docker](https://www.docker.com/)
 
 
-# Build and Start both services backend + typesense
+# Build and Start both services backend
 docker-compose up --build
 
 # to track the stats like memory usage and stuff

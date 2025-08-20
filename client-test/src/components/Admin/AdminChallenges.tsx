@@ -2,18 +2,13 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Award,
   Calendar,
   ChevronDown,
-  Clock,
   Code,
   Filter,
-  Flame,
-  Lightbulb,
   RefreshCw,
   Search,
   SlidersHorizontal,
-  Tag,
   Zap,
 } from "lucide-react";
 import React, {
@@ -24,6 +19,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useNavigate } from 'react-router-dom';
 import { useAdminStore } from "@/context/AdminContext";
 
 // Interfaces
@@ -211,18 +207,18 @@ const AnimatedCounter = memo(
       const end = value;
       const totalMilSecDur = duration * 1000;
       const incrementTime = totalMilSecDur / (end || 1);
-      
+
       if (end === 0) {
         setCount(0);
         return;
       }
-      
+
       const timer = setInterval(() => {
         start += 1;
         setCount(start);
         if (start >= end) clearInterval(timer);
       }, incrementTime);
-      
+
       return () => clearInterval(timer);
     }, [value, duration]);
 
@@ -375,7 +371,7 @@ const ProblemCard = memo(
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Platform info */}
                 <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
                   <Code className="h-4 w-4" />
@@ -430,7 +426,14 @@ StatCard.displayName = "StatCard";
 
 // Main AdminChallenges Component
 const AdminChallenges: React.FC = () => {
-  const { challenges: storeRawChallenges, fetchChallenges, loading: storeLoading } = useAdminStore();
+  const {
+    challenges: storeRawChallenges,
+    users: storeUsers,
+    fetchChallenges,
+    fetchUsers,
+    loading: storeLoading
+  } = useAdminStore();
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [processedChallenges, setProcessedChallenges] = useState<Challenge[]>([]);
   const [filteredChallenges, setFilteredChallenges] = useState<Challenge[]>([]);
@@ -443,35 +446,43 @@ const AdminChallenges: React.FC = () => {
     topPerformer: "",
     lowestPerformer: "",
   });
+  const navigate = useNavigate(); 
 
-  // Fetch challenge data from the store
+  // Fetch challenge and user data from the store
   useEffect(() => {
-    const loadChallenges = async () => {
+    const loadData = async () => {
       setIsLoading(true);
       try {
-        await fetchChallenges();
+        // Fetch both challenges and users data
+        await Promise.all([
+          fetchChallenges(),
+          fetchUsers()
+        ]);
       } catch (error) {
-        console.error("Failed to fetch challenges:", error);
-      } finally {
-        // Don't set isLoading to false here - let the storeRawChallenges effect handle that
+        console.error("Failed to fetch data:", error);
       }
     };
 
-    loadChallenges();
-  }, [fetchChallenges]);
+    loadData();
+  }, [fetchChallenges, fetchUsers]);
+
+  // Get the total number of users
+  const totalUsersCount = useMemo(() => {
+    return storeUsers.length;
+  }, [storeUsers]);
 
   // Process challenges when store data changes
   useEffect(() => {
     if (storeRawChallenges.length > 0) {
-      const totalUsers = 100; // Fallback to 100 if count is not available
-      
       const processedData = storeRawChallenges.map((challenge) => {
         const solvedUsersCount = challenge.solvedUsers?.length || 0;
-        const solvedPercentage = totalUsers > 0 ? Math.round((solvedUsersCount / totalUsers) * 100) : 0;
+        const solvedPercentage = totalUsersCount > 0
+          ? Math.round((solvedUsersCount / totalUsersCount) * 100)
+          : 0;
 
         // Ensure category is always an array for consistency
-        const categoryArray = Array.isArray(challenge.category) 
-          ? challenge.category 
+        const categoryArray = Array.isArray(challenge.category)
+          ? challenge.category
           : challenge.category ? [challenge.category] : [];
 
         return {
@@ -485,7 +496,7 @@ const AdminChallenges: React.FC = () => {
           problemLink: challenge.problemLink || "#",
           solvedUsers: challenge.solvedUsers || [],
           solvedUsersCount,
-          totalUsers,
+          totalUsers: totalUsersCount,
           solvedPercentage,
         };
       });
@@ -498,7 +509,7 @@ const AdminChallenges: React.FC = () => {
       // If we're not loading and have no challenges, ensure we're not showing loading state
       setIsLoading(false);
     }
-  }, [storeRawChallenges, storeLoading]);
+  }, [storeRawChallenges, storeLoading, totalUsersCount]);
 
   // Calculate statistics based on challenge data
   const calculateStatistics = useCallback((challengesData: Challenge[]) => {
@@ -516,13 +527,13 @@ const AdminChallenges: React.FC = () => {
     const categoryPerformance: Record<string, { count: number; totalRate: number }> = {};
 
     challengesData.forEach((challenge) => {
-      const categories = Array.isArray(challenge.category) 
-        ? challenge.category 
+      const categories = Array.isArray(challenge.category)
+        ? challenge.category
         : [challenge.category];
-        
+
       categories.forEach((cat) => {
         if (!cat) return; // Skip empty categories
-        
+
         if (!categoryPerformance[cat]) {
           categoryPerformance[cat] = { count: 0, totalRate: 0 };
         }
@@ -538,7 +549,7 @@ const AdminChallenges: React.FC = () => {
 
     Object.entries(categoryPerformance).forEach(([category, data]) => {
       if (data.count === 0) return; // Skip if no challenges in this category
-      
+
       const avgRate = data.totalRate / data.count;
       if (avgRate > topPerformanceRate) {
         topPerformanceRate = avgRate;
@@ -622,6 +633,8 @@ const AdminChallenges: React.FC = () => {
   // Handle add new problem navigation
   const handleAddNewProblem = () => {
     // In a real app, you would navigate to a new problem creation page
+    navigate('/codingclubadmin/addchallenge');
+
     console.log("Navigating to add new problem page");
     // Example: router.push('/admin/challenges/new');
   };
@@ -698,9 +711,9 @@ const AdminChallenges: React.FC = () => {
             trigger={
               <Button variant="outline" className="flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4" />
-                {sortBy === "date" ? "Date" : 
-                 sortBy === "title" ? "Title" : 
-                 sortBy === "difficulty" ? "Difficulty" : "Completion"}
+                {sortBy === "date" ? "Date" :
+                  sortBy === "title" ? "Title" :
+                    sortBy === "difficulty" ? "Difficulty" : "Completion"}
                 <ChevronDown className="h-4 w-4 ml-2" />
               </Button>
             }

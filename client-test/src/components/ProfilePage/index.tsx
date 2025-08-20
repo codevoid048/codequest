@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import axios from "axios"
@@ -7,7 +5,19 @@ import { motion } from "framer-motion"
 import { useAuth } from "@/context/AuthContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { updatePlatformCacheTimestamp, isPlatformDataStale } from "./platformCache"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Calendar,
   ChevronUp,
@@ -17,25 +27,26 @@ import {
   Linkedin,
   MapPin,
   School,
+  Settings,
   Sparkles,
   Trophy,
   Twitter,
+  Loader2,
 } from "lucide-react"
 import toast from "react-hot-toast"
-import { solvedChallenges } from "@/lib/potdchallenge"
 import { PlatformManager } from "./platform-manager"
 
 export default function ProfilePage() {
   const { username: routeUsername } = useParams()
   const navigate = useNavigate()
-  const { user, verificationString } = useAuth()
-  // const token = localStorage.getItem("token")
+  const { user, verificationString, logoutWhileDeletingUser } = useAuth()
 
   interface ProfileUser {
+    _id?: string
     leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
     gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
     codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
-    codechef?: { username?: string; solved?: number; rank?: number; rating?: number }
+    codechef?: { username?: string; stars?: string; rank?: number; rating?: number }
     profilePicture?: string
     name?: string
     username?: string
@@ -44,125 +55,215 @@ export default function ProfilePage() {
     branch?: string
     RegistrationNumber?: string
     otherLinks?: { platform: string; url: string }[]
-    solveChallenges?: { challengeId: string; timestamp: string }[]
+    solveChallenges?: {
+      easy: Array<{
+        challenge: string
+        timestamp: string
+      }>
+      medium: Array<{
+        challenge: string
+        timestamp: string
+      }>
+      hard: Array<{
+        challenge: string
+        timestamp: string
+      }>
+    }
     points?: number
     streak?: number
     potdSolved?: { timestamp: string }[]
-    heatmap?: { timestamp: string; _id: string }[]
-  }
-
-  interface Challenge {
-    challengeid: string
-    platform: string
-    difficulty: string
-    _id: string
   }
 
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [rating, setRating] = useState([]);
+
+  // Account deletion modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [usernameInput, setUsernameInput] = useState("")
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
+
+  // Create a derived heatmap from solveChallenges
+  const generateHeatmapFromSolveChallenges = (user: ProfileUser | null) => {
+    if (!user || !user.solveChallenges) return []
+
+    const heatmapData: { timestamp: string }[] = []
+
+    if (user.solveChallenges.easy) {
+      user.solveChallenges.easy.forEach((challenge) => {
+        if (challenge.timestamp) {
+          heatmapData.push({ timestamp: challenge.timestamp })
+        }
+      })
+    }
+
+    if (user.solveChallenges.medium) {
+      user.solveChallenges.medium.forEach((challenge) => {
+        if (challenge.timestamp) {
+          heatmapData.push({ timestamp: challenge.timestamp })
+        }
+      })
+    }
+
+    if (user.solveChallenges.hard) {
+      user.solveChallenges.hard.forEach((challenge) => {
+        if (challenge.timestamp) {
+          heatmapData.push({ timestamp: challenge.timestamp })
+        }
+      })
+    }
+
+    return heatmapData
+  }
+
   useEffect(() => {
     const updatePlatforms = async () => {
-      await axios.post('http://localhost:5000/platforms/leetcode', { username: profileUser?.leetCode?.username });
-      await axios.post('http://localhost:5000/platforms/codeforces', { username: profileUser?.codeforces?.username });
-      await axios.post('http://localhost:5000/platforms/codechef', { username: profileUser?.codechef?.username });
-      await axios.post('http://localhost:5000/platforms/gfg', { username: profileUser?.gfg?.username });
-    }
-    toast.success("Data updated successfully");
-    updatePlatforms();
-  }, [profileUser]);
-
-  useEffect(() => {
-  const fetchProfileUser = async () => {
-    setLoading(true)
-    setError(null)
-    const usernameToFetch = routeUsername || user?.username || "default" // Fallback if no username is provided
+      if (!profileUser || !profileUser.username) return
+      if (!isPlatformDataStale(profileUser.username, 5)) { return }
 
       try {
-        const response = await axios.get(`http://localhost:5000/api/user/${usernameToFetch}`)
-        console.log("Fetched user data:", response.data)
+        console.log("Updating platforms...")
+        const platformPromises = [];
+      
+        if (profileUser.leetCode?.username) {
+          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/leetcode`, { username: profileUser.leetCode.username }));
+        }
+        
+        if (profileUser.codeforces?.username) {
+          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/codeforces`, { username: profileUser.codeforces.username }));
+        }
+        
+        if (profileUser.codechef?.username) {
+          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/codechef`, { username: profileUser.codechef.username }));
+        }
+        
+        if (profileUser.gfg?.username) {
+          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/gfg`, {username: profileUser.gfg.username }));
+        }
+
+      // Execute all promises in parallel
+        await Promise.all(platformPromises);
+        toast.success("Data updated successfully")
+        updatePlatformCacheTimestamp(profileUser.username)
+      } catch (error) {
+        console.error("Error updating platforms:", error)
+        updatePlatformCacheTimestamp(profileUser.username)
+      }
+    }
+    updatePlatforms()
+  }, [profileUser])
+
+  useEffect(() => {
+    const fetchProfileUser = async () => {
+      setLoading(true)
+      setError(null)
+      const usernameToFetch = routeUsername || user?.username || "default"
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/user/${usernameToFetch}`)
         setProfileUser(response.data.user)
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error fetching user:", err)
-        setError(err.response?.data?.message || "User not found")
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.message || "User not found")
+        } else {
+          toast.error("An unexpected error occurred")
+        }
       } finally {
         setLoading(false)
       }
     }
-    const fetchChallenges = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/challenges");
-        // console.log("Challenges:", response.data)
-        // Ensure challenges data is an array
-        if (Array.isArray(response.data)) {
-          setChallenges(response.data)
-        } else if (response.data && Array.isArray(response.data.challenges)) {
-          // If the API returns {challenges: [...]}
-          setChallenges(response.data.challenges)
-        } else {
-          // If data is not in expected format, set as empty array
-          console.error("Challenges data is not an array:", response.data)
-          setChallenges([])
-        }
-      } catch (err: any) {
-        console.error("Error fetching challenges:", err)
-      }
-    }
-    fetchChallenges()
     fetchProfileUser()
-    solvedChallenges(routeUsername || "");
   }, [routeUsername, user?.username])
-
 
   // Handle platform verification
   const handleVerifyPlatform = async (platform: string, username: string): Promise<boolean> => {
-    console.log("Verifying platform:", platform, username, verificationString, user?._id);
     if (!verificationString) {
-      console.warn("Verification string is undefined or empty.");
+      console.warn("Verification string is undefined or empty.")
     }
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/verifyacc",
+        `${import.meta.env.VITE_API_BASE_URL}/api/auth/verifyacc`,
         {
           platform,
           username,
           verificationString,
           userId: user?._id,
         },
-        { withCredentials: true }
-      );
+        { withCredentials: true },
+      )
 
       if (response.status === 200) {
-        toast.success(response.data.message);
-        // Update the local state with the new platform data
+        toast.success(response.data.message)
         setProfileUser((prev) => {
-          if (!prev) return prev;
+          if (!prev) return prev
 
           return {
             ...prev,
             [platform]: {
               username,
-              solved: response.data.platformData?.solved || prev[platform]?.solved,
-              rank: response.data.platformData?.rank || prev[platform]?.rank,
-              rating: response.data.platformData?.rating || prev[platform]?.rating,
+              solved: response.data.platformData?.solved || 0,
+              rank: response.data.platformData?.rank || 0,
+              rating: response.data.platformData?.rating || 0,
             },
-          };
-        });
+          }
+        })
       } else {
-        const errorMessage = (response.data as { error?: string })?.error;
-        toast.error(errorMessage || "An unexpected error occurred.");
+        const errorMessage = (response.data as { error?: string })?.error
+        toast.error(errorMessage || "An unexpected error occurred.")
       }
 
-      return true;
-    } catch (error: any) {
-      console.error("Error verifying platform:", error.response?.data?.message || error.message);
-      toast.error("Verification failed, try again");
-      return false;
+      return true
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("Error verifying platform:", error.response?.data?.message || error.message)
+      } else {
+        console.error("Error verifying platform:", error)
+      }
+      toast.error("Verification failed, try again")
+      return false
     }
-  };
+  }
+
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    if (!profileUser?._id) return
+
+    setIsDeleting(true)
+    setDeleteError("")
+
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/auth/users/${profileUser._id}`, { withCredentials: true })
+
+      if (response.status === 204) {
+        toast.success("Account deleted successfully")
+        logoutWhileDeletingUser();
+        navigate("/")
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || "Failed to delete account"
+        setDeleteError(errorMessage)
+        toast.error(errorMessage)
+      } else {
+        setDeleteError("An unexpected error occurred")
+        toast.error("An unexpected error occurred")
+      }
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // Reset modal states when closing
+  const handleCloseModal = () => {
+    setShowDeleteModal(false)
+    setShowConfirmation(false)
+    setUsernameInput("")
+    setDeleteError("")
+    setIsDeleting(false)
+  }
 
   // Handle loading and error states
   if (loading) {
@@ -198,56 +299,18 @@ export default function ProfilePage() {
   }
 
   // Calculate the number of problems solved in each difficulty using the solveChallenges object
-  const allSolved = profileUser?.solveChallenges || [];
-  let easyCount = 0;
-  let mediumCount = 0;
-  let hardCount = 0;
-  allSolved.forEach((solved) => {
-    const challenge = challenges.find(challenge => challenge._id === solved.challengeId);
-    if (challenge) {
-      if (challenge.difficulty === "Easy") {
-        easyCount += 1;
-      } else if (challenge.difficulty === "Medium") {
-        mediumCount += 1;
-      } else if (challenge.difficulty === "Hard") {
-        hardCount += 1;
-      }
-    }
-  });
   const problemsSolved = {
-    total: allSolved?.length || 0,
-    easy: easyCount,
-    medium: mediumCount,
-    hard: hardCount,
+    total:
+      (profileUser.solveChallenges?.easy?.length || 0) +
+      (profileUser.solveChallenges?.medium?.length || 0) +
+      (profileUser.solveChallenges?.hard?.length || 0),
+    easy: profileUser.solveChallenges?.easy?.length || 0,
+    medium: profileUser.solveChallenges?.medium?.length || 0,
+    hard: profileUser.solveChallenges?.hard?.length || 0,
   }
-  // console.log(problemsSolved,"problemsSolved");
 
-  const platforms = [
-    {
-      name: "LeetCode",
-      handle: profileUser.leetCode?.username || "-",
-      rating: profileUser.leetCode?.rating || 0,
-      color: "#FFA116",
-    },
-    {
-      name: "GeeksForGeeks",
-      handle: profileUser.gfg?.username || "-",
-      rating: profileUser.gfg?.rating || 0,
-      color: "#2F8D46",
-    },
-    {
-      name: "CodeForces",
-      handle: profileUser.codeforces?.username || "-",
-      rating: profileUser.codeforces?.rating || 0,
-      color: "#318CE7",
-    },
-    {
-      name: "CodeChef",
-      handle: profileUser.codechef?.username || "-",
-      rating: profileUser.codechef?.rating || 0,
-      color: "#745D0B",
-    },
-  ]
+  // Generate the heatmap data from solveChallenges
+  const heatmap = generateHeatmapFromSolveChallenges(profileUser)
 
   interface GetDaysInMonthParams {
     month: number
@@ -274,25 +337,7 @@ export default function ProfilePage() {
   }
 
   const contributions = generateContributions(selectedYear)
-
-  const contributionsByMonth = Array.from({ length: 12 }, (_, month) => {
-    const daysInMonth = getDaysInMonth(month, selectedYear)
-    return contributions
-      .filter((contrib) => {
-        const contribDate = new Date(contrib.date)
-        return contribDate.getMonth() === month && contribDate.getFullYear() === selectedYear
-      })
-      .slice(0, daysInMonth)
-  })
-
   const yearOptions = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2]
-
-  const getColor = (count: number): string => {
-    if (count === 0) return "bg-gray-300"
-    if (count <= 3) return "bg-green-200"
-    if (count <= 6) return "bg-green-400"
-    return "bg-green-500"
-  }
 
   interface StreakParams {
     monthIndex: number
@@ -327,7 +372,7 @@ export default function ProfilePage() {
   }
 
   // Determine if the logged-in user is viewing their own profile
-  const isOwnProfile = user?.username === routeUsername
+  const isOwnProfile = user?._id === profileUser._id
 
   // Find social links from otherLinks array
   const findSocialLink = (platform: string) => {
@@ -340,529 +385,667 @@ export default function ProfilePage() {
   const linkedinLink = findSocialLink("linkedin")
   const githubLink = findSocialLink("github")
 
-  {/* Helper function to create the date-contributions mapping from heatmap data */ }
-  function createDateContributionsMap(heatmap: Array<{ timestamp: string; _id: string }>, year: number, monthIndex: number) {
-    if (!heatmap || !heatmap.length) return {};
+  // Helper function to create the date-contributions mapping from heatmap data
+  interface HeatmapItem {
+    timestamp?: string
+    _id?: string
+  }
 
-    // Create a map of dates to contribution counts
-    const dateContributionsMap: Record<string, number> = {};
+  function createDateContributionsMap(
+    heatmap: HeatmapItem[] | undefined,
+    year: number,
+    monthIndex: number,
+  ): Record<string, number> {
+    if (!heatmap || !heatmap.length) {
+      console.log("No heatmap data available")
+      return {}
+    }
 
-    // Format monthIndex to 2-digit string for comparison
-    const monthStr = String(monthIndex + 1).padStart(2, '0');
+    const dateContributionsMap: Record<string, number> = {}
+    const monthStr = String(monthIndex + 1).padStart(2, "0")
 
-    heatmap.forEach(item => {
+    heatmap.forEach((item: HeatmapItem) => {
       try {
-        if (!item.timestamp) return;
-
-        // Convert Unix timestamp (seconds) to milliseconds for Date
-        const timestamp = parseInt(item.timestamp) * 1000;
-        const contributionDate = new Date(timestamp);
-
-        if (isNaN(contributionDate.getTime())) {
-          console.error("Invalid timestamp:", item.timestamp);
-          return;
+        if (!item.timestamp) {
+          return
         }
 
-        // Convert to Indian timezone (UTC+5:30)
-        // First get the date in UTC
-        const utcYear = contributionDate.getUTCFullYear();
-        const utcMonth = contributionDate.getUTCMonth();
-        const utcDay = contributionDate.getUTCDate();
-        const utcHours = contributionDate.getUTCHours();
-        const utcMinutes = contributionDate.getUTCMinutes();
+        if (typeof item.timestamp === "string" && item.timestamp.includes(" ")) {
+          const [datePart] = item.timestamp.split(" ")
+          const [dateYear, dateMonth, dateDay] = datePart.split("-")
+          const formattedMonth = dateMonth.padStart(2, "0")
+          const dateString = `${dateYear}-${formattedMonth}-${dateDay.padStart(2, "0")}`
 
-        // Apply the India timezone offset (+5:30)
-        let indianHours = utcHours + 5;
-        let indianMinutes = utcMinutes + 30;
+          if (Number.parseInt(dateYear) === year && formattedMonth === monthStr) {
+            dateContributionsMap[dateString] = (dateContributionsMap[dateString] || 0) + 1
+          }
+        } else if (typeof item.timestamp === "string" && item.timestamp.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+          const [dateYear, dateMonth, dateDay] = item.timestamp.split("-")
+          const formattedMonth = dateMonth.padStart(2, "0")
+          const dateString = `${dateYear}-${formattedMonth}-${dateDay.padStart(2, "0")}`
 
-        // Adjust minutes if they exceed 60
-        if (indianMinutes >= 60) {
-          indianHours += 1;
-          indianMinutes -= 60;
-        }
+          if (Number.parseInt(dateYear) === year && formattedMonth === monthStr) {
+            dateContributionsMap[dateString] = (dateContributionsMap[dateString] || 0) + 1
+          }
+        } else {
+          let contributionDate: Date
 
-        // Adjust date if needed based on hours
-        let indianDay = utcDay;
-        let indianMonth = utcMonth + 1; // Convert 0-indexed month to 1-indexed
-        let indianYear = utcYear;
+          if (!isNaN(Number.parseInt(item.timestamp))) {
+            contributionDate = new Date(Number.parseInt(item.timestamp) * 1000)
+          } else {
+            contributionDate = new Date(item.timestamp)
+          }
 
-        if (indianHours >= 24) {
-          indianHours -= 24;
-          indianDay += 1;
+          if (isNaN(contributionDate.getTime())) {
+            console.error("Invalid timestamp format:", item.timestamp)
+            return
+          }
 
-          // Handle month/year transitions
-          const lastDayOfMonth = new Date(indianYear, indianMonth - 1, 0).getDate();
-          if (indianDay > lastDayOfMonth) {
-            indianDay = 1;
-            indianMonth += 1;
+          const dateStr = contributionDate.toISOString().split("T")[0]
+          const [dateYear, dateMonth] = dateStr.split("-")
 
-            if (indianMonth > 12) {
-              indianMonth = 1;
-              indianYear += 1;
-            }
+          if (Number.parseInt(dateYear) === year && dateMonth === monthStr) {
+            dateContributionsMap[dateStr] = (dateContributionsMap[dateStr] || 0) + 1
           }
         }
-
-        // Format the contribution date as YYYY-MM-DD for comparison
-        const indianDateString = `${indianYear}-${String(indianMonth).padStart(2, '0')}-${String(indianDay).padStart(2, '0')}`;
-
-        // Check if this contribution belongs to the selected month and year
-        if (indianYear === year && String(indianMonth).padStart(2, '0') === monthStr) {
-          // Increment the counter for this date
-          dateContributionsMap[indianDateString] = (dateContributionsMap[indianDateString] || 0) + 1;
-        }
       } catch (err) {
-        console.error("Error processing timestamp:", item.timestamp, err);
+        console.error("Error processing timestamp:", item.timestamp, err)
       }
-    });
-
-    return dateContributionsMap;
+    })
+    return dateContributionsMap
   }
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <motion.div
-        className="grid grid-cols-1 lg:grid-cols-4 gap-6"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Sidebar - Profile Details */}
-        <motion.div className="lg:col-span-1" variants={cardVariants}>
-          <Card className="overflow-hidden shadow-lg border-0">
-            <div className="h-24 bg-gradient-to-r from-purple-500 to-cyan-500"></div>
-            <div className="px-6 pb-6 -mt-12">
-              <Avatar className="w-24 h-24 border-4 border-white shadow-xl mx-auto">
-                <AvatarImage
-                  src={profileUser.profilePicture || "/placeholder.svg?height=128&width=128"}
-                  alt={profileUser.name || "User"}
-                />
-                <AvatarFallback className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500">
-                  {profileUser.name?.charAt(0) || "?"}
-                </AvatarFallback>
-              </Avatar>
-
-              <div className="mt-4 text-center">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text text-transparent">
-                  {profileUser.name}
-                </h1>
-                <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
-
-                <div className="mt-2">
-                  <p className="text-sm flex items-center justify-center text-muted-foreground">
-                    <ChevronUp className="h-4 w-4 text-green-500 mr-1" />
-                    Position #{profileUser.rank || "N/A"}
-                  </p>
+    <TooltipProvider>
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-4 gap-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* Sidebar - Profile Details */}
+          <motion.div className="lg:col-span-1" variants={cardVariants}>
+            <Card className="overflow-hidden shadow-lg border-0 relative">
+              {/* Settings Icon - Only show for own profile */}
+              {isOwnProfile && (
+                <div className="absolute top-6 right-0 z-10">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-800 backdrop-blur-sm"
+                        onClick={() => setShowDeleteModal(true)}
+                      >
+                        <Settings className="h-8 w-8" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Settings</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
+              )}
 
-                <div className="mt-5 space-y-3">
-                  {profileUser.collegeName && (
-                    <p className="text-sm flex items-center gap-2 justify-center">
-                      <School className="h-4 w-4 text-purple-500" /> {profileUser.collegeName}
-                    </p>
-                  )}
-                  {profileUser.branch && (
-                    <p className="text-sm flex items-center gap-2 justify-center">
-                      <Code2 className="h-4 w-4 text-cyan-500" /> {profileUser.branch}
-                    </p>
-                  )}
-                  {profileUser.RegistrationNumber && (
-                    <p className="text-sm flex items-center gap-2 justify-center">
-                      <MapPin className="h-4 w-4 text-pink-500" /> {profileUser.RegistrationNumber}
-                    </p>
-                  )}
-                </div>
+              <div className="h-24 bg-gradient-to-r from-purple-500 to-cyan-500"></div>
+              <div className="px-6 pb-6 -mt-12">
+                <Avatar className="w-24 h-24 border-4 border-white shadow-xl mx-auto">
+                  <AvatarImage
+                    src={profileUser.profilePicture || "/placeholder.svg?height=128&width=128"}
+                    alt={profileUser.name || "User"}
+                  />
+                  <AvatarFallback className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500">
+                    {profileUser.name?.charAt(0) || "?"}
+                  </AvatarFallback>
+                </Avatar>
 
-                <div className="mt-6 flex justify-center gap-3">
-                  {profileUser.otherLinks?.find((link) => link.platform === "Twitter")?.url && (
-                    <Button variant="outline" size="icon" className="rounded-full" asChild>
-                      <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
-                        <Twitter className="h-4 w-4 text-sky-500" />
-                      </Link>
-                    </Button>
-                  )}
-                  {profileUser.otherLinks?.find((link) => link.platform === "LinkedIn")?.url && (
-                    <Button variant="outline" size="icon" className="rounded-full" asChild>
-                      <Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
-                        <Linkedin className="h-4 w-4 text-blue-600" />
-                      </Link>
-                    </Button>
-                  )}
-                  {profileUser.otherLinks?.find((link) => link.platform === "GitHub")?.url && (
-                    <Button variant="outline" size="icon" className="rounded-full" asChild>
-                      <Link to={githubLink} target="_blank" rel="noopener noreferrer">
-                        <Github className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  )}
-                </div>
+                <div className="mt-4 text-center">
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text text-transparent">
+                    {profileUser.name}
+                  </h1>
+                  <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
 
-                {isOwnProfile && (
-                  <div className="mt-6">
-                    <Button
-                      className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600"
-                      onClick={() => navigate("/profile/edit-profile")}
-                    >
-                      Edit Profile
-                    </Button>
+                  <div className="mt-2">
+                    <p className="text-sm flex items-center justify-center text-muted-foreground">
+                      <ChevronUp className="h-4 w-4 text-green-500 mr-1" />
+                      Position #{profileUser.rank || "N/A"}
+                    </p>
                   </div>
-                )}
+
+                  <div className="mt-5 space-y-3">
+                    {profileUser.collegeName && (
+                      <p className="text-sm flex items-center gap-2 justify-center">
+                        <School className="h-4 w-4 text-purple-500" /> {profileUser.collegeName}
+                      </p>
+                    )}
+                    {profileUser.branch && (
+                      <p className="text-sm flex items-center gap-2 justify-center">
+                        <Code2 className="h-4 w-4 text-cyan-500" /> {profileUser.branch}
+                      </p>
+                    )}
+                    {profileUser.RegistrationNumber && (
+                      <p className="text-sm flex items-center gap-2 justify-center">
+                        <MapPin className="h-4 w-4 text-pink-500" /> {profileUser.RegistrationNumber}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-6 flex justify-center gap-3">
+                    {profileUser.otherLinks?.find((link) => link.platform === "Twitter")?.url && (
+                      <Button variant="outline" size="icon" className="rounded-full" asChild>
+                        {twitterLink && (
+                          <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
+                            <Twitter className="h-4 w-4 text-sky-500" />
+                          </Link>
+                        )}
+                      </Button>
+                    )}
+                    {profileUser.otherLinks?.find((link) => link.platform === "LinkedIn")?.url && (
+                      <Button variant="outline" size="icon" className="rounded-full" asChild>
+                        {linkedinLink && (
+                          <Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
+                            <Linkedin className="h-4 w-4 text-blue-600" />
+                          </Link>
+                        )}
+                      </Button>
+                    )}
+                    {profileUser.otherLinks?.find((link) => link.platform === "GitHub")?.url && (
+                      <Button variant="outline" size="icon" className="rounded-full" asChild>
+                        {githubLink && (
+                          <Link to={githubLink} target="_blank" rel="noopener noreferrer">
+                            <Github className="h-4 w-4" />
+                          </Link>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+
+                  {isOwnProfile && (
+                    <div className="mt-6">
+                      <Button
+                        className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600"
+                        onClick={() => navigate("/profile/edit-profile")}
+                      >
+                        Edit Profile
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </Card>
-
-          {/* Coding Platforms */}
-          <motion.div variants={cardVariants} className="mt-6">
-            {isOwnProfile ? (
-              <PlatformManager
-                userPlatforms={{
-                  leetCode: profileUser.leetCode,
-                  gfg: profileUser.gfg,
-                  codeforces: profileUser.codeforces,
-                  codechef: profileUser.codechef,
-                }}
-                onVerifyPlatform={handleVerifyPlatform}
-              />
-            ) : (
-              <Card className="shadow-lg border-0">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center text-lg">
-                    <Github className="mr-2 h-5 w-5 text-gray-500" /> Coding Platforms
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {[
-                    {
-                      name: "LeetCode",
-                      handle: profileUser.leetCode?.username || "-",
-                      rating: profileUser.leetCode?.rating || 0,
-                      color: "#FFA116",
-                    },
-                    {
-                      name: "GeeksForGeeks",
-                      handle: profileUser.gfg?.username || "-",
-                      rating: profileUser.gfg?.rating || 0,
-                      color: "#2F8D46",
-                    },
-                    {
-                      name: "CodeForces",
-                      handle: profileUser.codeforces?.username || "-",
-                      rating: profileUser.codeforces?.rating || 0,
-                      color: "#318CE7",
-                    },
-                    {
-                      name: "CodeChef",
-                      handle: profileUser.codechef?.username || "-",
-                      rating: profileUser.codechef?.rating || 0,
-                      color: "#745D0B",
-                    },
-                  ].map((platform) => (
-                    <motion.div
-                      key={platform.name}
-                      whileHover={{ scale: 1.02 }}
-                      className="border-l-4 rounded-lg shadow-sm p-3"
-                      style={{ borderLeftColor: platform.color }}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <div className="font-medium">{platform.name}</div>
-                          <div className="text-sm text-muted-foreground">@{platform.handle}</div>
-                        </div>
-                        <div className="text-lg font-bold" style={{ color: platform.color }}>
-                          {platform.rating}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
-        </motion.div>
-
-        {/* Main Content - Keeping the rest of the component unchanged */}
-        <motion.div className="lg:col-span-3" variants={cardVariants}>
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
-              <Card className="shadow-lg border-0 overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
-                <CardContent className="pt-6">
-                  <div className="flex items-center">
-                    <div className="bg-blue-100 p-3 rounded-lg mr-4">
-                      <Code2 className="h-6 w-6 text-blue-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Problems Solved</p>
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                        {problemsSolved.total}
-                      </h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
-              <Card className="shadow-lg border-0 overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
-                <CardContent className="pt-6">
-                  <div className="flex items-center">
-                    <div className="bg-amber-100 p-3 rounded-lg mr-4">
-                      <Trophy className="h-6 w-6 text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Points</p>
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                        {profileUser.points || 0}
-                      </h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
-              <Card className="shadow-lg border-0 overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
-                <CardContent className="pt-6">
-                  <div className="flex items-center">
-                    <div className="bg-red-100 p-3 rounded-lg mr-4">
-                      <Flame className="h-6 w-6 text-red-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-                        {profileUser.streak || 0}
-                      </h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-
-          {/* Problem Difficulty Breakdown */}
-          <motion.div variants={cardVariants} className="mt-6">
-            <Card className="shadow-lg border-0">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Sparkles className="mr-2 h-5 w-5 text-amber-500" /> Problem Difficulty Breakdown
-                </CardTitle>
-                <CardDescription>Track your progress across difficulty levels</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <motion.div
-                    variants={cardVariants}
-                    whileHover={{ scale: 1.03 }}
-                    className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm"
-                  >
-                    <div className="relative w-28 h-28 mx-auto">
-                      <svg className="w-full h-full" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#E5E7EB"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#10B981"
-                          strokeWidth="3"
-                          strokeDasharray={`${(problemsSolved.easy / 300) * 100}, 100`}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-3xl font-bold text-green-600">{problemsSolved.easy}</div>
-                      </div>
-                    </div>
-                    <div className="text-sm font-medium text-green-800 mt-3">Easy</div>
-                  </motion.div>
-
-                  <motion.div
-                    variants={cardVariants}
-                    whileHover={{ scale: 1.03 }}
-                    className="text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm"
-                  >
-                    <div className="relative w-28 h-28 mx-auto">
-                      <svg className="w-full h-full" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#E5E7EB"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#F59E0B"
-                          strokeWidth="3"
-                          strokeDasharray={`${(problemsSolved.medium / 300) * 100}, 100`}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-3xl font-bold text-yellow-600">{problemsSolved.medium}</div>
-                      </div>
-                    </div>
-                    <div className="text-sm font-medium text-yellow-800 mt-3">Medium</div>
-                  </motion.div>
-
-                  <motion.div
-                    variants={cardVariants}
-                    whileHover={{ scale: 1.03 }}
-                    className="text-center p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm"
-                  >
-                    <div className="relative w-28 h-28 mx-auto">
-                      <svg className="w-full h-full" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#E5E7EB"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#EF4444"
-                          strokeWidth="3"
-                          strokeDasharray={`${(problemsSolved.hard / 100) * 100}, 100`}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-3xl font-bold text-red-600">{problemsSolved.hard}</div>
-                      </div>
-                    </div>
-                    <div className="text-sm font-medium text-red-800 mt-3">Hard</div>
-                  </motion.div>
-                </div>
-              </CardContent>
             </Card>
-          </motion.div>
 
-          {/* Contributions Map */}
-          <motion.div variants={cardVariants} className="mt-6">
-            <Card className="shadow-lg border-0">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle className="flex items-center">
-                    <Calendar className="mr-2 h-5 w-5 text-green-500" /> Contributions
-                  </CardTitle>
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(Number.parseInt(e.target.value))}
-                    className="border rounded-md p-2 text-sm bg-background"
-                  >
-                    {yearOptions.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <CardDescription>Your coding activity for {selectedYear}</CardDescription>
-              </CardHeader>
-              <CardContent>   
-                <div className="overflow-x-auto pb-4">
-                  <div className="min-w-[950px]">
-                    <div className="flex gap-4">
-                      {Array.from({ length: 12 }).map((_, monthIndex) => {
-                        const daysInMonth = getDaysInMonth(monthIndex, selectedYear);
-                        const firstDayOfMonth = new Date(selectedYear, monthIndex, 1).getDay();
-                        const numWeeks = Math.ceil((daysInMonth + firstDayOfMonth) / 7);
-                        const monthNames = [
-                          "January", "February", "March", "April", "May", "June",
-                          "July", "August", "September", "October", "November", "December",
-                        ];
-
-                        // Create contributions map for the month using the heatmap data
-                        const dateContributionsMap = createDateContributionsMap(profileUser?.heatmap || [], selectedYear, monthIndex);
-                        return (
-                          <div key={monthIndex} className="flex-none">
-                            <div className="text-xs text-muted-foreground text-center mb-2">
-                              {monthNames[monthIndex]}
-                            </div>
-                            <div className="grid gap-1"
-                              style={{
-                                gridTemplateRows: `repeat(7, 1fr)`,
-                                gridTemplateColumns: `repeat(${numWeeks}, 1fr)`,
-                              }}
-                            >
-                              {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
-                                // Create date for this calendar cell (using local time)
-                                const date = new Date(selectedYear, monthIndex, dayIndex + 1);
-                                const dayOfWeek = date.getDay();
-
-                                // Format the date as YYYY-MM-DD for comparison
-                                const day = String(date.getDate()).padStart(2, '0');
-                                const month = String(date.getMonth() + 1).padStart(2, '0');
-                                const dateString = `${selectedYear}-${month}-${day}`;
-
-                                // Get contribution count for this date
-                                const contributionCount = dateContributionsMap[dateString] || 0;
-
-                                // Determine intensity based on count
-                                const getIntensityColor = (count: number) => {
-                                  if (count === 0) return "bg-gray-300";
-                                  if (count === 1) return "bg-green-200";
-                                  if (count <= 3) return "bg-green-300";
-                                  if (count <= 5) return "bg-green-400";
-                                  return "bg-green-500";
-                                };
-
-                                const isSolved = contributionCount > 0;
-                                const today = new Date();
-                                const isToday =
-                                  today.getDate() === date.getDate() &&
-                                  today.getMonth() === date.getMonth() &&
-                                  today.getFullYear() === date.getFullYear();
-
-                                const inStreak = isPartOfStreak({
-                                  monthIndex,
-                                  dayIndex,
-                                  monthContribs: Object.keys(dateContributionsMap)
-                                    .filter(date => date.startsWith(`${selectedYear}-${month}`))
-                                    .map(date => ({ date, count: dateContributionsMap[date] }))
-                                });
-
-                                return (
-                                  <motion.div
-                                    key={dayIndex}
-                                    className={`h-4 w-4 rounded-sm ${getIntensityColor(contributionCount)} ${isToday ? "ring-2 ring-black dark:ring-white" : ""
-                                      } ${inStreak && isSolved ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
-                                    style={{ gridRow: dayOfWeek + 1, gridColumn: Math.floor((dayIndex + firstDayOfMonth) / 7) + 1 }}
-                                    title={`${date.toLocaleDateString()}: ${contributionCount > 0 ? `${contributionCount} contribution${contributionCount > 1 ? 's' : ''}` : "No contributions"}`}
-                                    whileHover={{ scale: 1.5, zIndex: 10 }}
-                                    transition={{ duration: 0.2 }}
-                                  />
-                                );
-                              })}
-                            </div>
-                            <div className="text-xs text-muted-foreground text-center mt-1">
-                              {Object.values(dateContributionsMap).reduce((sum, count) => sum + count, 0)} contributions
-                            </div>
+            {/* Coding Platforms */}
+            <motion.div variants={cardVariants} className="mt-2">
+              {isOwnProfile ? (
+                <PlatformManager
+                  userPlatforms={{
+                    leetCode: profileUser.leetCode,
+                    gfg: profileUser.gfg,
+                    codeforces: profileUser.codeforces,
+                    codechef: profileUser.codechef,
+                  }}
+                  onVerifyPlatform={handleVerifyPlatform}
+                />
+              ) : (
+                <Card className="shadow-lg border-0">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center text-lg">
+                      <Github className="mr-2 h-5 w-5 text-gray-500" /> Coding Platforms
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {[
+                      {
+                        name: "LeetCode",
+                        handle: profileUser.leetCode?.username || "-",
+                        solved: profileUser.leetCode?.solved,
+                        rating: profileUser.leetCode?.rating,
+                        color: "#FFA116",
+                        type: "leetcode",
+                      },
+                      {
+                        name: "GeeksForGeeks",
+                        handle: profileUser.gfg?.username || "-",
+                        solved: profileUser.gfg?.solved,
+                        rating: profileUser.gfg?.rating,
+                        color: "#2F8D46",
+                        type: "gfg",
+                      },
+                      {
+                        name: "CodeForces",
+                        handle: profileUser.codeforces?.username || "-",
+                        solved: profileUser.codeforces?.solved,
+                        rating: profileUser.codeforces?.rating,
+                        color: "#318CE7",
+                        type: "codeforces",
+                      },
+                      {
+                        name: "CodeChef",
+                        handle: profileUser.codechef?.username || "-",
+                        stars: profileUser.codechef?.stars || "1*",
+                        rating: profileUser.codechef?.rating,
+                        color: "#745D0B",
+                        type: "codechef",
+                      },
+                    ].map((platform) => (
+                      <motion.div
+                        key={platform.name}
+                        whileHover={{ scale: 1.02 }}
+                        className="border-l-4 rounded-lg shadow-sm p-2 hover:shadow-md transition-shadow duration-200"
+                        style={{ borderLeftColor: platform.color }}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{platform.name}</div>
+                            <div className="text-xs text-muted-foreground">@{platform.handle}</div>
                           </div>
-                        );
-                      })}
+                          <div className="flex flex-col items-end space-y-1 text-right">
+                            {platform.solved !== undefined && platform.type !== "codechef" && (
+                              <div className="text-xs">
+                                <span className="text-muted-foreground">Solved:</span>{" "}
+                                {platform.handle !== "-" ? (
+                                  <span className="font-semibold">{platform.solved}</span>
+                                ) : (
+                                  <span className="font-semibold">--</span>
+                                )}
+                              </div>
+                            )}
+                            {platform.type === "codechef" && platform.stars !== undefined && (
+                              <div className="text-xs">
+                                <span className="text-muted-foreground">Stars:</span>{" "}
+                                {platform.handle !== "-" ? (
+                                  <span className="font-semibold" style={{ color: platform.color }}>
+                                    {platform.stars}
+                                  </span>
+                                ) : (
+                                  <span className="font-semibold" style={{ color: platform.color }}>
+                                    --
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {platform.rating !== undefined && (
+                              <div className="text-xs">
+                                <span className="text-muted-foreground">Rating:</span>{" "}
+                                {platform.handle !== "-" ? (
+                                  <span className="font-semibold" style={{ color: platform.color }}>
+                                    {platform.rating}
+                                  </span>
+                                ) : (
+                                  <span className="font-semibold" style={{ color: platform.color }}>
+                                    --
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </motion.div>
+          </motion.div>
+
+          {/* Main Content - Stats Cards */}
+          <motion.div className="lg:col-span-3" variants={cardVariants}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+                <Card className="shadow-lg border-0 overflow-hidden">
+                  <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center">
+                      <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                        <Code2 className="h-6 w-6 text-blue-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Problems Solved</p>
+                        <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
+                          {problemsSolved.total}
+                        </h3>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+                <Card className="shadow-lg border-0 overflow-hidden">
+                  <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center">
+                      <div className="bg-amber-100 p-3 rounded-lg mr-4">
+                        <Trophy className="h-6 w-6 text-amber-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Total Points</p>
+                        <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                          {profileUser.points || 0}
+                        </h3>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+                <Card className="shadow-lg border-0 overflow-hidden">
+                  <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center">
+                      <div className="bg-red-100 p-3 rounded-lg mr-4">
+                        <Flame className="h-6 w-6 text-red-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
+                        <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
+                          {profileUser.streak || 0}
+                        </h3>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+
+            {/* Problem Difficulty Breakdown */}
+            <motion.div variants={cardVariants} className="mt-6">
+              <Card className="shadow-lg border-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Sparkles className="mr-2 h-5 w-5 text-amber-500" /> Problem Difficulty Breakdown
+                  </CardTitle>
+                  <CardDescription>Track your progress across difficulty levels</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <motion.div
+                      variants={cardVariants}
+                      whileHover={{ scale: 1.03 }}
+                      className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm"
+                    >
+                      <div className="relative w-28 h-28 mx-auto">
+                        <svg className="w-full h-full" viewBox="0 0 36 36">
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#E5E7EB"
+                            strokeWidth="3"
+                          />
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#10B981"
+                            strokeWidth="3"
+                            strokeDasharray={`${(problemsSolved.easy / 300) * 100}, 100`}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-3xl font-bold text-green-600">{problemsSolved.easy}</div>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium text-green-800 mt-3">Easy</div>
+                    </motion.div>
+
+                    <motion.div
+                      variants={cardVariants}
+                      whileHover={{ scale: 1.03 }}
+                      className="text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm"
+                    >
+                      <div className="relative w-28 h-28 mx-auto">
+                        <svg className="w-full h-full" viewBox="0 0 36 36">
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#E5E7EB"
+                            strokeWidth="3"
+                          />
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#F59E0B"
+                            strokeWidth="3"
+                            strokeDasharray={`${(problemsSolved.medium / 300) * 100}, 100`}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-3xl font-bold text-yellow-600">{problemsSolved.medium}</div>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium text-yellow-800 mt-3">Medium</div>
+                    </motion.div>
+
+                    <motion.div
+                      variants={cardVariants}
+                      whileHover={{ scale: 1.03 }}
+                      className="text-center p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm"
+                    >
+                      <div className="relative w-28 h-28 mx-auto">
+                        <svg className="w-full h-full" viewBox="0 0 36 36">
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#E5E7EB"
+                            strokeWidth="3"
+                          />
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke="#EF4444"
+                            strokeWidth="3"
+                            strokeDasharray={`${(problemsSolved.hard / 100) * 100}, 100`}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-3xl font-bold text-red-600">{problemsSolved.hard}</div>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium text-red-800 mt-3">Hard</div>
+                    </motion.div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Contributions Map */}
+            <motion.div variants={cardVariants} className="mt-6">
+              <Card className="shadow-lg border-0">
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center">
+                      <Calendar className="mr-2 h-5 w-5 text-green-500" /> Contributions
+                    </CardTitle>
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(Number.parseInt(e.target.value))}
+                      className="border rounded-md p-2 text-sm bg-background"
+                    >
+                      {yearOptions.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <CardDescription>Your coding activity for {selectedYear}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto pb-4">
+                    <div className="min-w-[950px]">
+                      <div className="flex gap-4">
+                        {Array.from({ length: 12 }).map((_, monthIndex) => {
+                          const daysInMonth = getDaysInMonth(monthIndex, selectedYear)
+                          const firstDayOfMonth = new Date(selectedYear, monthIndex, 1).getDay()
+                          const numWeeks = Math.ceil((daysInMonth + firstDayOfMonth) / 7)
+                          const monthNames = [
+                            "January",
+                            "February",
+                            "March",
+                            "April",
+                            "May",
+                            "June",
+                            "July",
+                            "August",
+                            "September",
+                            "October",
+                            "November",
+                            "December",
+                          ]
+
+                          const dateContributionsMap = createDateContributionsMap(heatmap, selectedYear, monthIndex)
+                          return (
+                            <div key={monthIndex} className="flex-none">
+                              <div className="text-xs text-muted-foreground text-center mb-2">
+                                {monthNames[monthIndex]}
+                              </div>
+                              <div
+                                className="grid gap-1"
+                                style={{
+                                  gridTemplateRows: `repeat(7, 1fr)`,
+                                  gridTemplateColumns: `repeat(${numWeeks}, 1fr)`,
+                                }}
+                              >
+                                {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
+                                  const date = new Date(selectedYear, monthIndex, dayIndex + 1)
+                                  const dayOfWeek = date.getDay()
+
+                                  const day = String(date.getDate()).padStart(2, "0")
+                                  const month = String(date.getMonth() + 1).padStart(2, "0")
+                                  const dateString = `${selectedYear}-${month}-${day}`
+
+                                  const contributionCount = dateContributionsMap[dateString] || 0
+
+                                  const getIntensityColor = (count: number) => {
+                                    if (count === 0) return "bg-gray-300"
+                                    return "bg-green-500"
+                                  }
+
+                                  const isSolved = contributionCount > 0
+                                  const today = new Date()
+                                  const isToday =
+                                    today.getDate() === date.getDate() &&
+                                    today.getMonth() === date.getMonth() &&
+                                    today.getFullYear() === date.getFullYear()
+
+                                  const inStreak = isPartOfStreak({
+                                    monthIndex,
+                                    dayIndex,
+                                    monthContribs: Object.keys(dateContributionsMap)
+                                      .filter((date) => date.startsWith(`${selectedYear}-${month}`))
+                                      .map((date) => ({ date, count: dateContributionsMap[date] })),
+                                  })
+
+                                  return (
+                                    <motion.div
+                                      key={dayIndex}
+                                      className={`h-4 w-4 rounded-sm ${getIntensityColor(contributionCount)} ${
+                                        isToday ? "ring-2 ring-black dark:ring-white" : ""
+                                      } ${inStreak && isSolved ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
+                                      style={{
+                                        gridRow: dayOfWeek + 1,
+                                        gridColumn: Math.floor((dayIndex + firstDayOfMonth) / 7) + 1,
+                                      }}
+                                      title={`${date.toLocaleDateString()}: ${
+                                        contributionCount > 0
+                                          ? `${contributionCount} contribution${contributionCount > 1 ? "s" : ""}`
+                                          : "No contributions"
+                                      }`}
+                                      whileHover={{ scale: 1.5, zIndex: 10 }}
+                                      transition={{ duration: 0.2 }}
+                                    />
+                                  )
+                                })}
+                              </div>
+                              <div className="text-xs text-muted-foreground text-center mt-1">
+                                {Object.values(dateContributionsMap).reduce((sum, count) => sum + count, 0)}{" "}
+                                contributions
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-4">
+                      <span>Less</span>
+                      <div className="h-3 w-3 rounded-sm bg-gray-300"></div>
+                      <div className="h-3 w-3 rounded-sm bg-green-700"></div>
+                      <span>More</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-4">
-                    <span>Less</span>
-                    <div className="h-3 w-3 rounded-sm bg-gray-300"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-400"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-500"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-600"></div>
-                    <div className="h-3 w-3 rounded-sm bg-green-700"></div>
-                    <span>More</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           </motion.div>
         </motion.div>
-      </motion.div>
-      {/* <RatingChart ratingData={rating} /> */}
-    </div>
+
+        {/* Account Deletion Modal */}
+        <Dialog open={showDeleteModal} onOpenChange={handleCloseModal}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="text-red-600">
+                {showConfirmation ? "Confirm Account Deletion" : "Delete Account"}
+              </DialogTitle>
+              <DialogDescription>
+                {showConfirmation
+                  ? "Please type your username to confirm account deletion."
+                  : "Do you want to delete your account? This action cannot be undone."}
+              </DialogDescription>
+            </DialogHeader>
+
+            {!showConfirmation ? (
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={handleCloseModal}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={() => setShowConfirmation(true)}>
+                  Delete Account
+                </Button>
+              </DialogFooter>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username-confirm">
+                    Type <span className="font-mono font-semibold">{profileUser.username}</span> to confirm:
+                  </Label>
+                  <Input
+                    id="username-confirm"
+                    value={usernameInput}
+                    onChange={(e) => {
+                      setUsernameInput(e.target.value)
+                      setDeleteError("")
+                    }}
+                    placeholder="Enter your username"
+                    className={deleteError ? "border-red-500" : ""}
+                  />
+                  {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
+                </div>
+
+                <DialogFooter className="gap-2">
+                  <Button variant="outline" onClick={handleCloseModal}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteAccount}
+                    disabled={usernameInput !== profileUser.username || isDeleting}
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      "Delete"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   )
 }
-

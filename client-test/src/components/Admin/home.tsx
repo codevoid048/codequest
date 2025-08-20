@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 
 interface FeatureItem {
   text: string;
-  icon: React.ReactNode;
+  icon: React.ReactElement<{ size?: number }>; // Ensure the icon supports the `size` prop
 }
 
 const AdminHome: FC = () => {
@@ -63,7 +63,7 @@ const AdminHome: FC = () => {
                 className="flex items-start gap-4 p-4 bg-muted rounded-xl shadow-sm hover:shadow-md transition-all border border-border"
               >
                 <div className="p-2 bg-background rounded-full shadow">
-                  {React.cloneElement(item.icon as React.ReactElement, { size: 24 })}
+                  {React.cloneElement(item.icon, { size: 24 })} {/* Now TypeScript knows `size` is valid */}
                 </div>
                 <div className="text-left">
                   <h4 className="text-md font-medium">{item.text}</h4>

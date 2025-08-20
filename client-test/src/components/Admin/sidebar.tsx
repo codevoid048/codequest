@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAdminStore } from "@/context/AdminContext";
+import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Code, Menu, Moon, Sun, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -14,13 +14,16 @@ export function Sidebar() {
   const location = useLocation();
   const {token,logout} = useAdminStore();
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+      console.log(isScrolled);
+    };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isScrolled]);
 
   const navItems = [
-    { href: "/codingclubadmin/dashboard", label: "Dashboard" },
+    { href: "/codingclubadmin/", label: "Home" },
     { href: "/codingclubadmin/leaderboard", label: "Leaderboard" },
     { href: "/codingclubadmin/users", label: "Users" },
     { href: "/codingclubadmin/challenges", label: "Challenges" },
@@ -28,101 +31,149 @@ export function Sidebar() {
   ];
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full p-6">
-      <Link to="/codingclubadmin" className="flex items-center space-x-2 mb-8">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="flex flex-col h-full p-6 bg-gradient-to-b from-background to-background/80"
+    >
+      <Link 
+        to="/codingclubadmin" 
+        className="flex items-center space-x-3 mb-10"
+        onClick={() => setIsOpen(false)}
+      >
         <motion.div
-          animate={{ rotate: [0, 10, -10, 0] }}
-          transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 5 }}
         >
-          <Code className="h-6 w-6 text-primary" />
+          <Code className="h-8 w-8 text-primary" />
         </motion.div>
-        <span className="font-bold text-xl dark:text-primary">
+        <span className="font-extrabold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
           Admin CodeQuest
         </span>
       </Link>
-      <nav className="flex flex-col gap-4 flex-1">
+
+      <nav className="flex flex-col gap-2 flex-1">
         {navItems.map((item) => (
-          <Link
+          <motion.div
             key={item.href}
-            to={item.href}
-            className={`text-sm font-medium hover:text-primary ${
-              location.pathname === item.href
-                ? "text-primary"
-                : "text-muted-foreground"
-            }`}
-            onClick={() => setIsOpen(false)}
+            whileHover={{ x: 5 }}
+            transition={{ type: "spring", stiffness: 300 }}
           >
-            {item.label}
-          </Link>
+            <Link
+              to={item.href}
+              className={`block py-2 px-4 rounded-lg text-sm text-white dark:text-foreground font-medium transition-all duration-200 ${
+                location.pathname === item.href
+                  ? "bg-primary/10 text-primary  font-semibold"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary dark:hover:bg-muted dark:hover:text-primary"
+              }`}
+              onClick={() => setIsOpen(false)}
+            >
+              {item.label}
+            </Link>
+          </motion.div>
         ))}
       </nav>
-      <div className="flex flex-col gap-4 mt-auto">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="hover:bg-muted "
+
+      <div className="flex flex-col gap-4 mt-auto pt-6 border-t border-muted">
+        <motion.div
+
         >
-          {theme === "dark" ? (
-            <Sun className="h-5 w-5 text-black" />
-          ) : (
-            <Moon className="h-5 w-5" />
-          )}
-        </Button>
-        {!token ? (
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" asChild>
-              <Link to="/codingclubadmin">Log In</Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <Button
-              onClick={logout}
-              variant="outline"
-              className="dark:bg-primary"
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="justify-center gap-2"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-5 w-5 text-yellow-400" />
+            ) : (
+              <Moon className="h-5 w-5 text-blue-600" />
+            )}
+          </Button>
+        </motion.div>
+
+        <AnimatePresence>
+          {!isAuthenticated ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="flex flex-col gap-2"
             >
-              Logout
-            </Button>
-          </div>
-        )}
+              <Button 
+                variant="outline" 
+                asChild
+                className="w-full bg-primary/10 text-primary"
+              >
+                <Link to="/codingclubadmin" onClick={() => setIsOpen(false)}>Log In</Link>
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+            >
+              <Button
+                onClick={() => {
+                  logout();
+                  setIsOpen(false);
+                }}
+                variant="outline"
+                className="w-full bg-gradient-to-r from-red-500/10 to-red-600/10 hover:from-red-500/20 hover:to-red-600/20 text-red-500"
+              >
+                Logout
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 
   return (
     <>
       <aside
-        className={`hidden md:block fixed top-0 left-0 h-full w-64 z-50 border-r ${
-          isScrolled
-            ? "bg-background/90 backdrop-blur-md shadow-lg"
-            : "bg-background"
-        }`}
+        className={`hidden md:block fixed top-0 left-0 h-full w-72 z-50 border-r bg-background`}
       >
         <SidebarContent />
       </aside>
-      <div className="md:hidden sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b">
+
+      <motion.header 
+        className="md:hidden sticky top-0 z-50 w-full bg-background/90 backdrop-blur-lg border-b"
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", stiffness: 100 }}
+      >
         <div className="container flex h-16 items-center justify-between px-4">
           <Link to="/" className="flex items-center space-x-2">
-            <Code className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">CodeQuest</span>
+            <motion.div whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.9 }}>
+              <Code className="h-6 w-6 text-primary" />
+            </motion.div>
+            <span className="font-extrabold text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+              CodeQuest
+            </span>
           </Link>
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                {isOpen ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Menu className="h-5 w-5" />
-                )}
+              <Button variant="ghost" size="icon" className="  hover:bg-muted">
+                <motion.div
+                  animate={{ rotate: isOpen ? 90 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {isOpen ? (
+                    <X className="h-5 w-5 text-primary dark:text-primary" />
+                  ) : (
+                    <Menu className="h-5 w-5 text-primary dark:text-primary" />
+                  )}
+                </motion.div>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0">
+            <SheetContent side="left" className="w-72 p-0 border-r bg-primary">
               <SidebarContent />
             </SheetContent>
           </Sheet>
         </div>
-      </div>
+      </motion.header>
     </>
   );
 }

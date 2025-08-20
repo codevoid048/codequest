@@ -16,6 +16,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
+  logoutWhileDeletingUser: () => Promise<void>;
   token: string | null;
   fetchUser: () => Promise<void>; // Export fetchUser to allow manual refresh
   verificationString: string;
@@ -29,16 +30,13 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  //const [loading, setLoading] = useState<boolean>(true);
     const [verificationString, setVerificationString] = useState("")
   // Function to fetch user data from the backend
   const fetchUser = async () => {
     try {
-      // const res = await axios.get("http://localhost:5000/api/auth/me", { 
-      //   withCredentials: true 
-      // });
       const storedToken = localStorage.getItem("auth_token");
-    const res = await axios.get("http://localhost:5000/api/auth/me", {
+    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/me`, {
       withCredentials: true,
       headers: { Authorization: `Bearer ${storedToken}` }, // Ensure token is sent
     });
@@ -90,7 +88,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Logout function
   const logout = async () => {
     try {
-      await axios.post("http://localhost:5000/api/auth/logout", {}, {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/logout`, {}, {
         withCredentials: true
       });
 
@@ -99,11 +97,23 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setToken(null);
       localStorage.removeItem('auth_token');
 
-      window.location.href = "/login"; // Redirect to login page
+      window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
+
+  const logoutWhileDeletingUser = async () => {
+    try {
+      setUser(null);
+      setIsAuthenticated(false);
+      setToken(null);
+      localStorage.removeItem('auth_token');
+    }
+    catch (error) {
+      console.error("Logout Failed: ", error);
+    }
+  }
 
   // Create the context value object
   const contextValue: AuthContextType = {
@@ -111,6 +121,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     isAuthenticated,
     login,
     logout,
+    logoutWhileDeletingUser,
     token,
     verificationString,
     setVerificationString,

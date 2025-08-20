@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import {User} from "../models/User.js";
+import { User } from "../models/User.js";
 
 
 export const protect = async (req, res, next) => {
@@ -8,7 +8,6 @@ export const protect = async (req, res, next) => {
     try {
 
         token = req.cookies.jwt;
-        // console.log("Token from cookies:", token);
 
         if (!token) {
             return res.status(401).json({ message: 'No token, authorization denied' });
@@ -23,7 +22,7 @@ export const protect = async (req, res, next) => {
             return res.status(401).json({ message: 'Not authorized, token failed' });
         }
 
-        next(); 
+        next();
     }
     catch (error) {
         console.error("JWT Verification Error:", error);

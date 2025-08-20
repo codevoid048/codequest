@@ -1,5 +1,5 @@
 import { Challenge } from "../models/Challenge.js";
-import { Activity } from "../models/Activity.js";
+import { Solution } from "../models/Solution.js";
 
 export const getChallenges = async (req, res) => {
     try {
@@ -44,7 +44,7 @@ export const getChallengeById = async (req, res) => {
             //     type: 'challenge_attempt',
             //     challenge: challenge._id
             // });
-
+            
             res.status(200).json(challenge);
         } else {
             res.status(404).json({ message: 'Challenge not found' });
@@ -55,3 +55,38 @@ export const getChallengeById = async (req, res) => {
     }
 };
 
+export const getSolutionByChallengeId = async (req, res) => {
+    try {
+      const { id } = req.params;
+  
+      const solution = await Solution.findOne({ challenge: id })
+        .populate('challenge', 'title description category problemLink')
+        .select('-_id -__v');
+   
+      if (solution) {
+        const formattedSolution = {
+          title: solution.challenge.title,
+          description: solution.challenge.description,
+          category: solution.challenge.category,
+          problemLink: solution.challenge.problemLink,
+          codeSnippets: {
+            explanation: solution.explanation,
+            python: solution.python,
+            cpp: solution.cpp,
+            java: solution.java,
+            timeComplexity: solution.timeComplexity,
+            spaceComplexity: solution.spaceComplexity
+          }
+        };
+  
+        res.status(200).json(formattedSolution);
+      } else {
+        res.status(404).json({ message: 'Solution not found' });
+      }
+  
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
+  

@@ -52,7 +52,7 @@ export function PlatformManager({ userPlatforms, onVerifyPlatform }: PlatformMan
 
   return (
     <Card className="shadow-lg border-0">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-1">
         <CardTitle className="flex items-center text-lg">
           <Github className="mr-2 h-5 w-5 text-gray-500" /> Coding Platforms
         </CardTitle>

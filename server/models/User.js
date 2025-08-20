@@ -58,33 +58,41 @@ const userSchema = new mongoose.Schema(
     streak: { type: Number, default: 0 },
 
     // All challenges solved (non-POTD)
-    solveChallenges: [
+    solveChallenges: 
       {
-        challengeId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Challenge",
-        },
-        timestamp: { type: String },
+        easy: [
+          {
+            challenge: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "Challenge",
+            },
+            timestamp: { type: String },
+          }
+      ],
+        medium: [
+          {
+            challenge: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "Challenge",
+            },
+            timestamp: { type: String },
+          }
+      ],
+        hard: [
+          {
+            challenge: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "Challenge",
+            },
+            timestamp: { type: String },
+          }
+      ],
       }
-    ],
-
-    // POTD solved: store dates (unique per day)
-    potdSolved: [
-      {
-        timestamp: { type: String }, // ISO date string format
-      },
-
-    ],
+    ,
     otherLinks: [
       {
         platform: String, // The name of the social platform, e.g., 'twitter', 'linkedin', 'github'
         url: String, // The URL of the user's profile on that platform
-      },
-    ],
-
-    heatmap: [
-      {
-        timestamp: { type: String },
       },
     ],
   },

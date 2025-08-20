@@ -9,7 +9,6 @@ import {
     BookOpen,
     Zap,
     ChevronDown,
-    Star,
     Award,
     Rocket,
 } from "lucide-react"
@@ -52,7 +51,7 @@ export default function AboutPage() {
         }
 
         window.addEventListener("scroll", handleScroll)
-        handleScroll() 
+        handleScroll()
 
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
@@ -60,32 +59,77 @@ export default function AboutPage() {
     const teamMembers = [
         {
             id: 1,
-            name: "Tony Stark",
-            role: "Founder & President",
-            bio: "Visionary leader with a passion for coding education.",
-            image: "/placeholder.svg?height=150&width=150",
+            name: "William Keri",
+            role: "Software Developer",
+            image: "/public/William.jpg",
+            linkedin: "https://linkedin.com/in/codevoid",
+            email: "williamkeri007@gmail.com",
+            github: "https://github.com/codevoid048"
         },
         {
             id: 2,
-            name: "Bruce Banner",
-            role: "Vice President",
-            bio: "Competitive programming expert and algorithm specialist.",
-            image: "/placeholder.svg?height=150&width=150",
+            name: "Ambati Sai Ganesh",
+            role: "Software Developer",
+            image: "/public/Ganesh.jpg",
+            ilinkedin: "http://www.linkedin.com/in/sai-ganesh-ambati-8218a328a",
+            email: "saiganeshambati000@gmail.com",
+            github: "https://github.com/saiganesh4151"
         },
         {
             id: 3,
-            name: "Happy Hogan",
-            role: "Head of Events",
-            bio: "Organizes coding workshops and hackathons.",
-            image: "/placeholder.svg?height=150&width=150",
+            name: "Chemakurthi Sai Praveen",
+            role: "Software Developer",
+            image: "/public/Praveen.jpg",
+            linkedin: "http://www.linkedin.com/in/praveen-cheemakurthy-149271317",
+            email: "cheemakurthypraveen@gmail.com",
+            github: "https://github.com/Saipraveen49"
         },
         {
             id: 4,
-            name: "Peter Parker",
-            role: "Technical Lead",
-            bio: "Full-stack developer with expertise in web technologies.",
-            image: "/placeholder.svg?height=150&width=150",
+            name: "Ramisetti Chakrarao",
+            role: "Software Developer",
+            image: "/public/Chakri.jpg",
+            linkedin: "https://www.linkedin.com/in/chakri555/",
+            email: "chakriramisetti555@gmail.com",
+            github: "https://github.com/Chakri2759"
         },
+        {
+            id: 5,
+            name: "Saripalli Harshavardhan",
+            role: "Software Developer",
+            image: "/public/Harsha.jpg",
+            linkedin: "https://www.linkedin.com/in/harshavardhansaripalli/",
+            email: "harshavardhansaripalli21@gmail.com",
+            github: "https://github.com/harsha2143"
+        },
+        {
+            id: 6,
+            name: "Relangi Siva Ramaraju",
+            role: "Software Developer",
+            image: "/public/Siva.jpg",
+            linkedin: "http://www.linkedin.com/in/veera-siva-rama-raju-relangi-2130ba259",
+            email: "https://twitter.com/ambatiganesh",
+            github: "https://github.com/Siva-Relangi",
+        },
+        {
+            id: 7,
+            name: "Pulavarthi Sanjay",
+            role: "Software Developer",
+            image: "/public/Sanjay1.jpg",
+            linkedin: "http://www.linkedin.com/in/pulavarthi-sanjay-92ba93287",
+            email: "pnnksanjay@gmail.com",
+            github: "https://github.com/Sanjaypulavarthi"
+        },
+        {
+            id: 8,
+            name: "Vigna Ramtej",
+            role: "Software Developer",
+            image: "/public/Ramtej.jpg",
+            linkedin: "https://www.linkedin.com/in/vignaramtej",
+            email: "vignaramtej46@gmail.com",
+            github: "https://github.com/ramtejvigna"
+        },
+
     ]
 
     const faqItems = [
@@ -121,32 +165,27 @@ export default function AboutPage() {
 
     const majorEvents = [
         {
-            title: "CodeQuest Championship",
+            title: "CodeQuest",
             description:
-                "Our annual flagship competitive programming event with industry sponsors, challenging problems, and valuable prizes.",
-            date: "November",
+                "CodeQuest is a platform that offers daily coding challenges to enhance problem-solving skills across all levels.",
+            date: "Daily",
             icon: <Trophy className="h-6 w-6" />,
         },
         {
-            title: "Hack-A-Thon Weekend",
+            title: "IconCoderz",
             description:
-                "48-hour hackathon where teams build innovative solutions to real-world problems with mentorship from industry experts.",
-            date: "March",
+                "IconCoderz is a coding competition designed to test problem-solving skills through real-time challenges and a chance to win exciting prizes",
+            date: "February",
             icon: <Rocket className="h-6 w-6" />,
         },
         {
-            title: "Tech Talk Series",
+            title: "HackOverflow",
             description:
-                "Monthly sessions featuring guest speakers from leading tech companies sharing insights on emerging technologies.",
-            date: "Monthly",
+                "HackOverflow is a hackathon platform where participants team up to build innovative tech solutions for real-world problems.",
+            date: "October",
             icon: <Users className="h-6 w-6" />,
         },
-        {
-            title: "Code Sprint",
-            description: "Bi-monthly rapid coding challenges designed to improve problem-solving speed and efficiency.problem-solving speed and efficiency.",
-            date: "Bi-monthly",
-            icon: <Zap className="h-6 w-6" />,
-        },
+
     ]
 
     const fadeIn = {
@@ -295,7 +334,7 @@ export default function AboutPage() {
                     {/* About SRKR Coding Club */}
                     <motion.section
                         id="about"
-                        className="mb-20 px-20"
+                        className="mb-20 px-5"
                         initial="hidden"
                         animate={isVisible.about ? "visible" : "hidden"}
                         variants={fadeIn}
@@ -347,8 +386,7 @@ export default function AboutPage() {
                                             animate={{ x: 0, opacity: 1 }}
                                             transition={{ delay: 0.2 }}
                                         >
-                                            Our mission is to create a collaborative environment where students can develop their programming
-                                            skills, explore new technologies, and prepare for successful careers in the tech industry.
+                                            Founded with a vision to empower students through code, the club offers hands-on opportunities to explore technologies, build real-world projects, and grow together as future tech leaders.
                                         </motion.p>
                                         <motion.p
                                             className="text-lg mb-4 text-muted-foreground"
@@ -383,15 +421,15 @@ export default function AboutPage() {
                                                     <div className="text-sm text-muted-foreground">Active Members</div>
                                                 </div>
                                                 <div className="text-center p-3 bg-primary/20 rounded-lg hover:bg-primary/40 transition-all duration-300">
-                                                    <div className="text-3xl font-bold text-primary">50+</div>
+                                                    <div className="text-3xl font-bold text-primary">16+</div>
                                                     <div className="text-sm text-muted-foreground">Events Hosted</div>
                                                 </div>
                                                 <div className="text-center p-3 bg-primary/20 rounded-lg hover:bg-primary/40 transition-all duration-300">
-                                                    <div className="text-3xl font-bold text-primary">15+</div>
+                                                    <div className="text-3xl font-bold text-primary">2</div>
                                                     <div className="text-sm text-muted-foreground">Industry Partners</div>
                                                 </div>
                                                 <div className="text-center p-3 bg-primary/20 rounded-lg hover:bg-primary/40 transition-all duration-300">
-                                                    <div className="text-3xl font-bold text-primary">8</div>
+                                                    <div className="text-3xl font-bold text-primary">2</div>
                                                     <div className="text-sm text-muted-foreground">Years of Excellence</div>
                                                 </div>
                                             </div>
@@ -415,7 +453,7 @@ export default function AboutPage() {
                                         animate="visible"
                                     >
                                         <motion.div
-                                            className="flex items-start space-x-4 p-4  border border-primary/30 rounded-xl hover:bg-gray-700 transition-colors duration-300 bg-card text-card-foreground"
+                                            className="flex items-start space-x-4 p-4  border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
                                             variants={itemVariant}
                                         >
                                             <div className="bg-primary/10 p-2 rounded-full">
@@ -423,70 +461,48 @@ export default function AboutPage() {
                                             </div>
                                             <div>
                                                 <p className="font-medium text-muted-foreground">
-                                                    Recognized as the Best Technical Club by SRKR Engineering College for 3 consecutive years
+                                                    Recognized as the Best Technical Club by SRKR Engineering College for 2 consecutive years
                                                 </p>
                                             </div>
                                         </motion.div>
 
                                         <motion.div
-                                            className="flex items-start space-x-4 p-4  border border-primary/30 rounded-xl hover:bg-gray-700 transition-colors duration-300 bg-card text-card-foreground"
-                                            variants={itemVariant}
-                                        >
-                                            <div className="bg-primary/10 p-2 rounded-full">
-                                                <Calendar className="h-6 w-6 text-primary" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-muted-foreground">Organized over 50 successful hackathons and coding competitions</p>
-                                            </div>
-                                        </motion.div>
-
-                                        <motion.div
-                                            className="flex items-start space-x-4 p-4  border border-primary/30 rounded-xl hover:bg-gray-700 transition-colors duration-300 bg-card text-card-foreground"
-                                            variants={itemVariant}
-                                        >
-                                            <div className="bg-primary/10 p-2 rounded-full">
-                                                <Users className="h-6 w-6 text-primary" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-muted-foreground">Partnered with 15+ tech companies for events and recruitment</p>
-                                            </div>
-                                        </motion.div>
-
-                                        <motion.div
-                                            className="flex items-start space-x-4 p-4 border border-primary/30 rounded-xl hover:bg-gray-700 transition-colors duration-300 bg-card text-card-foreground"
+                                            className="flex items-start space-x-4 p-4  border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
                                             variants={itemVariant}
                                         >
                                             <div className="bg-primary/10 p-2 rounded-full">
                                                 <Award className="h-6 w-6 text-primary" />
                                             </div>
                                             <div>
-                                                <p className="font-medium text-muted-foreground">Members have won national-level coding competitions</p>
+                                                <p className="font-medium text-muted-foreground">Successfully organized two hackathons and three coding competitions, enhancing engagement and technical skill growth among participants</p>
                                             </div>
                                         </motion.div>
 
                                         <motion.div
-                                            className="flex items-start space-x-4 p-4 border border-primary/30 rounded-xl hover:bg-gray-700 transition-colors duration-300 bg-card text-card-foreground"
+                                            className="flex items-start space-x-4 p-4  border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
+                                            variants={itemVariant}
+                                        >
+                                            <div className="bg-primary/10 p-2 rounded-full">
+                                                <Users className="h-6 w-6 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-muted-foreground">Collaborated with two tech companies to promote their platforms while offering students useful insights and internship opportunities.</p>
+                                            </div>
+                                        </motion.div>
+
+
+                                        <motion.div
+                                            className="flex items-start space-x-4 p-4 border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
                                             variants={itemVariant}
                                         >
                                             <div className="bg-primary/10 p-2 rounded-full ">
                                                 <Code className="h-6 w-6 text-primary" />
                                             </div>
                                             <div>
-                                                <p className="font-medium text-muted-foreground">Developed multiple open-source projects with real-world applications</p>
+                                                <p className="font-medium text-muted-foreground">Developed multiple open-source projects with real-world applications, including CodeQuest for PODT and a live website for SRKR Coding Club.</p>
                                             </div>
                                         </motion.div>
 
-                                        <motion.div
-                                            className="flex items-start space-x-4 p-4 border border-primary/30 rounded-xl hover:bg-gray-700 transition-colors  duration-300 bg-card text-card-foreground"
-                                            variants={itemVariant}
-                                        >
-                                            <div className="bg-primary/10 p-2 rounded-full">
-                                                <Star className="h-6 w-6 text-primary" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-muted-foreground">Recognized by leading tech companies for talent development</p>
-                                            </div>
-                                        </motion.div>
                                     </motion.div>
                                 </motion.div>
                             </TabsContent>
@@ -496,7 +512,7 @@ export default function AboutPage() {
                     {/* What We Offer */}
                     <motion.section
                         id="offers"
-                        className="mb-20 px-20"
+                        className="mb-20 px-5"
                         initial="hidden"
                         animate={isVisible.offers ? "visible" : "hidden"}
                         variants={fadeIn}
@@ -532,7 +548,8 @@ export default function AboutPage() {
                                             {/* Icon Container */}
                                             <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
                                             group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <Code className="h-8 w-8 text-primary group-hover:text-white transition-colors duration-300" />
+                                                <Code className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 duration-300" />
+
                                             </div>
                                         </div>
 
@@ -544,8 +561,7 @@ export default function AboutPage() {
 
                                     {/* Description (Below) */}
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
-                                        Sharpen your skills with daily problems curated for all levels, from beginner to advanced.
-                                    </p>
+                                        Sharpen your skills with daily problems (POTD) on the CodeQuest platform, curated for all levels — from beginner to advanced.                                    </p>
 
                                 </div>
 
@@ -568,15 +584,44 @@ export default function AboutPage() {
 
                                             <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
                                             group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <BookOpen className="h-8 w-8 text-primary group-hover:text-white transition-colors duration-300" />
+                                                <BookOpen className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
                                             </div>
                                         </div>
                                         <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                            Workshops & Seminars
+                                            Hackathons
                                         </h3>
                                     </div>
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
-                                        Learn from industry experts through live sessions on cutting-edge technologies and best practices.
+                                        Collaborate and innovate at HackOverflow — our club's hackathon where participants team up to build real-world tech solutions.                                    </p>
+
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                className="group relative overflow-hidden rounded-2xl"
+                                variants={itemVariant}
+                                whileHover={{ y: -5 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20"></div>
+                                <div className="relative z-20 p-8 h-full flex flex-col">
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative">
+                                            {/* Blurred Border Effect */}
+                                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
+
+                                            <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
+                                            group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
+                                                <Trophy className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300 " />
+                                            </div>
+                                        </div>
+                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
+                                            Competitions
+                                        </h3>
+                                    </div>
+                                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
+                                        Test your coding skills through competitions like IconCoders, organized by our club to solve challenging problems and win exciting prizes.
                                     </p>
 
                                 </div>
@@ -598,46 +643,15 @@ export default function AboutPage() {
 
                                             <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
                                             group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <Trophy className="h-8 w-8 text-primary group-hover:text-white transition-colors duration-300 " />
+                                                <Users className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
                                             </div>
                                         </div>
                                         <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                            Hackathons & Competitions
-                                        </h3>
-                                    </div>
-                                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
-                                        Compete, collaborate, and innovate in coding contests with attractive prizes and recognition.
-                                    </p>
-
-                                </div>
-                            </motion.div>
-
-                            <motion.div
-                                className="group relative overflow-hidden rounded-2xl"
-                                variants={itemVariant}
-                                whileHover={{ y: -5 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20"></div>
-                                <div className="relative z-20 p-8 h-full flex flex-col">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            {/* Blurred Border Effect */}
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-
-                                            <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
-                                            group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <Users className="h-8 w-8 text-primary group-hover:text-white transition-colors duration-300" />
-                                            </div>
-                                        </div>
-                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                            Mentorship Program
+                                            Workshops
                                         </h3>
                                     </div>
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
-                                        Get personalized guidance from senior members and industry professionals to accelerate your growth.
-                                    </p>
+                                        Gain practical knowledge through hands-on workshops organized by our club, focusing on modern technologies and industry practices.                                    </p>
 
                                 </div>
                             </motion.div>
@@ -658,7 +672,36 @@ export default function AboutPage() {
 
                                             <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
                                             group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <Zap className="h-8 w-8 text-primary group-hover:text-white transition-colors duration-300" />
+                                                <Zap className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
+                                            </div>
+                                        </div>
+                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white  transition-colors duration-300 mb-2">
+                                            Courses
+                                        </h3>
+                                    </div>
+                                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
+                                        Learn through courses conducted by our club, with live sessions covering the latest technologies and industry-relevant skills.                                    </p>
+
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                className="group relative overflow-hidden rounded-2xl"
+                                variants={itemVariant}
+                                whileHover={{ y: -5 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20"></div>
+                                <div className="relative z-20 p-8 h-full flex flex-col">
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative">
+                                            {/* Blurred Border Effect */}
+                                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
+
+                                            <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
+                                            group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
+                                                <Calendar className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
                                             </div>
                                         </div>
                                         <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
@@ -666,38 +709,7 @@ export default function AboutPage() {
                                         </h3>
                                     </div>
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
-                                        Work on real-world projects in teams to build your portfolio and gain practical experience.
-                                    </p>
-
-                                </div>
-                            </motion.div>
-
-                            <motion.div
-                                className="group relative overflow-hidden rounded-2xl"
-                                variants={itemVariant}
-                                whileHover={{ y: -5 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20"></div>
-                                <div className="relative z-20 p-8 h-full flex flex-col">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            {/* Blurred Border Effect */}
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-
-                                            <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
-                                            group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <Calendar className="h-8 w-8 text-primary group-hover:text-white transition-colors duration-300" />
-                                            </div>
-                                        </div>
-                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                            Industry Connect
-                                        </h3>
-                                    </div>
-                                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
-                                        Network with recruiters and professionals from leading tech companies for internship and job
-                                        opportunities.
+                                        Developed multiple open-source projects with real-world applications, including the CodeQuest platform and the SRKR Coding Club website.
                                     </p>
 
                                 </div>
@@ -708,7 +720,7 @@ export default function AboutPage() {
                     {/* Major Events */}
                     <motion.section
                         id="events"
-                        className="mb-20 px-20"
+                        className="mb-20 px-5 "
                         initial="hidden"
                         animate={isVisible.events ? "visible" : "hidden"}
                         variants={fadeIn}
@@ -720,7 +732,7 @@ export default function AboutPage() {
                         </motion.h2>
 
                         <motion.div
-                            className="grid grid-cols-1 md:grid-cols-3 gap-10"
+                            className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-10"
                             variants={staggerContainer}
                             initial="hidden"
                             animate="visible"
@@ -776,7 +788,7 @@ export default function AboutPage() {
                         </motion.h2>
 
                         <motion.div
-                            className="flex flex-wrap justify-center gap-8"
+                            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-7xl mx-auto px-4 justify-items-center items-center"
                             variants={staggerContainer}
                             initial="hidden"
                             animate="visible"
@@ -784,18 +796,18 @@ export default function AboutPage() {
                             {teamMembers.map((member) => (
                                 <motion.div
                                     key={member.id}
-                                    className="group"
+                                    className="group w-full max-w-[240px]"
                                     variants={itemVariant}
                                     whileHover={{ y: -10 }}
                                     transition={{ duration: 0.3 }}
                                 >
                                     <div className="relative">
                                         <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-primary/60 rounded-2xl blur opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
-                                        <Card className="relative bg-card shadow-lg rounded-2xl p-6 text-center w-64 border-primary/10 group-hover:border-transparent transition-all duration-300">
-                                            <div className="flex justify-center mb-4">
+                                        <Card className="relative bg-card shadow-lg rounded-2xl p-6 text-center w-60 border-primary/10 group-hover:border-transparent transition-all duration-300">
+                                            <div className="flex justify-center">
                                                 <div className="relative">
                                                     <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-primary/60 rounded-full blur opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
-                                                    <Avatar className="h-24 w-24 border-2 border-primary/20 group-hover:border-primary/50 transition-all duration-300">
+                                                    <Avatar className="h-40 w-42 border-2 border-primary/20 group-hover:border-primary/50 transition-all duration-300">
                                                         <AvatarImage src={member.image} alt={member.name} />
                                                         <AvatarFallback className="bg-primary/10 text-primary">
                                                             {member.name
@@ -806,11 +818,10 @@ export default function AboutPage() {
                                                     </Avatar>
                                                 </div>
                                             </div>
-                                            <h3 className="text-xl font-semibold text-primary mb-1">{member.name}</h3>
-                                            <p className="text-muted-foreground mb-3 text-sm">{member.role}</p>
-                                            <p className="text-card-foreground text-sm">{member.bio}</p>
-                                            <div className="mt-4 pt-4 border-t border-primary/10 flex justify-center space-x-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                            <h3 className="text-xl font-semibold text-primary">{member.name}</h3>
+                                            <p className="text-muted-foreground text-sm">{member.role}</p>
+                                            <div className=" pt-2 border-t border-primary/10 flex justify-center space-x-3 opacity-100 transition-opacity duration-300">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => window.open(member.linkedin, "_blank")}>
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         width="16"
@@ -828,7 +839,7 @@ export default function AboutPage() {
                                                         <circle cx="4" cy="4" r="2"></circle>
                                                     </svg>
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full " onClick={() => window.open(member.github, "_blank")}>
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         width="16"
@@ -841,10 +852,11 @@ export default function AboutPage() {
                                                         strokeLinejoin="round"
                                                         className="text-primary"
                                                     >
-                                                        <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+                                                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7a3.37 3.37 0 0 0-.94 2.61V22" />
                                                     </svg>
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => window.open(member.email, "_blank")}>
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         width="16"
@@ -857,9 +869,8 @@ export default function AboutPage() {
                                                         strokeLinejoin="round"
                                                         className="text-primary"
                                                     >
-                                                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                                                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                                                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                                        <polyline points="22,6 12,13 2,6"></polyline>
                                                     </svg>
                                                 </Button>
                                             </div>

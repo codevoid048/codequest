@@ -13,20 +13,24 @@ export default function ResetPassword() {
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
 
-    const handleResetPassword = async (e) => {
+    const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError("");
         setMessage("");
 
         try {
-            const response = await axios.post(`http://localhost:5000/api/auth/reset-password/${token}`,
+            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/reset-password/${token}`,
                 { newPassword },
                 { withCredentials: true }
             );
             setMessage(response.data.message);
             setTimeout(() => navigate("/login"), 2000); // Redirect after success
-        } catch (error) {
-            setError(error.response?.data?.message || "Something went wrong");
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                setError(error.response.data.message);
+            } else {
+                setError("Something went wrong");
+            }
         }
     };
 
