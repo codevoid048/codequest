@@ -1,6 +1,6 @@
 import { User } from "../models/User.js";
 import { Challenge } from "../models/Challenge.js";
-import { Solution } from "../models/solution.js";
+import { Solution } from "../models/Solution.js";
 // import moment from "moment-timezone";
 export const getUsers = async(req, res) => {
     try{

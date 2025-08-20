@@ -6,7 +6,7 @@ import { Activity } from "../models/Activity.js"
 import { sendOTPEmail, deleteConfirmationMail } from "../utils/emailService.js"
 import { isEmailValid } from "../utils/isEmailValid.js";
 import mongoose from "mongoose";
-import { client } from "../utils/typesenseClient.js";
+// import { client } from "../utils/typesenseClient.js";
 import { warmupLeaderboardCache } from "../utils/leaderBoardCache.js";
 
 // Generate JWT token function
@@ -300,18 +300,18 @@ export const deleteUser = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    try {
-      await client.collections("users").documents(id.toString()).delete();
-      console.log(`Deleted user ${id} from Typesense`);
-    } catch (typesenseError) {
-      // Only ignore "Not Found" errors
-      if (!typesenseError.message.includes("Not Found")) {
-        await session.abortTransaction();
-        session.endSession();
-        throw typesenseError;
-      }
-      console.log(`User ${id} already removed from Typesense`);
-    }
+    // try {
+    //   await client.collections("users").documents(id.toString()).delete();
+    //   console.log(`Deleted user ${id} from Typesense`);
+    // } catch (typesenseError) {
+    //   // Only ignore "Not Found" errors
+    //   if (!typesenseError.message.includes("Not Found")) {
+    //     await session.abortTransaction();
+    //     session.endSession();
+    //     throw typesenseError;
+    //   }
+    //   console.log(`User ${id} already removed from Typesense`);
+    // }
 
     const mail = user.email;
     // Perform deletion

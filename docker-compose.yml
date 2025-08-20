@@ -20,24 +20,6 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-    depends_on:
-      - typesense
-    networks:
-      - app_network
-
-  typesense:
-    image: typesense/typesense:28.0
-    restart: on-failure
-    ports:
-      - "8108:8108"
-    volumes:
-      - ./server/typesense-data:/data
-    command: >
-      typesense-server
-      --data-dir /data
-      --api-key=xyz
-      --enable-cors
-      --log-level=warn
     networks:
       - app_network
 
