@@ -96,5 +96,23 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password)
 }
 
+userSchema.index(
+  {
+    name: "text",
+    username: "text",
+    collegeName: "text",
+    branch: "text"
+  },
+  {
+    weights: {
+      name: 4,
+      username: 3,
+      collegeName: 2,
+      branch: 1
+    },
+    name: "UserTextIndex",
+  }
+);
+
 export const User = mongoose.model("User", userSchema)
 

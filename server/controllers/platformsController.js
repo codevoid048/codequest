@@ -1,4 +1,3 @@
-import express from "express";
 import fetch from "node-fetch";
 import axios from "axios";
 import { User } from "../models/User.js";
@@ -387,12 +386,4 @@ export const heatmap = async (req, res) => {
     return res.status(500).json({ error: `Failed to fetch heatmap` });
   }
 }
-
-
-
-
-
-
-
-
 

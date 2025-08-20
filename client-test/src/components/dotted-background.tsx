@@ -1,71 +1,61 @@
-import { useCallback, useEffect, useState } from "react";
-import Particles from "react-tsparticles";
-import { loadSlim } from "tsparticles-slim";
+import { useEffect, useState } from "react";
+import Particles, { initParticlesEngine } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
 import { useTheme } from "@/context/ThemeContext";
-import { Engine } from "node_modules/tsparticles-engine/types/export-types";
 
 export function DottedBackground() {
-    const { theme } = useTheme();
-    const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const [engineReady, setEngineReady] = useState(false);
 
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+  useEffect(() => {
+    initParticlesEngine(async (engine) => {
+      await loadSlim(engine);
+    }).then(() => setEngineReady(true));
 
-    const particlesInit = useCallback(async (engine: Engine) => {
-        await loadSlim(engine);
-    }, []);
+    setMounted(true);
+  }, []);
 
-    if (!mounted) return null;
+  if (!mounted || !engineReady) return null;
 
-    const isDarkMode = theme === "dark";
+  const isDarkMode = theme === "dark";
 
-    return (
-        <Particles
-            id="tsparticles"
-            init={particlesInit}
-            className="absolute inset-0 -z-10"
-            options={{
-                fullScreen: false,
-                background: {
-                    color: {
-                        value: "transparent",
-                    },
-                },
-                fpsLimit: 120,
-                particles: {
-                    color: {
-                        value: isDarkMode ? "#3b82f6" : "#ffffff", // Adjusted colors for better visibility
-                    },
-                    move: {
-                        direction: "none",
-                        enable: true,
-                        outModes: {
-                            default: "bounce",
-                        },
-                        random: false,
-                        speed: 1,
-                        straight: false,
-                    },
-                    number: {
-                        density: {
-                            enable: true,
-                            area: 800,
-                        },
-                        value: 80,
-                    },
-                    opacity: {
-                        value: isDarkMode ? 0.5 : 0.3,
-                    },
-                    shape: {
-                        type: "circle",
-                    },
-                    size: {
-                        value: { min: 1, max: 3 },
-                    },
-                },
-                detectRetina: true,
-            }}
-        />
-    );
+  return (
+    <Particles
+      id="tsparticles"
+      className="absolute inset-0 -z-10"
+      options={{
+        fullScreen: false,
+        background: { color: { value: "transparent" } },
+        fpsLimit: 60,
+        detectRetina: true,
+        particles: {
+          number: {
+            value: 100,
+            density: { enable: true, height: 800, width: 800 },
+          },
+          color: { value: isDarkMode ? "#3b82f6" : "#1e293b" },
+          shape: { type: "circle" },
+          opacity: { value: 0.6 },
+          size: { value: { min: 1, max: 2 } },
+          move: {
+            enable: true,
+            speed: 0.5,
+            direction: "none",
+            outModes: "out",
+          },
+        },
+        interactivity: {
+          events: {
+            onHover: { enable: true, mode: "repulse" },
+            onClick: { enable: true, mode: "push" },
+          },
+          modes: {
+            repulse: { distance: 100 },
+            push: { quantity: 3 },
+          },
+        },
+      }}
+    />
+  );
 }

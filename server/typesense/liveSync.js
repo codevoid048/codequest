@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { client } from "../utils/typesenseClient.js";
-import { getResumeToken, saveResumeToken } from "../utils/resumeTokenStore.js";
+// import { getResumeToken, saveResumeToken } from "../utils/resumeTokenStore.js";
 
 const withRetry = async (fn, retries = 5, delay = 500) => {
   for (let i = 0; i < retries; i++) {
