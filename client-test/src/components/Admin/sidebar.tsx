@@ -12,7 +12,8 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  const {token,logout} = useAdminStore();
+  const { isAuthenticated, logout } = useAuth();
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
