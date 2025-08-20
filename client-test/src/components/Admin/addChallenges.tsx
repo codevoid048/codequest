@@ -75,7 +75,7 @@ export default function Admin() {
       timeComplexity: "",
       spaceComplexity: ""
     },
-    
+
   });
   const [newCategory, setNewCategory] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,26 +107,26 @@ export default function Admin() {
   };
 
   const handleSolutionChange = (
-      e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
-      language: string
-    ) => {
-      setFormData((prev) => ({
-        ...prev,
-        solutions: { ...prev.solutions, [language]: e.target.value },
-      }));
-    };
+    e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
+    language: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      solutions: { ...prev.solutions, [language]: e.target.value },
+    }));
+  };
 
   // const handleDifficultyChange = (value: string) => {
   //   setFormData((prev) => ({ ...prev, difficulty: value }));
   // };
   const handleDifficultyChange = (value: string) => {
-  const points = calculatePoints(value);
-  setFormData((prev) => ({ 
-    ...prev, 
-    difficulty: value,
-    points: points 
-  }));
-};
+    const points = calculatePoints(value);
+    setFormData((prev) => ({
+      ...prev,
+      difficulty: value,
+      points: points
+    }));
+  };
 
   const handlePlatformChange = (value: string) => {
     setFormData((prev) => ({ ...prev, platform: value }));
@@ -191,17 +191,17 @@ export default function Admin() {
           problemLink: formData.problemLink,
           createdAt: formData.createdAt.toISOString(),
           platform: formData.platform,
-        solution: {
-          explanation: formData.solutions.explanation,
-          cpp: formData.solutions.cpp,
-          java: formData.solutions.java,
-          python: formData.solutions.python,
-          timeComplexity: formData.solutions.timeComplexity,
-          spaceComplexity: formData.solutions.spaceComplexity,
+          solution: {
+            explanation: formData.solutions.explanation,
+            cpp: formData.solutions.cpp,
+            java: formData.solutions.java,
+            python: formData.solutions.python,
+            timeComplexity: formData.solutions.timeComplexity,
+            spaceComplexity: formData.solutions.spaceComplexity,
+          },
+
+
         },
-        
-  
-      },
         {
           headers: { "Content-Type": "application/json" },
         }
@@ -239,7 +239,7 @@ export default function Admin() {
       y: 0,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 100,
       },
     },
@@ -252,17 +252,17 @@ export default function Admin() {
   };
 
   const calculatePoints = (difficulty: string) => {
-  switch (difficulty) {
-    case 'Easy':
-      return 5;
-    case 'Medium':
-      return 10;
-    case 'Hard': 
-      return 15;
-    default:
-      return 0;
-  }
-};
+    switch (difficulty) {
+      case 'Easy':
+        return 5;
+      case 'Medium':
+        return 10;
+      case 'Hard':
+        return 15;
+      default:
+        return 0;
+    }
+  };
 
   return (
     <motion.div
@@ -486,11 +486,10 @@ export default function Admin() {
                             <motion.div
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className={`flex cursor-pointer items-center gap-2 rounded-full border-2 px-4 py-2 transition-all ${
-                                formData.difficulty === difficulty
+                              className={`flex cursor-pointer items-center gap-2 rounded-full border-2 px-4 py-2 transition-all ${formData.difficulty === difficulty
                                   ? getDifficultyColor(difficulty) + " bg-secondary/20"
                                   : "border-gray-600 hover:border-gray-500"
-                              }`}
+                                }`}
                             >
                               <RadioGroupItem
                                 value={difficulty}
@@ -499,11 +498,10 @@ export default function Admin() {
                               />
                               <Label
                                 htmlFor={`difficulty-${difficulty.toLowerCase()}`}
-                                className={`cursor-pointer font-medium ${
-                                  formData.difficulty === difficulty
+                                className={`cursor-pointer font-medium ${formData.difficulty === difficulty
                                     ? getDifficultyColor(difficulty)
                                     : "text-foreground"
-                                }`}
+                                  }`}
                               >
                                 {difficulty}
                               </Label>
@@ -513,31 +511,31 @@ export default function Admin() {
                       </RadioGroup>
                     </div>
                   </motion.div>
-                    
 
-                    
+
+
                   <motion.div variants={itemVariants} className="space-y-2">
-  <Label
-    htmlFor="points"
-    className="flex items-center text-lg font-medium text-foreground"
-  >
-    <Award className="mr-2 h-5 w-5" />
-    Points (Auto-calculated)
-  </Label>
-  <Input
-    id="points"
-    name="points"
-    type="number"
-    min="1"
-    value={formData.points}
-    onChange={handleChange}
-    disabled
-    className="border-gray-600 bg-muted text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary opacity-75"
-  />
-  <p className="text-sm text-muted-foreground">
-    Points are automatically set based on difficulty: Easy (5), Medium (10), Hard (15)
-  </p>
-</motion.div>
+                    <Label
+                      htmlFor="points"
+                      className="flex items-center text-lg font-medium text-foreground"
+                    >
+                      <Award className="mr-2 h-5 w-5" />
+                      Points (Auto-calculated)
+                    </Label>
+                    <Input
+                      id="points"
+                      name="points"
+                      type="number"
+                      min="1"
+                      value={formData.points}
+                      onChange={handleChange}
+                      disabled
+                      className="border-gray-600 bg-muted text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary opacity-75"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Points are automatically set based on difficulty: Easy (5), Medium (10), Hard (15)
+                    </p>
+                  </motion.div>
 
                   <div className="flex justify-between">
                     <Button
@@ -562,8 +560,8 @@ export default function Admin() {
               <TabsContent value="Solutions">
                 <motion.div className="space-y-6" variants={containerVariants}>
                   <motion.div variants={itemVariants} className="space-y-4">
-                    
-                  <motion.div variants={itemVariants} className="space-y-2">
+
+                    <motion.div variants={itemVariants} className="space-y-2">
                       <Label
                         htmlFor="explanation"
                         className="flex items-center text-lg font-medium text-foreground"
@@ -636,47 +634,47 @@ export default function Admin() {
                         className="min-h-[150px] border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
                       />
                     </motion.div>
-                    
-                    <motion.div variants={itemVariants} className="space-y-2">
-  <Label
-    htmlFor="timeComplexity"
-    className="flex items-center text-lg font-medium text-foreground"
-  >
-    <BarChart3 className="mr-2 h-5 w-5" />
-    Time Complexity
-  </Label>
-  <input
-    type="text"
-    id="timeComplexity"
-    name="timeComplexity"
-    value={formData.solutions.timeComplexity}
-    onChange={(e) => handleSolutionChange(e, "timeComplexity")}
-    required
-    placeholder="Enter time complexity (e.g., O(n))"
-    className="w-full px-3 py-2 h-10 rounded-md border border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-  />
-</motion.div>
 
-<motion.div variants={itemVariants} className="space-y-2">
-  <Label
-    htmlFor="spaceComplexity"
-    className="flex items-center text-lg font-medium text-foreground"
-  >
-    <BarChart3 className="mr-2 h-5 w-5" />
-    Space Complexity
-  </Label>
-  <input
-    type="text"
-    id="spaceComplexity"
-    name="spaceComplexity"
-    value={formData.solutions.spaceComplexity}
-    onChange={(e) => handleSolutionChange(e, "spaceComplexity")}
-    required
-    placeholder="Enter space complexity (e.g., O(n))"
-    className="w-full px-3 py-2 h-10 rounded-md border border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-  />
-</motion.div>
-</motion.div>
+                    <motion.div variants={itemVariants} className="space-y-2">
+                      <Label
+                        htmlFor="timeComplexity"
+                        className="flex items-center text-lg font-medium text-foreground"
+                      >
+                        <BarChart3 className="mr-2 h-5 w-5" />
+                        Time Complexity
+                      </Label>
+                      <input
+                        type="text"
+                        id="timeComplexity"
+                        name="timeComplexity"
+                        value={formData.solutions.timeComplexity}
+                        onChange={(e) => handleSolutionChange(e, "timeComplexity")}
+                        required
+                        placeholder="Enter time complexity (e.g., O(n))"
+                        className="w-full px-3 py-2 h-10 rounded-md border border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                      />
+                    </motion.div>
+
+                    <motion.div variants={itemVariants} className="space-y-2">
+                      <Label
+                        htmlFor="spaceComplexity"
+                        className="flex items-center text-lg font-medium text-foreground"
+                      >
+                        <BarChart3 className="mr-2 h-5 w-5" />
+                        Space Complexity
+                      </Label>
+                      <input
+                        type="text"
+                        id="spaceComplexity"
+                        name="spaceComplexity"
+                        value={formData.solutions.spaceComplexity}
+                        onChange={(e) => handleSolutionChange(e, "spaceComplexity")}
+                        required
+                        placeholder="Enter space complexity (e.g., O(n))"
+                        className="w-full px-3 py-2 h-10 rounded-md border border-gray-600 bg-card text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                      />
+                    </motion.div>
+                  </motion.div>
 
                   <div className="flex justify-end">
                     <Button
@@ -769,7 +767,7 @@ export default function Admin() {
                         <div className="flex items-center gap-2">
                           <Award className="h-4 w-4 text-muted-foreground" />
                           <span className="text-muted-foreground">Difficulty: {formData.difficulty}</span>
-                         
+
                         </div>
                         {/* <div className={getDifficultyColor(formData.difficulty).split(" ")[0]}>
                           {formData.difficulty}

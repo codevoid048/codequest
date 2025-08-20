@@ -161,7 +161,7 @@ export default function UserDashboard() {
       y: 0,
       opacity: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 100,
       },
     },
@@ -174,8 +174,8 @@ export default function UserDashboard() {
       opacity: 1,
       transition: {
         duration: 0.3,
-        ease: "easeInOut",
-      },
+        ease: "easeInOut", // use a valid easing string
+      } as const,
     },
   }
 

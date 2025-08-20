@@ -72,7 +72,7 @@ const NotFoundPage: React.FC = () => {
                 stiffness: 200,
                 damping: 20,
                 delay: 0.2,
-            },
+            } as const,
         },
     };
 
@@ -82,16 +82,9 @@ const NotFoundPage: React.FC = () => {
             y: [-10, 10],
             rotate: [-5, 5],
             transition: {
-                y: {
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    duration: 2,
-                },
-                rotate: {
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    duration: 1.5,
-                },
+                repeat: Infinity,
+                repeatType: "reverse" as const,
+                duration: 2,
             },
         },
     };
