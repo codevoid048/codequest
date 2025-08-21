@@ -4,9 +4,9 @@ import { protect } from "../middleware/auth.js";
 const router = express.Router();
 
 router.post('/leetcode',leetcodeData);
-router.post('/gfg',  geeksforgeeksData);
+// router.post('/gfg',  geeksforgeeksData);
 router.post('/codeforces', codeforcesData);
-router.post('/codechef', codechefData);
+// router.post('/codechef', codechefData);
 router.post('/solvedChallenges',solvedChallenges);
 router.post('/leetcode/graphql',fetchLeetCodeGraphql);
 router.post('/heatmap',heatmap);

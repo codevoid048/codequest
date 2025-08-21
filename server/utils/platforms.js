@@ -21,20 +21,20 @@ export const fetchCodeforcesProfile = async (username) => {
     }
 };
 
-export const fetchgfgProfile = async (username) => {
-    try {
-        await axios.get(`${API_BASE_URL}/gfg`);
-    } catch (error) {
-        // console.error("Error fetching LeetCode data:", error.message);
-    }
-};
+// export const fetchgfgProfile = async (username) => {
+//     try {
+//         await axios.get(`${API_BASE_URL}/gfg`);
+//     } catch (error) {
+//         // console.error("Error fetching LeetCode data:", error.message);
+//     }
+// };
 
-export const fetchCodeChefProfile = async (username) => {
-    try {
-        await axios.get(`${API_BASE_URL}/codechef`);
-    } catch (error) {
-        // console.error("Error fetching LeetCode data:", error.message);
-    }
-};
+// export const fetchCodeChefProfile = async (username) => {
+//     try {
+//         await axios.get(`${API_BASE_URL}/codechef`);
+//     } catch (error) {
+//         // console.error("Error fetching LeetCode data:", error.message);
+//     }
+// };
 
 

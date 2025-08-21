@@ -149,3 +149,35 @@ setInterval(() => {
     }
   }
 }, RATE_LIMIT.WINDOW_MS);
+
+export const sendResetPassEmail = async (email, resetLink) => {
+  if (!email || !resetLink) {
+    throw new Error("Email and reset link are required");
+  }
+
+  try {
+    const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+    await transporter.verify();
+
+    const mailOptions = {
+      from: `"CodeQuest" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Password Reset Request",
+      text: `You requested a password reset. Click the link below to reset your password:\n${resetLink}\n\nIf you didn't request this, please ignore this email.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+          <h2>Password Reset Request</h2>
+          <p>You requested a password reset. Click the link below to reset your password:</p>
+          <a href="${resetLink}" style="color: #007bff;">Reset Password</a>
+          <p>If you didn't request this, please ignore this email.</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};

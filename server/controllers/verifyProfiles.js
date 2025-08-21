@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getGFGName } from '../utils/gfgService.js';
+// import { getGFGName } from '../utils/gfgService.js';
 import { User } from '../models/User.js';
 
 export const verifyProfiles = async (req, res) => {
@@ -11,44 +11,45 @@ export const verifyProfiles = async (req, res) => {
         // console.log('Received data:', { platform, username, verificationString, userId });
         const normalizedPlatform = platform.trim().toLowerCase();
 
-        if (normalizedPlatform === 'gfg') {
-            const response = await axios.get(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`);
-            if (response.data?.message === 'User not found!') {
-                return res.status(400).json({ error: 'User not found on GFG' });
-            }
+        // if (normalizedPlatform === 'gfg') {
+        //     const response = await axios.get(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${username}`);
+        //     if (response.data?.message === 'User not found!') {
+        //         return res.status(400).json({ error: 'User not found on GFG' });
+        //     }
 
-            const name = response.data?.data?.name || "Unknown";
-            if (!name) {
-                return res.status(400).json({ error: 'Name not found in GFG profile' });
-            }
+        //     const name = response.data?.data?.name || "Unknown";
+        //     if (!name) {
+        //         return res.status(400).json({ error: 'Name not found in GFG profile' });
+        //     }
 
-            // Debugging logs
-            // console.log("GFG name from profile:", JSON.stringify(name));
-            // console.log("Verification string:", JSON.stringify(verificationString));
+        //     // Debugging logs
+        //     // console.log("GFG name from profile:", JSON.stringify(name));
+        //     // console.log("Verification string:", JSON.stringify(verificationString));
 
-            // Normalize strings for comparison
-            const normalizedName = name.trim().toLowerCase();
-            const normalizedVerificationString = verificationString.trim().toLowerCase();
+        //     // Normalize strings for comparison
+        //     const normalizedName = name.trim().toLowerCase();
+        //     const normalizedVerificationString = verificationString.trim().toLowerCase();
 
-            if (normalizedName !== normalizedVerificationString) {
-                return res.status(400).json({ error: 'Verification string does not match' });
-            }
+        //     if (normalizedName !== normalizedVerificationString) {
+        //         return res.status(400).json({ error: 'Verification string does not match' });
+        //     }
 
-            const user = await User.findById(userId);
-            if (!user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
+        //     const user = await User.findById(userId);
+        //     if (!user) {
+        //         return res.status(404).json({ error: 'User not found' });
+        //     }
 
-            const total_problems_solved = response.data?.data?.total_problems_solved || user.gfg.solved || "Unknown";
-            const institute_rank = response.data?.data?.institute_rank || user.gfg.rank || "Unknown";
+        //     const total_problems_solved = response.data?.data?.total_problems_solved || user.gfg.solved || "Unknown";
+        //     const institute_rank = response.data?.data?.institute_rank || user.gfg.rank || "Unknown";
 
-            const sc_response = await getGFGName(username);
-            const { rating } = sc_response || user.gfg.rating;
+        //     const sc_response = await getGFGName(username);
+        //     const { rating } = sc_response || user.gfg.rating;
     
-            await user.updateOne({ $set: { 'gfg.username': username, 'gfg.solved': total_problems_solved, 'gfg.rank': institute_rank, 'gfg.rating': rating } });
-            return res.status(200).json({ message: 'GFG Profile verified successfully' });
-        }
-        else if (normalizedPlatform === 'codeforces') {
+        //     await user.updateOne({ $set: { 'gfg.username': username, 'gfg.solved': total_problems_solved, 'gfg.rank': institute_rank, 'gfg.rating': rating } });
+        //     return res.status(200).json({ message: 'GFG Profile verified successfully' });
+        // }
+        // else 
+         if (normalizedPlatform === 'codeforces') {
             // console.log("You got here man");
             const response = await axios.get(`https://codeforces.com/api/user.info?handles=${username}`);
             if (response.data.status !== 'OK') {
@@ -116,22 +117,22 @@ export const verifyProfiles = async (req, res) => {
             await user.updateOne({ $set: { 'leetCode.username': username, 'leetCode.rating': rating, 'leetCode.rank': rank, 'leetCode.solved': totalSolved } });
             return res.status(200).json({ message: 'Profile verified successfully' });
         }
-        else if (normalizedPlatform === 'codechef') {
-            const response = await axios.get(`https://codechef-api.vercel.app/handle/${username}`)
-            if (response.error) {
-                return res.status(400).json({ error: response.error });
-            }
-            const { name, currentRating, globalRank, stars } = response.data;
-            if (name.trim() !== verificationString.trim()) {
-                return res.status(400).json({ error: 'Verification string does not match' });
-            }
-            const user = await User.findById(userId);
-            if (!user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-            await user.updateOne({ $set: { 'codechef.username': username, 'codechef.rating': currentRating, 'codechef.rank': globalRank, 'codechef.stars': stars } });
-            return res.status(200).json({ message: 'Profile verified successfully' });
-        }
+        // else if (normalizedPlatform === 'codechef') {
+        //     const response = await axios.get(`https://codechef-api.vercel.app/handle/${username}`)
+        //     if (response.error) {
+        //         return res.status(400).json({ error: response.error });
+        //     }
+        //     const { name, currentRating, globalRank, stars } = response.data;
+        //     if (name.trim() !== verificationString.trim()) {
+        //         return res.status(400).json({ error: 'Verification string does not match' });
+        //     }
+        //     const user = await User.findById(userId);
+        //     if (!user) {
+        //         return res.status(404).json({ error: 'User not found' });
+        //     }
+        //     await user.updateOne({ $set: { 'codechef.username': username, 'codechef.rating': currentRating, 'codechef.rank': globalRank, 'codechef.stars': stars } });
+        //     return res.status(200).json({ message: 'Profile verified successfully' });
+        // }
         else {
             return res.status(400).json({ error: 'Unsupported platform. Supported platforms are: GeeksForGeeks, CodeForces, LeetCode, CodeChef.' });
         }

@@ -6,7 +6,7 @@ import { Challenge } from "../models/Challenge.js"
 
 export const getUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select("-password")
+        const user = await User.findById(req.user._id).select("-password -gfg -codechef -googleId -githubId -resetPasswordToken -resetPasswordExpires -otp -otpExpires")
 
         if (user) {
             res.status(200).json(user)
@@ -29,7 +29,6 @@ export const updateUserProfile = async (req, res) => {
 
         // Update basic fields
         if (req.body.name) user.name = req.body.name
-        // Don't update email and username as you mentioned
 
         // Update additional fields
         if (req.body.registerNumber) user.RegistrationNumber = req.body.registerNumber
@@ -97,11 +96,13 @@ export const updateUserProfile = async (req, res) => {
                 } else if (platform === "github" && url) {
                     // For GitHub, you might want to store it differently
                     user.otherLinks.push({ platform: "github", url })
-                } else if (platform === "codechef" && url) {
-                    user.codechef = { ...user.codechef, username: url }
-                } else if (platform === "gfg" && url) {
-                    user.gfg = { ...user.gfg, username: url }
-                } else if (platform === "hackerrank" && url) {
+                } 
+                // else if (platform === "codechef" && url) {
+                //     user.codechef = { ...user.codechef, username: url }
+                // } else if (platform === "gfg" && url) {
+                //     user.gfg = { ...user.gfg, username: url }
+                // } 
+                else if (platform === "hackerrank" && url) {
                     // HackerRank doesn't have a dedicated field, so add to otherLinks
                     user.otherLinks.push({ platform: "hackerrank", url })
                 }
@@ -122,8 +123,8 @@ export const updateUserProfile = async (req, res) => {
             isAffiliate: updatedUser.isAffiliate,
             leetcode: updatedUser.leetcode,
             codeforces: updatedUser.codeforces,
-            codechef: updatedUser.codechef,
-            gfg: updatedUser.gfg,
+            // codechef: updatedUser.codechef,
+            // gfg: updatedUser.gfg,
             otherLinks: updatedUser.otherLinks,
             points: updatedUser.points,
             rank: updatedUser.rank,
@@ -410,7 +411,7 @@ export const getUserById = async (req, res) => {
             return res.status(400).json({ message: 'User ID is required' });
         }
 
-        const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
+        const user = await User.findById(userId).select("-password -gfg -codechef -googleId -githubId -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
