@@ -62,7 +62,7 @@ export const updateRanks = async () => {
         leaderBoardCache.set('leaderboard', formattedLeaderboard);
         return formattedLeaderboard;
     } catch (error) {
-        console.error('Error updating ranks:', error);
+        // console.error('Error updating ranks:', error);
     }
 };
 
@@ -97,12 +97,12 @@ export const warmupLeaderboardCache = async (maxRetries = 3) => {
     while (attempts < maxRetries) {
         try {
             attempts++;
-            console.log(`Leaderboard update attempt ${attempts}/${maxRetries}`);
+            // console.log(`Leaderboard update attempt ${attempts}/${maxRetries}`);
             await updateRanks();
-            console.log('Leaderboard updated successfully');
+            // console.log('Leaderboard updated successfully');
             return;
         } catch (error) {
-            console.error(`Attempt ${attempts} failed:`, error);
+            // console.error(`Attempt ${attempts} failed:`, error);
             if (attempts >= maxRetries) {
                 throw error; // Final attempt failed
             }

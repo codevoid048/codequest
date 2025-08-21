@@ -34,7 +34,7 @@ const resetUserStreaks = async () => {
 
     console.log("Streak check completed");
   } catch (err) {
-    console.error("Error resetting streaks:", err.message);
+    // console.error("Error resetting streaks:", err.message);
   }
 };
 export const startStreakCronJob = () => {

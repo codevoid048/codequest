@@ -8,6 +8,9 @@ import { isEmailValid } from "../utils/isEmailValid.js";
 import mongoose from "mongoose";
 // import { client } from "../utils/typesenseClient.js";
 import { warmupLeaderboardCache } from "../utils/leaderBoardCache.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Generate JWT token function
 const generateToken = (user) => {
@@ -98,7 +101,7 @@ export const registerUser = async (req, res) => {
 
     res.status(201).json({ message: "OTP sent to email. Verify to complete registration.", tempUserData });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -150,7 +153,7 @@ export const loginUser = async (req, res) => {
     setAuthCookies(res, user, token);
     return res.status(200).json({ message: "Login Successful" });
   } catch (error) {
-    console.error("Server Error:", error);
+    // console.error("Server Error:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
@@ -177,7 +180,7 @@ export const githubAuthCallback = (req, res) => {
 
 
 export const logoutUser = async (req, res) => {
-  console.log("Logout API hit"); // Debugging log
+  // console.log("Logout API hit"); // Debugging log
 
   // Clear JWT cookie
   res.clearCookie("jwt", {
@@ -214,7 +217,7 @@ export const forgotPassword = async (req, res) => {
     await user.save();
 
     // Send Reset Link via Email
-    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetLink = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
     await sendEmail(user.email, "Password Reset Request", `Click the link to reset password: ${resetLink}`);
 
     res.status(200).json({ message: "Reset link sent to email" });
@@ -226,7 +229,7 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;
-  console.log(token);
+  // console.log(token);
 
   try {
     // Verify JWT Token
@@ -272,7 +275,7 @@ export const getCurrentUser = async (req, res) => {
 
     res.json({ user, token });
   } catch (error) {
-    console.error("Error fetching user:", error);
+    // console.error("Error fetching user:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -340,10 +343,10 @@ export const deleteUser = async (req, res) => {
 
   } catch (error) {
     await session.abortTransaction().catch(abortError => {
-      console.error('Abort transaction failed:', abortError);
+      // console.error('Abort transaction failed:', abortError);
     });
     session.endSession();
-    console.error('Error deleting user:', error);
+    // console.error('Error deleting user:', error);
     return res.status(500).json({
       error: 'Internal server error',
       ...(process.env.NODE_ENV === 'development' && { stack: error.stack })

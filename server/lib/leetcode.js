@@ -20,7 +20,7 @@ export const fetchLeetCodeProfile = async (username) => {
     const response = await axios.post('https://leetcode.com/graphql', { query });
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching user data from LeetCode:', error);
+    // console.error('Error fetching user data from LeetCode:', error);
     return null;
   }
 };
