@@ -25,7 +25,7 @@ export const protect = async (req, res, next) => {
         next();
     }
     catch (error) {
-        console.error("JWT Verification Error:", error);
+        // console.error("JWT Verification Error:", error);
         return res.status(401).json({ message: 'Not authorized, invalid token' });
     }
 };

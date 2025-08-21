@@ -1,6 +1,9 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
 
-const API_BASE_URL = `http://localhost:5000/api`;
+dotenv.config();
+
+const API_BASE_URL = `${process.env.BASE_URL}/api`;
 
 // Create axios instance with default config
 const api = axios.create({
@@ -39,7 +42,7 @@ export const ProfileService = {
       const response = await api.get('/profile');
       return response.data;
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      // console.error('Error fetching profile:', error);
       throw error;
     }
   },
@@ -49,7 +52,7 @@ export const ProfileService = {
       const response = await api.put('/profile/update', profileData);
       return response.data;
     } catch (error) {
-      console.error('Error updating profile:', error);
+      // console.error('Error updating profile:', error);
       throw error;
     }
   }
@@ -62,7 +65,7 @@ export const AuthService = {
       const response = await api.post('/auth/login', credentials);
       return response.data;
     } catch (error) {
-      console.error('Login error:', error);
+      // console.error('Login error:', error);
       throw error;
     }
   },
@@ -72,7 +75,7 @@ export const AuthService = {
       const response = await api.post('/auth/logout');
       return response.data;
     } catch (error) {
-      console.error('Logout error:', error);
+      // console.error('Logout error:', error);
       throw error;
     }
   },
@@ -82,7 +85,7 @@ export const AuthService = {
       const response = await api.get('/auth/me');
       return response.data;
     } catch (error) {
-      console.error('Get current user error:', error);
+      // console.error('Get current user error:', error);
       throw error;
     }
   }

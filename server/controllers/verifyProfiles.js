@@ -8,7 +8,7 @@ export const verifyProfiles = async (req, res) => {
         if (!platform || !username || !userId || !verificationString) {
             return res.status(400).json({ error: 'Platform, username, userId, and verificationString are required' });
         }
-        console.log('Received data:', { platform, username, verificationString, userId });
+        // console.log('Received data:', { platform, username, verificationString, userId });
         const normalizedPlatform = platform.trim().toLowerCase();
 
         if (normalizedPlatform === 'gfg') {
@@ -23,8 +23,8 @@ export const verifyProfiles = async (req, res) => {
             }
 
             // Debugging logs
-            console.log("GFG name from profile:", JSON.stringify(name));
-            console.log("Verification string:", JSON.stringify(verificationString));
+            // console.log("GFG name from profile:", JSON.stringify(name));
+            // console.log("Verification string:", JSON.stringify(verificationString));
 
             // Normalize strings for comparison
             const normalizedName = name.trim().toLowerCase();
@@ -49,7 +49,7 @@ export const verifyProfiles = async (req, res) => {
             return res.status(200).json({ message: 'GFG Profile verified successfully' });
         }
         else if (normalizedPlatform === 'codeforces') {
-            console.log("You got here man");
+            // console.log("You got here man");
             const response = await axios.get(`https://codeforces.com/api/user.info?handles=${username}`);
             if (response.data.status !== 'OK') {
                 return res.status(400).json({ error: 'Invalid Codeforces username' });
@@ -61,7 +61,7 @@ export const verifyProfiles = async (req, res) => {
             const rating = response.data.result[0].rating || 0;
             const rank = response.data.result[0].rank || 0;
             const user = await User.findById(userId);
-            console.log("codeforce data:", username, rating, rank);
+            // console.log("codeforce data:", username, rating, rank);
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }
@@ -112,7 +112,7 @@ export const verifyProfiles = async (req, res) => {
             const rank = responseData?.matchedUser?.profile?.ranking || user.leetCode.rank || 0;
             const stats = responseData?.data?.matchedUser?.submitStats?.acSubmissionNum || [];
             const totalSolved = stats.find(s => s.difficulty === "All")?.count || user.leetCode.solved || 0;
-            console.log("LeetCode data:", username, rating, rank, totalSolved);
+            // console.log("LeetCode data:", username, rating, rank, totalSolved);
             await user.updateOne({ $set: { 'leetCode.username': username, 'leetCode.rating': rating, 'leetCode.rank': rank, 'leetCode.solved': totalSolved } });
             return res.status(200).json({ message: 'Profile verified successfully' });
         }

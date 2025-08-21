@@ -12,7 +12,7 @@ export const setDummyData = async (req, res) => {
             data: insertedUsers,
         });
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -50,7 +50,7 @@ export const updateUserPoints = async (req, res) => {
 
         res.json({ message: "User points updated successfully", user });
     } catch (error) {
-        console.error("Error updating user points:", error);
+        // console.error("Error updating user points:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };
@@ -64,7 +64,7 @@ export const getLeaderboardData = async (req, res) => {
         }
         res.json(leaderboard);
     } catch (error) {
-        console.error("Error fetching leaderboard:", error);
+        // console.error("Error fetching leaderboard:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };

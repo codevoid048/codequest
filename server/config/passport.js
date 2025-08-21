@@ -57,7 +57,7 @@ passport.use(
         return done(null, { user:newUser, token });
         }
       } catch (error) {
-        console.error("Google Auth Error:", error);
+        //console.error("Google Auth Error:", error);
         return done(error, null);
       }
     }
@@ -75,7 +75,7 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        console.log("GitHub profile:", profile);
+        // console.log("GitHub profile:", profile);
         const email = profile.emails && profile.emails.length > 0 ? profile.emails[0].value : undefined;
         const username = email ? email.split("@")[0] : profile.username;
 
@@ -116,7 +116,7 @@ passport.use(
         const token = generateToken(user);
         return done(null, { user, token });
       } catch (error) {
-        console.error("GitHub Strategy error:", error);
+        // console.error("GitHub Strategy error:", error);
         return done(error, null);
       }
     }
