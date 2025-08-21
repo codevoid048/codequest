@@ -12,9 +12,9 @@ interface PlatformData {
 
 interface UserPlatforms {
   leetCode?: PlatformData
-  codechef?: PlatformData
+  // codechef?: PlatformData
   codeforces?: PlatformData
-  gfg?: PlatformData
+  // gfg?: PlatformData
 }
 
 interface PlatformManagerProps {
@@ -30,24 +30,24 @@ export function PlatformManager({ userPlatforms, onVerifyPlatform }: PlatformMan
       username: userPlatforms.leetCode?.username,
       stats: userPlatforms.leetCode,
     },
-    {
-      type: "gfg",
-      isLinked: !!userPlatforms.gfg?.username,
-      username: userPlatforms.gfg?.username,
-      stats: userPlatforms.gfg,
-    },
+    // {
+    //   type: "gfg",
+    //   isLinked: !!userPlatforms.gfg?.username,
+    //   username: userPlatforms.gfg?.username,
+    //   stats: userPlatforms.gfg,
+    // },
     {
       type: "codeforces",
       isLinked: !!userPlatforms.codeforces?.username,
       username: userPlatforms.codeforces?.username,
       stats: userPlatforms.codeforces,
     },
-    {
-      type: "codechef",
-      isLinked: !!userPlatforms.codechef?.username,
-      username: userPlatforms.codechef?.username,
-      stats: userPlatforms.codechef,
-    },
+    // {
+    //   type: "codechef",
+    //   isLinked: !!userPlatforms.codechef?.username,
+    //   username: userPlatforms.codechef?.username,
+    //   stats: userPlatforms.codechef,
+    // },
   ]
 
   return (
