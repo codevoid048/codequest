@@ -18,35 +18,49 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false); // State for password visibility
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const togglePasswordVisibility = () => setShowPassword((s) => !s);
 
+  const API = import.meta.env.VITE_API_BASE_URL;
 
-  const handleLogin = async () => {
+  const handleLogin = async (loginType: "manual" | "google" | "github") => {
     setError("");
-    if (!email || !password) {
-      setError("Please enter both email and password.");
-      return;
-    }
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, { email, password }, {withCredentials: true});
-      if (response.status === 200) {
-        login();
-        toast.success(response.data.message);
-        navigate("/"); // Redirect to homepage
-      }
-    } catch (error: unknown) {
-      const err = error as AxiosError;
-      console.error("Login error:", err);
+      if (loginType === "manual") {
+        // validate only for manual
+        if (!email || !password) {
+          setError("Please enter both email and password.");
+          return;
+        }
 
-      if (err.response) {
-        const errorMessage = (err.response.data as { error?: string })?.error;
-        toast.error(errorMessage || "An unexpected error occurred.");
-        setError((err.response.data as { error?: string })?.error || "Login failed. Please try again.");
+        const response = await axios.post(
+          `${API}/api/auth/login`,
+          { email, password },
+          { withCredentials: true } // ensure cookies set by backend are accepted
+        );
+
+        if (response.status === 200) {
+          // set authenticated state in client
+          login();
+          navigate("/");
+        }
+      } else if (loginType === "google") {
+        // start OAuth flow — backend should redirect to frontend /auth/callback after success
+        window.location.href = `${API}/api/auth/google`;
+      } else if (loginType === "github") {
+        window.location.href = `${API}/api/auth/github`;
+      }
+    } catch (err: unknown) {
+      const errorObj = err as AxiosError;
+      console.error("Login error:", errorObj);
+      if (errorObj.response) {
+        const message = (errorObj.response.data as any)?.error || "Login failed. Please try again.";
+        toast.error(message);
+        setError(message);
       } else {
-        setError("Unable to connect to the server. Please try again later.");
+        const msg = "Unable to connect to the server. Please try again later.";
+        setError(msg);
+        toast.error(msg);
       }
     }
   };
@@ -72,8 +86,8 @@ export default function LoginPage() {
               <Link to="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</Link>
             </div>
             <div className="relative">
-            <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} />
-            <Button
+              <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Button
                 type="button"
                 variant="ghost"
                 size="icon"
@@ -83,10 +97,10 @@ export default function LoginPage() {
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </Button>
-              </div>
+            </div>
           </div>
 
-          <Button className="w-full" onClick={handleLogin}>Sign In</Button>
+          <Button className="w-full" onClick={() => handleLogin("manual")}>Sign In</Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -98,8 +112,8 @@ export default function LoginPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline" className="w-full" onClick={() => window.location.href = `${import.meta.env.VITE_API_BASE_URL}/api/auth/google`}>
-            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+            <Button variant="outline" className="w-full" onClick={() => handleLogin("google")}>
+              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                     fill="#4285F4"
@@ -118,23 +132,23 @@ export default function LoginPage() {
                 />
                 <path d="M1 1h22v22H1z" fill="none" />
             </svg>
-            Google
-        </Button>
-        <Button variant="outline" className="w-full" onClick={() => window.location.href = `${import.meta.env.VITE_API_BASE_URL}/api/auth/github`}>
-            <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+              Google
+            </Button>
+
+            <Button variant="outline" className="w-full" onClick={() => handleLogin("github")}>
+              <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                 <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.49.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.603-3.369-1.34-3.369-1.34-.454-1.154-1.109-1.461-1.109-1.461-.906-.62.069-.607.069-.607 1.002.07 1.53 1.03 1.53 1.03.89 1.525 2.34 1.085 2.91.829.091-.645.348-1.085.634-1.335-2.22-.253-4.555-1.11-4.555-4.945 0-1.091.39-1.984 1.03-2.683-.103-.254-.447-1.275.098-2.656 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.505.338 1.909-1.294 2.748-1.025 2.748-1.025.547 1.381.203 2.402.1 2.656.64.699 1.028 1.592 1.028 2.683 0 3.845-2.337 4.69-4.563 4.938.357.308.678.919.678 1.852 0 1.337-.012 2.418-.012 2.745 0 .268.18.58.688.481A10.002 10.002 0 0 0 22 12c0-5.523-4.477-10-10-10z" />
-            </svg>
-            GitHub
-        </Button>
+              </svg>
+              GitHub
+            </Button>
           </div>
         </CardContent>
+
         <CardFooter className="flex flex-col space-y-4">
-            <div className="text-sm text-center text-muted-foreground">
-                Don&apos;t have an account?{" "}
-                <Link to="/register" className="text-primary hover:underline">
-                    Sign up
-                </Link>
-            </div>
+          <div className="text-sm text-center text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <Link to="/register" className="text-primary hover:underline">Sign up</Link>
+          </div>
         </CardFooter>
       </Card>
     </div>

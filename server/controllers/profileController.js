@@ -6,7 +6,7 @@ import { Challenge } from "../models/Challenge.js"
 
 export const getUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select("-password")
+        const user = await User.findById(req.user._id).select("-password -gfg -codechef -googleId -githubId -resetPasswordToken -resetPasswordExpires -otp -otpExpires")
 
         if (user) {
             res.status(200).json(user)
@@ -14,7 +14,7 @@ export const getUserProfile = async (req, res) => {
             res.status(404).json({ message: "User not found" })
         }
     } catch (error) {
-        console.error(error)
+        // console.error(error)
         res.status(500).json({ message: "Server error" })
     }
 }
@@ -29,7 +29,6 @@ export const updateUserProfile = async (req, res) => {
 
         // Update basic fields
         if (req.body.name) user.name = req.body.name
-        // Don't update email and username as you mentioned
 
         // Update additional fields
         if (req.body.registerNumber) user.RegistrationNumber = req.body.registerNumber
@@ -59,7 +58,7 @@ export const updateUserProfile = async (req, res) => {
                     // Optionally store the public_id to manage the image later
                     user.profilePictureId = uploadResult.public_id
                 } catch (cloudinaryError) {
-                    console.error("Cloudinary upload error:", cloudinaryError)
+                    // console.error("Cloudinary upload error:", cloudinaryError)
                     return res.status(400).json({
                         message: "Failed to upload image to cloud storage. Please try again.",
                     })
@@ -97,11 +96,13 @@ export const updateUserProfile = async (req, res) => {
                 } else if (platform === "github" && url) {
                     // For GitHub, you might want to store it differently
                     user.otherLinks.push({ platform: "github", url })
-                } else if (platform === "codechef" && url) {
-                    user.codechef = { ...user.codechef, username: url }
-                } else if (platform === "gfg" && url) {
-                    user.gfg = { ...user.gfg, username: url }
-                } else if (platform === "hackerrank" && url) {
+                } 
+                // else if (platform === "codechef" && url) {
+                //     user.codechef = { ...user.codechef, username: url }
+                // } else if (platform === "gfg" && url) {
+                //     user.gfg = { ...user.gfg, username: url }
+                // } 
+                else if (platform === "hackerrank" && url) {
                     // HackerRank doesn't have a dedicated field, so add to otherLinks
                     user.otherLinks.push({ platform: "hackerrank", url })
                 }
@@ -122,14 +123,14 @@ export const updateUserProfile = async (req, res) => {
             isAffiliate: updatedUser.isAffiliate,
             leetcode: updatedUser.leetcode,
             codeforces: updatedUser.codeforces,
-            codechef: updatedUser.codechef,
-            gfg: updatedUser.gfg,
+            // codechef: updatedUser.codechef,
+            // gfg: updatedUser.gfg,
             otherLinks: updatedUser.otherLinks,
             points: updatedUser.points,
             rank: updatedUser.rank,
         })
     } catch (error) {
-        console.error("Profile update error:", error)
+        // console.error("Profile update error:", error)
         res.status(500).json({
             message: "Server error",
             error: error.message,
@@ -187,14 +188,14 @@ export const getUserActivity = async (req, res) => {
 
         res.status(200).json(activities)
     } catch (error) {
-        console.error(error)
+        // console.error(error)
         res.status(500).json({ message: "Server error" })
     }
 }
 
 export const postPotdChallenge = async (req, res) => {
     try {
-        console.log("Request received:", req.body);
+        // console.log("Request received:", req.body);
         const { username, timestamp, challengeId, difficulty } = req.body;
 
         if (!username || !timestamp || !challengeId || !difficulty) {
@@ -231,7 +232,7 @@ export const postPotdChallenge = async (req, res) => {
             entry.challenge?.toString() === challengeId.toString()
         );
         
-        console.log("Already solved:", alreadySolved);
+        // console.log("Already solved:", alreadySolved);
         
         if (!alreadySolved) {
             // Push the solved challenge
@@ -253,7 +254,7 @@ export const postPotdChallenge = async (req, res) => {
                     })
                 );
 
-            console.log("Any challenge solved today in other difficulties:", anyChallengeToday);
+            // console.log("Any challenge solved today in other difficulties:", anyChallengeToday);
 
             // Only update streak if no other challenge was solved today
             if (!anyChallengeToday) {
@@ -268,30 +269,30 @@ export const postPotdChallenge = async (req, res) => {
                     day: "2-digit"
                 }).format(yesterday).split('/').reverse().join('-');
                 
-                console.log("Yesterday's date for streak check:", yesterdayStr);
+                // console.log("Yesterday's date for streak check:", yesterdayStr);
 
                 // Check if any challenge was solved yesterday across all difficulties
                 const anyYesterday = ['easy', 'medium', 'hard']
                     .some(diff => 
                         user.solveChallenges[diff]?.some(entry => {
                             const entryDateStr = entry.timestamp?.split(' ')[0];
-                            console.log(entryDateStr, "===", yesterdayStr);
+                            // console.log(entryDateStr, "===", yesterdayStr);
                             return entryDateStr === yesterdayStr;
                         })
                     );
                 
-                console.log("Any challenge solved yesterday:", anyYesterday);
+                // console.log("Any challenge solved yesterday:", anyYesterday);
                 
                 // Update streak based on yesterday's activity
                 if (anyYesterday) {
                     user.streak = (user.streak || 0) + 1;
-                    console.log(`Streak continued and updated to ${user.streak}`);
+                    // console.log(`Streak continued and updated to ${user.streak}`);
                 } else {
                     user.streak = 1;
-                    console.log(`Streak reset to 1`);
+                    // console.log(`Streak reset to 1`);
                 }
             } else {
-                console.log("Already solved a challenge today in another difficulty, streak not updated");
+                // console.log("Already solved a challenge today in another difficulty, streak not updated");
             }
 
             // Save user
@@ -303,23 +304,23 @@ export const postPotdChallenge = async (req, res) => {
                 challenge.solvedUsers = challenge.solvedUsers || [];
                 challenge.solvedUsers.push(user._id);
                 await challenge.save();
-                console.log("User added to challenge's solvedUsers");
+                // console.log("User added to challenge's solvedUsers");
             } else {
-                console.log("User already in challenge's solvedUsers");
+                // console.log("User already in challenge's solvedUsers");
             }
 
-            console.log("POTD challenge recorded successfully");
+            // console.log("POTD challenge recorded successfully");
             return res.status(200).json({ 
                 message: 'POTD challenge recorded successfully',
                 points: user.points,
                 streak: user.streak
             });
         } else {
-            console.log("Challenge already solved");
+            // console.log("Challenge already solved");
             return res.status(200).json({ message: 'Challenge already solved' });
         }
     } catch (error) {
-        console.error('POTD challenge update error:', error);
+        // console.error('POTD challenge update error:', error);
         res.status(500).json({
             message: 'Server error',
             error: error.message,
@@ -345,7 +346,7 @@ export const getUserByUsername = async (req, res) => {
 
         res.status(200).json({ user })
     } catch (error) {
-        console.error("Error fetching user by username:", error)
+        // console.error("Error fetching user by username:", error)
         res.status(500).json({ message: "Server error" })
     }
 }
@@ -392,7 +393,7 @@ export const updateUserStreak = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error updating streak:", error);
+        // console.error("Error updating streak:", error);
         return res.status(500).json({
             success: false,
             message: "An error occurred",
@@ -410,7 +411,7 @@ export const getUserById = async (req, res) => {
             return res.status(400).json({ message: 'User ID is required' });
         }
 
-        const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
+        const user = await User.findById(userId).select("-password -gfg -codechef -googleId -githubId -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -418,7 +419,7 @@ export const getUserById = async (req, res) => {
 
         res.status(200).json({ user });
     } catch (error) {
-        console.error("Server error:", error);
+        // console.error("Server error:", error);
         res.status(500).json({ message: 'Server error' });
     }
 };

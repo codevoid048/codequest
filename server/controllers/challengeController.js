@@ -28,7 +28,7 @@ export const getChallenges = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 }
@@ -50,7 +50,7 @@ export const getChallengeById = async (req, res) => {
             res.status(404).json({ message: 'Challenge not found' });
         }
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 };
@@ -85,7 +85,7 @@ export const getSolutionByChallengeId = async (req, res) => {
       }
   
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       res.status(500).json({ message: 'Server error' });
     }
   };

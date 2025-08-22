@@ -129,7 +129,7 @@ export const search = async (req, res) => {
 
         res.json([...users, ...challenges]);
     } catch (err) {
-        console.error("Search error:", err);
+        // console.error("Search error:", err);
         res.status(500).json({ error: "Search failed" });
     }
 };
@@ -167,7 +167,7 @@ export const searchUser = async (req, res) => {
 
     res.json(formattedUsers);
   } catch (err) {
-    console.error(err);
+    // console.error(err);
     res.status(500).json({ error: "Search failed" });
   }
 };

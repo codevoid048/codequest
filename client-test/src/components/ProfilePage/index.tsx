@@ -44,9 +44,9 @@ export default function ProfilePage() {
   interface ProfileUser {
     _id?: string
     leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
-    gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+    // gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
     codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
-    codechef?: { username?: string; stars?: string; rank?: number; rating?: number }
+    // codechef?: { username?: string; stars?: string; rank?: number; rating?: number }
     profilePicture?: string
     name?: string
     username?: string
@@ -136,13 +136,13 @@ export default function ProfilePage() {
           platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/codeforces`, { username: profileUser.codeforces.username }));
         }
         
-        if (profileUser.codechef?.username) {
-          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/codechef`, { username: profileUser.codechef.username }));
-        }
+        // if (profileUser.codechef?.username) {
+        //   platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/codechef`, { username: profileUser.codechef.username }));
+        // }
         
-        if (profileUser.gfg?.username) {
-          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/gfg`, {username: profileUser.gfg.username }));
-        }
+        // if (profileUser.gfg?.username) {
+        //   platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/gfg`, {username: profileUser.gfg.username }));
+        // }
 
       // Execute all promises in parallel
         await Promise.all(platformPromises);
@@ -581,9 +581,9 @@ export default function ProfilePage() {
                 <PlatformManager
                   userPlatforms={{
                     leetCode: profileUser.leetCode,
-                    gfg: profileUser.gfg,
+                    //gfg: profileUser.gfg,
                     codeforces: profileUser.codeforces,
-                    codechef: profileUser.codechef,
+                    //codechef: profileUser.codechef,
                   }}
                   onVerifyPlatform={handleVerifyPlatform}
                 />
@@ -604,14 +604,14 @@ export default function ProfilePage() {
                         color: "#FFA116",
                         type: "leetcode",
                       },
-                      {
-                        name: "GeeksForGeeks",
-                        handle: profileUser.gfg?.username || "-",
-                        solved: profileUser.gfg?.solved,
-                        rating: profileUser.gfg?.rating,
-                        color: "#2F8D46",
-                        type: "gfg",
-                      },
+                      // {
+                      //   name: "GeeksForGeeks",
+                      //   handle: profileUser.gfg?.username || "-",
+                      //   solved: profileUser.gfg?.solved,
+                      //   rating: profileUser.gfg?.rating,
+                      //   color: "#2F8D46",
+                      //   type: "gfg",
+                      // },
                       {
                         name: "CodeForces",
                         handle: profileUser.codeforces?.username || "-",
@@ -620,14 +620,14 @@ export default function ProfilePage() {
                         color: "#318CE7",
                         type: "codeforces",
                       },
-                      {
-                        name: "CodeChef",
-                        handle: profileUser.codechef?.username || "-",
-                        stars: profileUser.codechef?.stars || "1*",
-                        rating: profileUser.codechef?.rating,
-                        color: "#745D0B",
-                        type: "codechef",
-                      },
+                      // {
+                      //   name: "CodeChef",
+                      //   handle: profileUser.codechef?.username || "-",
+                      //   stars: profileUser.codechef?.stars || "1*",
+                      //   rating: profileUser.codechef?.rating,
+                      //   color: "#745D0B",
+                      //   type: "codechef",
+                      // },
                     ].map((platform) => (
                       <motion.div
                         key={platform.name}
@@ -651,7 +651,7 @@ export default function ProfilePage() {
                                 )}
                               </div>
                             )}
-                            {platform.type === "codechef" && platform.stars !== undefined && (
+                            {/* {platform.type === "codechef" && platform.stars !== undefined && (
                               <div className="text-xs">
                                 <span className="text-muted-foreground">Stars:</span>{" "}
                                 {platform.handle !== "-" ? (
@@ -664,7 +664,7 @@ export default function ProfilePage() {
                                   </span>
                                 )}
                               </div>
-                            )}
+                            )} */}
                             {platform.rating !== undefined && (
                               <div className="text-xs">
                                 <span className="text-muted-foreground">Rating:</span>{" "}

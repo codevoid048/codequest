@@ -8,7 +8,7 @@ export const leetcodeData = async (req, res) => {
   try {
     const username = req.body.username; // Get username from request body
     const user = await User.findOne({ 'leetCode.username': username });
-    console.log(req.body.username);
+    // console.log(req.body.username);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -48,12 +48,12 @@ export const leetcodeData = async (req, res) => {
     const rank = responseData?.matchedUser?.profile?.ranking || user.leetCode.rank || 0;
     const stats = responseData?.matchedUser?.submitStats?.acSubmissionNum || [];
     const totalSolved = stats.find(s => s.difficulty === "All")?.count || user.leetCode.solved || 0;
-    console.log("LeetCode data:", username, rating, rank, totalSolved);
+    // console.log("LeetCode data:", username, rating, rank, totalSolved);
     await user.updateOne({ $set: { 'leetCode.username': username, 'leetCode.rating': rating, 'leetCode.rank': rank, 'leetCode.solved': totalSolved } });
 
     return res.json({ success: true, message: "LeetCode data updated successfully" });
   } catch (error) {
-    console.error("LeetCode API Error:", error.message);
+    // console.error("LeetCode API Error:", error.message);
     return res.status(500).json({ error: `Failed to fetch data` });
   }
 };
@@ -69,7 +69,7 @@ export const geeksforgeeksData = async (req, res) => {
 
     const response = await getGFGName(username);
     if (response.error) {
-      console.error(`Error fetching GFG data for user ${username}: ${response.error}`);
+      // console.error(`Error fetching GFG data for user ${username}: ${response.error}`);
     }
     const totalSolved = response.total_problems_solved;
     const instituteRank = response.institute_rank || 0;
@@ -88,7 +88,7 @@ export const geeksforgeeksData = async (req, res) => {
 
     return res.json({ success: true, message: "GFG data updated successfully" });
   } catch (error) {
-    console.error("GFG API Error:", error.message);
+    // console.error("GFG API Error:", error.message);
     return res.status(500).json({ error: `Failed to fetch data` });
   }
 };
@@ -130,7 +130,7 @@ export const codeforcesData = async (req, res) => {
 
     return res.json({ success: true, message: "Codeforces data updated successfully" });
   } catch (error) {
-    console.error("Codeforces API Error:", error.message);
+    // console.error("Codeforces API Error:", error.message);
     return res.status(500).json({ error: `Failed to fetch data` });
   }
 };
@@ -160,7 +160,7 @@ export const codechefData = async (req, res) => {
 
     return res.json({ success: true, message: "Codechef data updated successfully" });
   } catch (error) {
-    console.error("Codechef API Error:", error.message);
+    // console.error("Codechef API Error:", error.message);
     return res.status(500).json({ error: `Failed to fetch data` });
   }
 };
@@ -266,7 +266,7 @@ export const solvedChallenges = async (req, res) => {
     await user.save();
     res.json({ success: true, message: "Data Added Successfully" });
   } catch (error) {
-    console.error("Error fetching data:", error);
+    // console.error("Error fetching data:", error);
     res.status(500).json({ error: `Failed to fetch data` });
   }
 }
@@ -334,7 +334,7 @@ export const fetchLeetCodeGraphql = async (req, res) => {
     const response = await axios.post('https://leetcode.com/graphql', { query });
     return res.json(response.data.data);
   } catch (error) {
-    console.error('Error fetching user data from LeetCode:', error);
+    // console.error('Error fetching user data from LeetCode:', error);
     return null;
   }
 };
@@ -344,7 +344,7 @@ export const heatmap = async (req, res) => {
   try {
     const username = req.body.username;
     const user = await User.findOne({ 'username': username });
-    console.log(user.heatmap, "heatmap");
+    // console.log(user.heatmap, "heatmap");
     // console.log(solvedChallenges , "solvedChallenges");
     return res.status(200).json({ message: "Heatmap fetched successfully", heatmap: user.heatmap });
   } catch (error) {

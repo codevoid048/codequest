@@ -5,7 +5,7 @@ const router = express.Router();
 router.get("/:username", async (req, res) => {
   try {
     const { username } = req.params;
-    const user = await User.findOne({ username }).select("-password"); // Exclude sensitive fields
+    const user = await User.findOne({ username }).select("-password -gfg -codechef -otp -otpExpires -isVerified -createdAt -updatedAt -resetPasswordToken -resetPasswordExpires -googleId -githubId"); // Exclude sensitive fields
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

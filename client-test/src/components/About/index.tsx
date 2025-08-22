@@ -61,7 +61,7 @@ export default function AboutPage() {
             id: 1,
             name: "William Keri",
             role: "Software Developer",
-            image: "/public/William.jpg",
+            image: "/William.jpg",
             linkedin: "https://linkedin.com/in/codevoid",
             email: "williamkeri007@gmail.com",
             github: "https://github.com/codevoid048"
@@ -70,8 +70,8 @@ export default function AboutPage() {
             id: 2,
             name: "Ambati Sai Ganesh",
             role: "Software Developer",
-            image: "/public/Ganesh.jpg",
-            ilinkedin: "http://www.linkedin.com/in/sai-ganesh-ambati-8218a328a",
+            image: "/Ganesh.jpg",
+            linkedin: "http://www.linkedin.com/in/sai-ganesh-ambati-8218a328a",
             email: "saiganeshambati000@gmail.com",
             github: "https://github.com/saiganesh4151"
         },
@@ -79,7 +79,7 @@ export default function AboutPage() {
             id: 3,
             name: "Chemakurthi Sai Praveen",
             role: "Software Developer",
-            image: "/public/Praveen.jpg",
+            image: "/Praveen.jpg",
             linkedin: "http://www.linkedin.com/in/praveen-cheemakurthy-149271317",
             email: "cheemakurthypraveen@gmail.com",
             github: "https://github.com/Saipraveen49"
@@ -88,7 +88,7 @@ export default function AboutPage() {
             id: 4,
             name: "Ramisetti Chakrarao",
             role: "Software Developer",
-            image: "/public/Chakri.jpg",
+            image: "/Chakri.jpg",
             linkedin: "https://www.linkedin.com/in/chakri555/",
             email: "chakriramisetti555@gmail.com",
             github: "https://github.com/Chakri2759"
@@ -97,7 +97,7 @@ export default function AboutPage() {
             id: 5,
             name: "Saripalli Harshavardhan",
             role: "Software Developer",
-            image: "/public/Harsha.jpg",
+            image: "/Harsha.jpg",
             linkedin: "https://www.linkedin.com/in/harshavardhansaripalli/",
             email: "harshavardhansaripalli21@gmail.com",
             github: "https://github.com/harsha2143"
@@ -106,7 +106,7 @@ export default function AboutPage() {
             id: 6,
             name: "Relangi Siva Ramaraju",
             role: "Software Developer",
-            image: "/public/Siva.jpg",
+            image: "/Siva.jpg",
             linkedin: "http://www.linkedin.com/in/veera-siva-rama-raju-relangi-2130ba259",
             email: "https://twitter.com/ambatiganesh",
             github: "https://github.com/Siva-Relangi",
@@ -115,7 +115,7 @@ export default function AboutPage() {
             id: 7,
             name: "Pulavarthi Sanjay",
             role: "Software Developer",
-            image: "/public/Sanjay1.jpg",
+            image: "/Sanjay1.jpg",
             linkedin: "http://www.linkedin.com/in/pulavarthi-sanjay-92ba93287",
             email: "pnnksanjay@gmail.com",
             github: "https://github.com/Sanjaypulavarthi"
@@ -124,7 +124,7 @@ export default function AboutPage() {
             id: 8,
             name: "Vigna Ramtej",
             role: "Software Developer",
-            image: "/public/Ramtej.jpg",
+            image: "/Ramtej.jpg",
             linkedin: "https://www.linkedin.com/in/vignaramtej",
             email: "vignaramtej46@gmail.com",
             github: "https://github.com/ramtejvigna"

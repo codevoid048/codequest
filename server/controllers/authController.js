@@ -3,16 +3,19 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto"; // For generating OTP
 import { User } from "../models/User.js"
 import { Activity } from "../models/Activity.js"
-import { sendOTPEmail, deleteConfirmationMail } from "../utils/emailService.js"
+import { sendOTPEmail, deleteConfirmationMail, sendResetPassEmail } from "../utils/emailService.js"
 import { isEmailValid } from "../utils/isEmailValid.js";
 import mongoose from "mongoose";
 // import { client } from "../utils/typesenseClient.js";
 import { warmupLeaderboardCache } from "../utils/leaderBoardCache.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Generate JWT token function
 const generateToken = (user) => {
-  return jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
+  rewt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
   });
 };
 
@@ -21,38 +24,31 @@ const setAuthCookies = (res, user, token) => {
   res.cookie("jwt", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
   });
 
-  // Store full user object in HTTP-only cookie
-  res.cookie("user", JSON.stringify(user), {
+  // Store user ID and email in HTTP-only cookie
+  res.cookie("user", JSON.stringify({ id: user._id, email: user.email }), {
     httpOnly: true, // Prevent JavaScript access
     secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
   });
 };
 
 
 export const registerUser = async (req, res) => {
   try {
-    const {
-      name, email, password, username,
-      mobile, profilePicture, RegistrationNumber, branch, collegeName,
-      gfg, leetCode, codeforces, codechef, otherLinks
-    } = req.body;
+    const { email, name, password, username } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !username) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    const { valid, reason, validators } = await isEmailValid(email);
+    const result = await isEmailValid(email);
 
-    //console.log("Email Validation Response:", { reason: validators[reason].reason });
-    const validationReason = validators[reason] ? validators[reason].reason : "unknown reason";
-
-    if (!valid) return res.status(400).json({ message: `Please provide a valid email address, ${validationReason}` });
+    if (!result.valid) return res.status(400).json({ message: `Please provide a valid email address, ${result.reason}` });
 
     const usernameRegex = /^[a-z][a-z0-9_]*$/;
     if (!usernameRegex.test(username)) {
@@ -63,66 +59,73 @@ export const registerUser = async (req, res) => {
     if (user && user.isVerified) return res.status(400).json({ error: "Email already exists" });
 
     const exist = await User.findOne({ username });
-    if (exist) return res.status(400).json({ error: "Username already exists, please choose another" });
+    if (exist && user.isVerified) return res.status(400).json({ error: "Username already exists, please choose another" });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     // Generate a 6-digit OTP
     const otp = crypto.randomInt(100000, 999999).toString();
+    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const otpExpires = nowIST.getTime() + 5 * 60 * 1000; // OTP expires in 5 minutes
 
-    // Temporarily hold user data in memory or send it back to the client
-    const tempUserData = {
-      name,
-      email,
-      username,
-      password: hashedPassword,
-      rank: 0,
-      streak: 0,
-      points: 0,
-      solveChallenges: [],
-      mobile: mobile || "",
-      profilePicture: profilePicture || "",
-      RegistrationNumber: RegistrationNumber || "",
-      branch: branch || "",
-      collegeName: collegeName || "",
-      gfg: gfg || { rating: 0 },
-      leetCode: leetCode || { rating: 0 },
-      codeforces: codeforces || { rating: 0 },
-      codechef: codechef || { rating: 0 },
-      otherLinks: otherLinks || [],
-      otp, // Include OTP for verification
-    };
+    if (!user) {
+      await User.create({
+        email,
+        name,
+        username,
+        password: hashedPassword,
+        otp,
+        otpExpires,
+        isVerified: false,
+      });
+    }
+    else {
+      user.otp = otp;
+      user.otpExpires = otpExpires;
+      await user.save();
+    }
 
     // Send OTP to user's email
     await sendOTPEmail(email, otp);
 
-    res.status(201).json({ message: "OTP sent to email. Verify to complete registration.", tempUserData });
+    res.status(201).json({ message: "OTP sent to email. Verify to complete registration." });
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
 
 export const verifyEmail = async (req, res) => {
   try {
-    const { email, otp, tempUserData } = req.body;
+    const { email, otp } = req.body;
 
-    if (!tempUserData) {
-      return res.status(400).json({ error: "Temporary user data is missing" });
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
 
-    if (tempUserData.otp !== otp) {
-      return res.status(400).json({ error: "Invalid OTP. Please try again." });
+    if (user.isVerified) {
+      return res.status(400).json({ error: "Email already verified, Please login" });
     }
 
-    // Save user data to the database after verification
-    const newUser = new User({
-      ...tempUserData,
-      isVerified: true,
-      otp: undefined,
-    });
+    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    if (user.otpExpires < nowIST.getTime()) {
+      await User.findByIdAndDelete(user._id);
+      await warmupLeaderboardCache();
+      return res.status(400).json({ error: "OTP has expired. Please request a new one." });
+    }
+    console.log("OTP:", typeof (user.otp), "Provided OTP:", typeof (parseInt(otp)));
+    if (user.otp === parseInt(otp)) {
+        user.isVerified = true;
+        user.otp = null;
+        user.otpExpires = null;
+    } else {
+      throw new Error("Invalid OTP");
+    }
 
-    await newUser.save();
+    await user.save();
 
     res.status(200).json({ message: "Email verified and user registered successfully!" });
   } catch (error) {
@@ -146,11 +149,12 @@ export const loginUser = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ error: "Wrong Password" });
 
-    const token = generateToken(user);
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    // console.log("Login successful for user:", user.username);
     setAuthCookies(res, user, token);
     return res.status(200).json({ message: "Login Successful" });
   } catch (error) {
-    console.error("Server Error:", error);
+    // console.error("Server Error:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
@@ -177,20 +181,20 @@ export const githubAuthCallback = (req, res) => {
 
 
 export const logoutUser = async (req, res) => {
-  console.log("Logout API hit"); // Debugging log
+  // console.log("Logout API hit"); // Debugging log
 
   // Clear JWT cookie
   res.clearCookie("jwt", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "Lax",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
   });
 
   // Clear user cookie
   res.clearCookie("user", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "Lax",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
   });
 
   res.status(200).json({ message: "Logged out successfully" });
@@ -206,16 +210,17 @@ export const forgotPassword = async (req, res) => {
     if (!user.isVerified) return res.status(404).json({ message: "Verify your email first" });
 
     // Generate Reset Token (JWT)
-    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.RESET_TOKEN_EXPIRY });
+    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
 
     // Save Token & Expiry in DB
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
+    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    user.resetPasswordExpires = nowIST.getTime() + 15 * 60 * 1000;
     await user.save();
 
     // Send Reset Link via Email
-    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
-    await sendEmail(user.email, "Password Reset Request", `Click the link to reset password: ${resetLink}`);
+    const resetLink = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+    await sendResetPassEmail(user.email, resetLink);
 
     res.status(200).json({ message: "Reset link sent to email" });
   } catch (error) {
@@ -226,14 +231,15 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;
-  console.log(token);
+  // console.log(token);
 
   try {
     // Verify JWT Token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
 
-    if (!user || user.resetPasswordToken !== token || user.resetPasswordExpires < Date.now()) {
+    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    if (!user || user.resetPasswordToken !== token || user.resetPasswordExpires < nowIST.getTime()) {
       return res.status(400).json({ message: "Invalid or expired token" });
     }
     // Hash New Password
@@ -254,25 +260,21 @@ export const resetPassword = async (req, res) => {
 
 export const getCurrentUser = async (req, res) => {
   try {
-    const token = req.cookies.jwt;
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    // Decode the JWT to get the user ID
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id;
-
     // Fetch full user data from database
-    const user = await User.findById(userId).select("-password"); // Exclude password
+    const user = req.user;
+    const token = req.token;
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    if (!token) {
+      return res.status(401).json({ message: "Token not found" });
+    }
+
     res.json({ user, token });
   } catch (error) {
-    console.error("Error fetching user:", error);
+    // console.error("Error fetching user:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -325,25 +327,25 @@ export const deleteUser = async (req, res) => {
     res.clearCookie('jwt', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     });
 
     res.clearCookie('user', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     });
 
     deleteConfirmationMail(mail);
-    
+
     return res.status(204).end(); // Proper status code for deletions
 
   } catch (error) {
     await session.abortTransaction().catch(abortError => {
-      console.error('Abort transaction failed:', abortError);
+      // console.error('Abort transaction failed:', abortError);
     });
     session.endSession();
-    console.error('Error deleting user:', error);
+    // console.error('Error deleting user:', error);
     return res.status(500).json({
       error: 'Internal server error',
       ...(process.env.NODE_ENV === 'development' && { stack: error.stack })

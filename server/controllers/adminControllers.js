@@ -5,10 +5,10 @@ import { Solution } from "../models/Solution.js";
 export const getUsers = async(req, res) => {
     try{
         const users = await User.find({}).select("-password");
-        console.log(users)
+        // console.log(users)
         res.json(users);
     }catch(err){
-        console.error(err);
+        // console.error(err);
         res.status(500).json({ error: "error in getting users", details: err.message });
     }
 }
@@ -84,7 +84,7 @@ export const addChallenge = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error in addChallenge:", error);
+        // console.error("Error in addChallenge:", error);
         res.status(500).json({ 
             success: false, 
             message: "Server error",
