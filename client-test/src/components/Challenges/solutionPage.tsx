@@ -6,7 +6,8 @@ import {
   Code, BookOpen, FileCode, Check, Copy,
   Clock, AlertCircle, Lightbulb,
   Database, Award, GitBranch, Star, Tag,
-  ArrowUpRight, TerminalSquare
+  ArrowUpRight, TerminalSquare,
+  ArrowLeft
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,13 +34,13 @@ interface SolutionData {
 // CopyButton component for the code editor UI
 const CopyButton: React.FC<{ code: string }> = ({ code }) => {
   const [copied, setCopied] = useState(false);
-  
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -147,7 +148,7 @@ const CategoryPill: React.FC<{ category: string; index: number }> = ({ category,
     "bg-blue-500/10 text-blue-500 border-blue-500/20",
     "bg-purple-500/10 text-purple-500 border-purple-500/20"
   ];
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -171,7 +172,7 @@ const SolutionPage: React.FC = () => {
   //const codeContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<string>("description");
   const [isHeaderSticky, setIsHeaderSticky] = useState<boolean>(false);
-  
+
   const { problemId } = location.state as { problemId: string };
 
   useEffect(() => {
@@ -179,7 +180,7 @@ const SolutionPage: React.FC = () => {
       setIsHeaderSticky(window.scrollY > 10);
       console.log(isHeaderSticky, activeTab);
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activeTab, isHeaderSticky]);
@@ -187,7 +188,7 @@ const SolutionPage: React.FC = () => {
   useEffect(() => {
     const fetchSolution = async () => {
       if (!problemId) return;
-  
+
       setIsLoading(true);
       setError(null);
       try {
@@ -196,7 +197,7 @@ const SolutionPage: React.FC = () => {
           const errorData = await response.json();
           throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
-  
+
         const data: SolutionData = await response.json();
         console.log("data", data);
         if (data) {
@@ -204,23 +205,23 @@ const SolutionPage: React.FC = () => {
         } else {
           throw new Error('No solution data found.');
         }
-  
+
       } catch (err) {
         console.error('Error fetching solution:', err);
         setError((err as Error).message);
       }
-  
+
       setIsLoading(false);
     };
-  
+
     fetchSolution();
   }, [problemId]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { 
+      transition: {
         staggerChildren: 0.1,
         delayChildren: 0.2
       }
@@ -239,10 +240,21 @@ const SolutionPage: React.FC = () => {
       transition={{ duration: 0.5 }}
       className="min-h-screen bg-background"
     >
+      {/* Back Button */}
+      <div className="max-w-[calc(100%-2rem)] md:max-w-[calc(100%-120px)] mx-auto my-4 flex items-center">
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex items-center gap-2"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+      </div>
       {/* Header - modified to align with container width */}
       <div className="border rounded-lg w-full max-w-[calc(100%-2rem)] md:max-w-[calc(100%-120px)] mx-auto container mt-7">
         <div className="w-full">
-          {/* Title Section */}
           {solution && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -250,8 +262,9 @@ const SolutionPage: React.FC = () => {
               transition={{ duration: 0.5 }}
               className="py-4"
             >
-              <div className="flex items-center justify-between px-4 sm:px-6">
-                <motion.div 
+              <div className="px-4 sm:px-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                {/* Title Section */}
+                <motion.div
                   className="flex items-center gap-2 sm:gap-3"
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
@@ -267,16 +280,17 @@ const SolutionPage: React.FC = () => {
                     <p className="text-xs sm:text-sm text-muted-foreground">Solution Explorer</p>
                   </div>
                 </motion.div>
-                
+
+                {/* Solve Challenge button */}
                 <motion.div
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.5, delay: 0.3 }}
-                  className="flex gap-2"
+                  className="flex justify-end"
                 >
-                  <Button 
-                    size="sm" 
-                    className="gap-1.5 text-sm group bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md hover:shadow-lg transition-all duration-300"
+                  <Button
+                    size="sm"
+                    className="gap-1.5 text-sm group bg-primary hover:bg-primary/90  border-0 shadow-md hover:shadow-lg transition-all duration-300"
                     onClick={() => openProblemLink(solution?.problemLink)}
                   >
                     <span>Solve Challenge</span>
@@ -288,6 +302,10 @@ const SolutionPage: React.FC = () => {
           )}
         </div>
       </div>
+
+
+
+
 
       {/* Main Content */}
       <div className="container m-auto py-2 w-full max-w-[calc(100%-1rem)] sm:max-w-[calc(100%-2rem)] md:max-w-[calc(100%-120px)]">
@@ -301,7 +319,7 @@ const SolutionPage: React.FC = () => {
             </div>
           </div>
         ) : error ? (
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
@@ -311,8 +329,8 @@ const SolutionPage: React.FC = () => {
               <AlertCircle className="h-8 w-8" />
             </div>
             <p className="font-medium">{error}</p>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="mt-4 border-red-500/20 text-red-500 hover:bg-red-500/10"
               onClick={() => navigate(-1)}
             >
@@ -320,7 +338,7 @@ const SolutionPage: React.FC = () => {
             </Button>
           </motion.div>
         ) : solution ? (
-          <motion.div 
+          <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -334,7 +352,7 @@ const SolutionPage: React.FC = () => {
                   <CardContent className="p-3 h-full">
                     <Tabs defaultValue="description" onValueChange={setActiveTab} className="w-full h-full">
                       <TabsList className="grid grid-cols-2 bg-muted/30 p-1 rounded-sm">
-                        <TabsTrigger 
+                        <TabsTrigger
                           value="description"
                           className="text-sm font-medium transition-all data-[state=active]:shadow-sm data-[state=active]:bg-background/80"
                         >
@@ -343,7 +361,7 @@ const SolutionPage: React.FC = () => {
                             <span>Description</span>
                           </div>
                         </TabsTrigger>
-                        <TabsTrigger 
+                        <TabsTrigger
                           value="explanation"
                           className="text-sm font-medium transition-all data-[state=active]:shadow-sm data-[state=active]:bg-background/80"
                         >
@@ -353,7 +371,7 @@ const SolutionPage: React.FC = () => {
                           </div>
                         </TabsTrigger>
                       </TabsList>
-                      
+
                       <div className="p-3 h-[calc(100%-48px)]">
                         <TabsContent value="description" className="m-0 h-full">
                           <ScrollArea className="h-[400px] pr-4">
@@ -370,7 +388,7 @@ const SolutionPage: React.FC = () => {
                             </div>
                           </ScrollArea>
                         </TabsContent>
-                        
+
                         <TabsContent value="explanation" className="m-0 h-full">
                           <ScrollArea className="h-[400px] pr-4">
                             <div className="space-y-3">
@@ -396,8 +414,8 @@ const SolutionPage: React.FC = () => {
               <motion.div variants={itemVariants} className="pt-0">
                 <Card className="border shadow-md bg-card/95 overflow-hidden hover:shadow-lg transition-all duration-300 h-full">
                   <CardContent className="p-0 h-full">
-                    <Tabs 
-                      defaultValue="java" 
+                    <Tabs
+                      defaultValue="java"
                       className="w-full h-full"
                       onValueChange={setSelectedLanguage}
                     >
@@ -411,7 +429,7 @@ const SolutionPage: React.FC = () => {
                         <div className="flex-1 flex justify-center mb-2 sm:mb-0">
                           <TabsList className="bg-background/80 light:bg-white-800/50  rounded-md border border-border/50">
                             {['java', 'python', 'cpp'].map((lang) => (
-                              <TabsTrigger 
+                              <TabsTrigger
                                 key={lang}
                                 value={lang}
                                 className="px-3 py-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground/80 data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-muted/50 rounded-md transition-all duration-300 light:font-black"
@@ -433,8 +451,8 @@ const SolutionPage: React.FC = () => {
                             <ScrollArea className="h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] w-full">
                               <div className="flex w-full">
                                 <div className="w-8 sm:w-10 text-right mr-1 sm:mr-2 text-black-500 select-none bg-white-800/30 dark:bg-gray-800/30 flex-shrink-0">
-                                  {Array.from({ 
-                                    length: solution.codeSnippets[language as keyof SolutionData['codeSnippets']].split('\n').length 
+                                  {Array.from({
+                                    length: solution.codeSnippets[language as keyof SolutionData['codeSnippets']].split('\n').length
                                   }, (_, i) => (
                                     <div key={i} className="py-0.5 px-1 sm:px-2 text-xs">{i + 1}</div>
                                   ))}
@@ -446,8 +464,8 @@ const SolutionPage: React.FC = () => {
                                   transition={{ duration: 0.3 }}
                                   className="font-mono flex-1 text-gray-200 dark:text-gray-800 pr-2 overflow-x-auto"
                                 >
-                                  <SyntaxHighlighter 
-                                    code={solution.codeSnippets[language as keyof SolutionData['codeSnippets']]} 
+                                  <SyntaxHighlighter
+                                    code={solution.codeSnippets[language as keyof SolutionData['codeSnippets']]}
                                     language={language}
                                   />
                                 </motion.div>
@@ -475,7 +493,7 @@ const SolutionPage: React.FC = () => {
                         </div>
                         <h3 className="text-lg font-medium">Complexity Analysis</h3>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <div className="flex items-center gap-3 p-2.5 bg-purple-500/5 rounded-lg border border-purple-500/10 transition-all duration-300 hover:border-purple-500/20">
                           <div className="p-1.5 bg-purple-500/10 rounded-full">
@@ -486,7 +504,7 @@ const SolutionPage: React.FC = () => {
                             <p className="font-mono text-sm font-medium">{solution.codeSnippets.timeComplexity}</p>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-3 p-2.5 bg-purple-500/5 rounded-lg border border-purple-500/10 transition-all duration-300 hover:border-purple-500/20">
                           <div className="p-1.5 bg-purple-500/10 rounded-full">
                             <Database className="h-4 w-4 text-purple-500" />
@@ -507,7 +525,7 @@ const SolutionPage: React.FC = () => {
                         </div>
                         <h3 className="text-lg font-medium">Problem Categories</h3>
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-2">
                         {solution.category?.map((category, index) => (
                           <CategoryPill key={index} category={category} index={index} />

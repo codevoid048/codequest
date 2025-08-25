@@ -30,7 +30,6 @@ export default function RegisterPage() {
     const [otp, setOtp] = useState<string>(""); // State for OTP input
     const [isOtpSent, setIsOtpSent] = useState<boolean>(false); // Track if OTP is sent
     const [error, setError] = useState<string>("");
-    const [tempUserData, setTempUserData] = useState<FormData | null>(null); // State for temporary user data
     const [showPassword, setShowPassword] = useState(false); // State for password visibility
     const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State for confirm password visibility
 
@@ -87,7 +86,6 @@ export default function RegisterPage() {
             }, { headers: { "Content-Type": "application/json" } });
 
             toast.success(response.data.message);
-            setTempUserData(response.data.tempUserData); // Store temporary user data
             setIsOtpSent(true); // Show OTP input form
         } catch (err: any) {
             console.error("Registration error:", err);
@@ -107,16 +105,16 @@ export default function RegisterPage() {
     // Handle OTP verification
     const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!tempUserData) {
-            toast.error("Temporary user data is missing. Please try registering again.");
-            return;
-        }
 
         try {
             const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/verify`, {
-                email: tempUserData.email,
+                email: formData.email.trim().toLowerCase(),
                 otp,
-                tempUserData, // Send temporary user data for verification
+            }, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                withCredentials: true,
             });
 
             toast.success(response.data.message);
@@ -200,7 +198,7 @@ export default function RegisterPage() {
                     ) : (
                         <form onSubmit={handleOtpSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="otp">Enter OTP</Label>
+                                <Label htmlFor="otp">Enter OTP sent to {formData?.email}</Label>
                                 <Input name="otp" id="otp" placeholder="6-digit OTP" value={otp} onChange={handleOtpChange} required />
                             </div>
                             {error && <p className="text-red-500 text-sm">{error}</p>}

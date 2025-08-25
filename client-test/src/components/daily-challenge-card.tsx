@@ -87,58 +87,71 @@ export function DailyChallengeCard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
+      className="mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-3xl"
+    >
+      {isLoading ? (
+        <div className="flex justify-center items-center h-40">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <Card className="overflow-hidden border-2 transition-all duration-300 hover:border-primary/50 hover:shadow-lg w-full">
+          <CardHeader className="bg-muted/50 pb-4 mt-0">
+            <div className="flex flex-row items-center gap-3 flex-wrap mt-3">
+              <Badge
+                variant="outline"
+                className="bg-primary/10 text-primary w-fit flex items-center gap-2"
+              >
+                <Clock className="h-5 w-5" />
+                <span className="text-sm sm:text-base">Daily Challenge</span>
+              </Badge>
 
-      className="mx-auto"
-    > {isLoading ? (
-      <div className="flex justify-center items-center h-40">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    ) : (
-      <Card className="overflow-hidden border-2 transition-all w-3xl mx-auto  duration-300 hover:border-primary/50 hover:shadow-lg">
-        <CardHeader className="bg-muted/50 pb-4 mt-0">
-          <div className="flex items-center justify-between">
-            <Badge variant="outline" className="bg-primary/10 text-primary">
-              <Clock className="mr-1 h-15 w-8" /> Daily Challenge
-            </Badge>
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 mt-3 ${getDifficultyStyle(
-                dailyProblem?.difficulty
-              )}`}
-            >
-              {getDifficultyIcon(dailyProblem?.difficulty)}
-              {dailyProblem?.difficulty}
-            </span>
-          </div>
-          <CardTitle className="text-2xl mt-1">{dailyProblem?.title}</CardTitle>
-          <CardDescription>{dailyProblem?.date}</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {dailyProblem?.categories.map((cat) => (
-                <Badge
-                  key={cat}
-                  variant="secondary"
-                  className="text-xs py-1 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
-                >
-                  {cat}
-                </Badge>
-              ))}
+              <span
+                className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium flex items-center gap-2 w-fit ${getDifficultyStyle(
+                  dailyProblem?.difficulty
+                )}`}
+              >
+                {getDifficultyIcon(dailyProblem?.difficulty)}
+                {dailyProblem?.difficulty}
+              </span>
             </div>
-          </div>
-        </CardContent>
-        <CardFooter className="bg-muted/30 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-muted-foreground">Solve this challenge to earn {dailyProblem?.points} points</p>
-          </div>
-          <Button asChild className="group">
-            <a href={dailyProblem?.problemUrl} target="_blank" rel="noopener noreferrer">
-              Solve Challenge
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-            </a>
-          </Button>
-        </CardFooter>
-      </Card>)}
+
+
+            <CardTitle className="text-xl sm:text-2xl mt-2 break-words">
+              {dailyProblem?.title}
+            </CardTitle>
+            <CardDescription className="text-sm sm:text-base">{dailyProblem?.date}</CardDescription>
+          </CardHeader>
+
+          <CardContent className="pt-0">
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {dailyProblem?.categories.map((cat) => (
+                  <Badge
+                    key={cat}
+                    variant="secondary"
+                    className="text-xs sm:text-sm py-1 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
+                  >
+                    {cat}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+
+          <CardFooter className="bg-muted/30 flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center">
+            <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+              Solve this challenge to earn {dailyProblem?.points} points
+            </p>
+
+            <Button asChild className="group w-full sm:w-auto">
+              <a href={dailyProblem?.problemUrl} target="_blank" rel="noopener noreferrer">
+                Solve Challenge
+                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
+              </a>
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
     </motion.div>
   );
 }

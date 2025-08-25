@@ -18,7 +18,7 @@ router.get("/github/callback", passport.authenticate("github", { session: false 
 router.post("/logout", logoutUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
-router.get("/me", getCurrentUser);
+router.get("/me", protect, getCurrentUser);
 router.post("/verifyacc", verifyProfiles);
 
 router.delete('/users/:id', protect, deleteUser);

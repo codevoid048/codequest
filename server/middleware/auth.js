@@ -1,13 +1,19 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 
-
 export const protect = async (req, res, next) => {
     let token;
 
     try {
 
         token = req.cookies.jwt;
+
+        // console.log("Token from cookies:", token);
+
+        if(!token) {
+            token = req.headers.authorization?.split(" ")[1];
+            // if(token) console.log("Token from headers:", token);
+        }
 
         if (!token) {
             return res.status(401).json({ message: 'No token, authorization denied' });
@@ -16,11 +22,13 @@ export const protect = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         // console.log("Decoded token:", decoded.id);
 
-        req.user = await User.findById(decoded.id).select('-password');
+        req.user = await User.findById(decoded.id).select('-password -gfg -codechef -otp -otpExpires -createdAt -updatedAt -resetPasswordToken -resetPasswordExpires -googleId -githubId'); // Exclude sensitive fields
 
         if (!req.user) {
             return res.status(401).json({ message: 'Not authorized, token failed' });
         }
+
+        req.token = token;
 
         next();
     }
