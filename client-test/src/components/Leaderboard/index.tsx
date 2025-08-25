@@ -192,14 +192,14 @@ export default function Leaderboard() {
   return (
     <div
       className={cn(
-        "min-h-screen transition-all duration-500 px-20 bg-background text-foreground",
+        "min-h-screen transition-all duration-500 px-4 sm:px-6 md:px-12 lg:px-20 bg-background text-foreground",
         isDarkMode ? "dark" : "",
         "bg-grid-pattern",
       )}
     >
-      <div className="container mx-auto p-1 px-4 relative mt-6">
+      <div className="container mx-auto p-1 px-2 sm:px-4 relative mt-6">
         {/* Background decorative elements */}
-        <div className="absolute top-20 right-20 opacity-5">
+        <div className="absolute top-20 right-6 sm:right-12 md:right-20 opacity-5">
           <motion.div
             animate={{
               rotate: [0, 10, 0, -10, 0],
@@ -207,19 +207,17 @@ export default function Leaderboard() {
             }}
             transition={{ repeat: Number.POSITIVE_INFINITY, duration: 10 }}
           >
-            <Zap className="h-30 w-30" />
+            <Zap className="h-16 w-16 sm:h-20 sm:w-20 md:h-30 md:w-30" />
           </motion.div>
         </div>
-        <motion.div></motion.div>
 
-        {/* Confetti container for first place */}
         <div ref={confettiRef} className="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
         {/* Header */}
-        <div className="relative z-10 mb-12">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="relative z-10 sm:mb-12">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="text-center md:text-left">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center md:justify-start gap-2 sm:gap-3">
                 <motion.div
                   animate={{
                     rotate: [0, 5, 0, -5, 0],
@@ -227,25 +225,29 @@ export default function Leaderboard() {
                   }}
                   transition={{ repeat: Number.POSITIVE_INFINITY, duration: 5 }}
                 >
-                  <Trophy className="h-10 w-10 text-yellow-500" />
+                  <Trophy className="h-8 w-8 sm:h-10 sm:w-10 text-yellow-500" />
                 </motion.div>
-                <h1 className="text-4xl font-bold">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-ring">CodeQuest</span>
-                  <span className="ml-2 text-foreground">Leaderboard</span>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-ring">
+                    CodeQuest
+                  </span>
+                  <span className="ml-1 sm:ml-2 text-foreground">Leaderboard</span>
                 </h1>
               </div>
-              <p className="text-muted-foreground mt-2 text-lg">Top problem solvers competing for glory</p>
+              <p className="text-muted-foreground mt-2 text-sm sm:text-base md:text-lg">
+                Top problem solvers competing for glory
+              </p>
             </div>
 
             {/* Search Bar */}
-            <div className="mt-6 md:mt-0 md:ml-auto">
+            <div className="w-full sm:w-auto mt-4 md:mt-0 md:ml-auto">
               <div
-                className="relative flex items-center rounded-xl transition-all duration-300 w-76
-      border border-gray-700 dark:border-indigo-300
-      shadow-md shadow-indigo-700/30 dark:shadow-indigo-200/30
-      bg-gray-800 dark:bg-white
-      hover:border-indigo-500 dark:hover:border-indigo-400
-      hover:shadow-lg hover:shadow-indigo-500/30 dark:hover:shadow-indigo-300/30"
+                className="relative flex items-center rounded-xl transition-all duration-300 w-full sm:w-72
+            border border-gray-700 dark:border-indigo-300
+            shadow-md shadow-indigo-700/30 dark:shadow-indigo-200/30
+            bg-gray-800 dark:bg-white
+            hover:border-indigo-500 dark:hover:border-indigo-400
+            hover:shadow-lg hover:shadow-indigo-500/30 dark:hover:shadow-indigo-300/30"
               >
                 <div className="pl-1">
                   <Search className="h-4 w-4 text-white dark:text-indigo-500 ml-2" />
@@ -256,20 +258,16 @@ export default function Leaderboard() {
                   type="text"
                   placeholder="Search for coders..."
                   value={searchTerm}
-                  onChange={(e) => {
-                    // Safely update search term
-                    const value = e.target.value
-                    setSearchTerm(value)
-                  }}
-                  className="flex-1 bg-transparent py-3 px-3 outline-none transition-all duration-300
-    text-sm text-white dark:text-gray-800 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 bg-transparent py-2 sm:py-3 px-2 sm:px-3 outline-none transition-all duration-300
+              text-sm text-white dark:text-gray-800 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
 
                 {searchTerm && (
                   <button
                     onClick={clearSearch}
-                    className="mr-3 p-1.5 rounded-full bg-indigo-600 dark:bg-indigo-500 transition-colors duration-300
-            hover:bg-indigo-500 dark:hover:bg-indigo-600"
+                    className="mr-2 sm:mr-3 p-1.5 rounded-full bg-indigo-600 dark:bg-indigo-500 transition-colors duration-300
+                hover:bg-indigo-500 dark:hover:bg-indigo-600"
                   >
                     <X className="h-3.5 w-3.5 text-white dark:text-white" />
                   </button>
@@ -278,10 +276,8 @@ export default function Leaderboard() {
             </div>
           </div>
 
-          {/* Decorative line */}
-          <div className="w-full h-1 bg-gradient-to-r from-transparent via-indigo-600 to-transparent mt-6 opacity-70 dark:via-indigo-400"></div>
+          <div className="w-full h-1 bg-gradient-to-r from-transparent via-indigo-600 to-transparent mt-4 sm:mt-6 opacity-70 dark:via-indigo-400"></div>
 
-          {/* Search results status with animated appearance */}
           <AnimatePresence>
             {searchTerm && (
               <motion.div
@@ -289,7 +285,7 @@ export default function Leaderboard() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ delay: 0.1 }}
-                className="text-center text-sm mt-3 font-medium bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent dark:from-indigo-400 dark:to-purple-400"
+                className="text-center text-xs sm:text-sm mt-2 sm:mt-3 font-medium bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent dark:from-indigo-400 dark:to-purple-400"
               >
                 {filteredUsers.length === 0
                   ? "No coders found"
@@ -301,13 +297,13 @@ export default function Leaderboard() {
           </AnimatePresence>
         </div>
       </div>
-        
+
       {/* Leaderboard */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mt-4" // Added margin-top to reduce the gap
+        className=""
       >
         <Card
           className={cn(
@@ -315,45 +311,37 @@ export default function Leaderboard() {
             isDarkMode ? "bg-card/80 backdrop-blur-sm border-border/30" : "bg-card/90 backdrop-blur-sm",
           )}
         >
-          {/* Table header */}
+          {/* Table header (desktop only) */}
           <div
             className={cn(
-              "grid grid-cols-15 p-4 font-medium border-b rounded-t-md ",
+              "hidden sm:grid grid-cols-12 md:grid-cols-15 p-3 sm:p-4 font-medium border-b rounded-t-md text-xs sm:text-sm",
               isDarkMode ? "text-primary border-border bg-muted/30" : "text-primary border-border bg-muted/50",
             )}
           >
             <div className="col-span-1 text-center">Rank</div>
-            <div className="col-span-5 ml-5">Coder</div>
-            <div className="col-span-3 text-center">Points</div>
-            <div className="col-span-3 text-center">Problems</div>
-            <div className="col-span-3 text-center">Streak</div>
+            <div className="col-span-5 ml-2 sm:ml-5">Coder</div>
+            <div className="col-span-2 sm:col-span-3 text-center">Points</div>
+            <div className="col-span-2 sm:col-span-3 text-center">Problems</div>
+            <div className="col-span-2 sm:col-span-3 text-center">Streak</div>
           </div>
 
-          {/* Empty state */}
-          <AnimatePresence>
-            {filteredUsers.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="py-12 text-center"
+          {/* Mobile version (card style list) */}
+          <div className="sm:hidden divide-y">
+            {getCurrentUsers().map((user) => (
+              <div
+                key={user.id}
+                className="flex flex-col p-3 text-sm hover:bg-accent/40 transition"
               >
-                <motion.div
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1, rotate: [0, -3, 3, -2, 0] }}
-                  transition={{ duration: 0.5 }}
-                  className="inline-block mb-3 text-muted-foreground"
-                >
-                  <Search className="h-12 w-12 mx-auto" />
-                </motion.div>
-                <h3 className="text-lg font-medium">No coders found</h3>
-                <p className="text-muted-foreground mt-1">Try a different search term</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold flex items-center gap-2">{getRankIcon(user.rank)} {user.username}</span>
+                  <span className="text-chart-4 font-semibold">{user.points} pts</span>
+                </div>
+              </div>
+            ))}
+          </div>
 
-          {/* Table body */}
-          <div className={cn("divide-y rounded-b-md", isDarkMode ? "divide-border/20" : "divide-border/70")}>
+          {/* Desktop table body */}
+          <div className={cn("hidden sm:block divide-y rounded-b-md", isDarkMode ? "divide-border/20" : "divide-border/70")}>
             <AnimatePresence>
               {getCurrentUsers().map((user) => {
                 const isTop3 = user.rank <= 3
@@ -384,7 +372,7 @@ export default function Leaderboard() {
                       isSearchMatch ? (isDarkMode ? "bg-primary/10" : "bg-primary/5") : "",
                     )}
                   >
-                    {/* Rank indicator */}
+                    {/* Rank */}
                     <div className="col-span-1 flex justify-center">
                       <motion.div
                         className={cn(
@@ -410,18 +398,9 @@ export default function Leaderboard() {
                         {getRankIcon(user.rank)}
                       </motion.div>
                     </div>
-                    {/* Username with special styling for top 3 */}
+
+                    {/* Username */}
                     <Link to={`/profile/${user.username}`} className="col-span-5 flex items-center gap-3">
-                      {isTop3 && (
-                        <motion.div
-                          animate={{ rotate: [0, 5, 0, -5, 0] }}
-                          transition={{
-                            repeat: Number.POSITIVE_INFINITY,
-                            duration: 2,
-                            repeatType: "loop",
-                          }}
-                        ></motion.div>
-                      )}
                       <motion.span
                         className={cn(
                           "font-medium ml-4 relative inline-block hover:text-blue-500",
@@ -445,7 +424,7 @@ export default function Leaderboard() {
                       </motion.span>
                     </Link>
 
-                    {/* Points with animation */}
+                    {/* Points */}
                     <motion.div
                       className="col-span-3 text-center font-semibold"
                       key={`points-${user.id}-${user.points}`}
@@ -472,79 +451,40 @@ export default function Leaderboard() {
                       </div>
                     </motion.div>
 
-                    {/* Problems solved */}
+                    {/* Problems */}
                     <div className="col-span-3 text-center">
-                      <div
-                        className={cn(
-                          "flex items-center justify-center gap-2 transition-all duration-300 hover:text-blue-500",
-                        )}
-                      >
+                      <div className="flex items-center justify-center gap-2 transition-all duration-300 hover:text-blue-500">
                         {user.solveChallenges ? user.solveChallenges.total : 0}
                       </div>
                     </div>
 
-                    {/* Streak column */}
+                    {/* Streak */}
                     <div className="col-span-3 text-center">
-                      <div
-                        className={cn(
-                          "flex items-center justify-center gap-2 transition-all duration-300 hover:text-blue-500",
-                        )}
-                      >
+                      <div className="flex items-center justify-center gap-2 transition-all duration-300 hover:text-blue-500">
                         <span>{user.streak}</span>
                       </div>
                     </div>
-
-                    {/* Decorative elements for top 3 */}
-                    {isTop3 && (
-                      <div
-                        className={cn(
-                          "absolute left-0 top-0 h-full w-1",
-                          user.rank === 1
-                            ? "bg-gradient-to-b from-chart-1 to-chart-1/60"
-                            : user.rank === 2
-                              ? "bg-gradient-to-b from-chart-2 to-chart-2/60"
-                              : "bg-gradient-to-b from-chart-3 to-chart-3/60",
-                        )}
-                      ></div>
-                    )}
-
-                    {/* Animated highlight for updated user */}
-                    {isUpdated && (
-                      <motion.div
-                        className={cn(
-                          "absolute inset-0 pointer-events-none",
-                          isDarkMode ? "bg-primary/10" : "bg-primary/5",
-                        )}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    )}
                   </motion.div>
                 )
               })}
             </AnimatePresence>
           </div>
 
-          {/* Pagination Footer */}
+          {/* Pagination footer (unchanged, but responsive) */}
           {filteredUsers.length > 0 && (
             <div
               className={cn(
-                "p-4 border-t flex justify-between items-center",
+                "p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-3",
                 isDarkMode ? "border-border/20" : "border-border",
               )}
             >
-              {/* Page info */}
-              <div className="text-sm text-muted-foreground ml-8">
+              <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                 {searchTerm
                   ? `Showing ${Math.min(USERS_PER_PAGE, filteredUsers.length)} of ${filteredUsers.length} ${filteredUsers.length === 1 ? "result" : "results"}`
                   : `Page ${currentPage} of ${Math.ceil(filteredUsers.length / USERS_PER_PAGE)}`}
               </div>
 
-              {/* Pagination controls */}
               <div className="flex items-center space-x-1">
-                {/* Previous button */}
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -562,7 +502,6 @@ export default function Leaderboard() {
                   <ChevronLeft className="h-4 w-4" />
                 </motion.button>
 
-                {/* Page numbers */}
                 <div className="flex items-center space-x-1">
                   {getPageNumbers().map((page, index) => (
                     <motion.button
@@ -572,7 +511,7 @@ export default function Leaderboard() {
                       onClick={() => typeof page === "number" && goToPage(page)}
                       disabled={page === "..."}
                       className={cn(
-                        "flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200 text-sm font-medium",
+                        "flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200 text-xs sm:text-sm font-medium",
                         page === currentPage
                           ? isDarkMode
                             ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
@@ -590,7 +529,6 @@ export default function Leaderboard() {
                   ))}
                 </div>
 
-                {/* Next button */}
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -613,5 +551,6 @@ export default function Leaderboard() {
         </Card>
       </motion.div>
     </div>
+
   )
 }

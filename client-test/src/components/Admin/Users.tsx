@@ -52,7 +52,7 @@ export default function UserDashboard() {
         setLoading(false)
       }
     }
-    
+
     loadUsers()
   }, [fetchUsers])
 
@@ -116,7 +116,7 @@ export default function UserDashboard() {
     // Apply category filters
     Object.entries(activeFilters).forEach(([type, values]) => {
       if (values.length > 0) {
-        result = result.filter((user) => 
+        result = result.filter((user) =>
           user[type as FilterType] && values.includes(user[type as FilterType])
         )
       }
@@ -189,7 +189,7 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="container mx-3 px-4 py-4">
+    <div className="container ml-0 md:mx-3 px-4 py-4">
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -282,8 +282,8 @@ export default function UserDashboard() {
                         key={college}
                         variant={activeFilters.collegeName.includes(college) ? "default" : "outline"}
                         className={`cursor-pointer transition-all duration-300 ${activeFilters.collegeName.includes(college)
-                            ? "bg-indigo-500 hover:bg-indigo-600"
-                            : "hover:border-indigo-500 hover:text-indigo-600"
+                          ? "bg-indigo-500 hover:bg-indigo-600"
+                          : "hover:border-indigo-500 hover:text-indigo-600"
                           }`}
                         onClick={() => toggleFilter("collegeName", college)}
                       >
@@ -305,8 +305,8 @@ export default function UserDashboard() {
                         key={branch}
                         variant={activeFilters.branch.includes(branch) ? "default" : "outline"}
                         className={`cursor-pointer transition-all duration-300 ${activeFilters.branch.includes(branch)
-                            ? "bg-sky-500 hover:bg-sky-600"
-                            : "hover:border-sky-500 hover:text-sky-600"
+                          ? "bg-sky-500 hover:bg-sky-600"
+                          : "hover:border-sky-500 hover:text-sky-600"
                           }`}
                         onClick={() => toggleFilter("branch", branch)}
                       >
@@ -328,8 +328,8 @@ export default function UserDashboard() {
                         key={field}
                         variant={sortBy === field ? "default" : "outline"}
                         className={`cursor-pointer transition-all duration-300 ${sortBy === field
-                            ? "bg-teal-500 hover:bg-teal-600"
-                            : "hover:border-teal-500 hover:text-teal-600"
+                          ? "bg-teal-500 hover:bg-teal-600"
+                          : "hover:border-teal-500 hover:text-teal-600"
                           }`}
                         onClick={() => handleSort(field)}
                       >

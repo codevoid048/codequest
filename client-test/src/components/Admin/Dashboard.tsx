@@ -262,8 +262,8 @@ export default function Dashboard() {
 
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+    <div className="flex min-h-screen flex-col !pt-0">
+      <header className="sticky top-0 left-auto right-0 z-10 flex h-16 items-center gap-4 border-b bg-background ml-4 md:px-6">
         <h1 className="text-xl font-semibold">Coding Club Admin Dashboard</h1>
       </header>
       <main className="flex-1 space-y-4 p-4 md:p-6">
@@ -318,7 +318,7 @@ export default function Dashboard() {
                   <CardTitle>Weekly User Registrations</CardTitle>
                   <CardDescription>New user registrations over the past 7 days</CardDescription>
                 </CardHeader>
-                <CardContent className="pl-2">
+                <CardContent className="pl-0">
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={userWeeklyData}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -452,7 +452,7 @@ export default function Dashboard() {
                     <BarChart
                       data={collegeData as { name: string; users: number }[]}
                       layout="vertical"
-                      margin={{ left: 50, right: 30, top: 20, bottom: 20 }}
+                      margin={{ left: 0, right: 30, top: 20, bottom: 20 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={true} />
                       <XAxis
@@ -518,7 +518,7 @@ export default function Dashboard() {
                       <XAxis dataKey="name" />
                       <YAxis allowDecimals={false} />
                       <Tooltip formatter={(v: number) => [`${v} users`, "Solved"]} />
-                      <Legend  />
+                      <Legend />
                       <Bar dataKey="users" fill="#38bdf8" maxBarSize={80} />
                     </BarChart>
                   </ResponsiveContainer>

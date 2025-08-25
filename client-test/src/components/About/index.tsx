@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import {
     Calendar,
     Trophy,
@@ -19,10 +19,48 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DottedBackground } from "../dotted-background"
+import ScrollToTopButton from "../scrolltotop"
 
+// Loading skeleton component
+const LoadingSkeleton = () => (
+    <div className="relative w-full min-h-screen">
+        <DottedBackground />
+        <div className="relative z-10 container mx-auto py-10 px-4">
+            <div className="animate-pulse space-y-8">
+                <div className="h-12 bg-gray-300 rounded-lg w-1/2 mx-auto"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className="h-32 bg-gray-300 rounded-lg"></div>
+                    ))}
+                </div>
+                <div className="h-64 bg-gray-300 rounded-lg"></div>
+            </div>
+        </div>
+    </div>
+)
+
+// Throttle function
+const throttle = (func: Function, delay: number) => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let lastExecTime = 0;
+    return (...args: any[]) => {
+        const currentTime = Date.now();
+        
+        if (currentTime - lastExecTime > delay) {
+            func(...args);
+            lastExecTime = currentTime;
+        } else {
+            if (timeoutId) clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                func(...args);
+                lastExecTime = Date.now();
+            }, delay - (currentTime - lastExecTime));
+        }
+    };
+};
 
 export default function AboutPage() {
-
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("club")
     const [activeFaq, setActiveFaq] = useState<number | null>(null)
     const [isVisible, setIsVisible] = useState<Record<string, boolean>>({
@@ -36,27 +74,8 @@ export default function AboutPage() {
         cta: false,
     })
 
-    useEffect(() => {
-        const handleScroll = () => {
-            const sections = ["hero", "codequest", "about", "offers", "events", "team", "faq", "cta"]
-
-            sections.forEach((section) => {
-                const element = document.getElementById(section)
-                if (element) {
-                    const rect = element.getBoundingClientRect()
-                    const isInView = rect.top < window.innerHeight * 0.75 && rect.bottom > 0
-                    setIsVisible((prev) => ({ ...prev, [section]: isInView }))
-                }
-            })
-        }
-
-        window.addEventListener("scroll", handleScroll)
-        handleScroll()
-
-        return () => window.removeEventListener("scroll", handleScroll)
-    }, [])
-
-    const teamMembers = [
+    // Memoize team members data to prevent recreating on each render
+    const teamMembers = useMemo(() => [
         {
             id: 1,
             name: "William Keri",
@@ -129,10 +148,30 @@ export default function AboutPage() {
             email: "vignaramtej46@gmail.com",
             github: "https://github.com/ramtejvigna"
         },
+    ], []);
 
-    ]
+    const majorEvents = useMemo(() => [
+        {
+            title: "CodeQuest",
+            description: "CodeQuest is a platform that offers daily coding challenges to enhance problem-solving skills across all levels.",
+            date: "Daily",
+            icon: <Trophy className="h-6 w-6" />,
+        },
+        {
+            title: "IconCoderz",
+            description: "IconCoderz is a coding competition designed to test problem-solving skills through real-time challenges and a chance to win exciting prizes",
+            date: "February",
+            icon: <Rocket className="h-6 w-6" />,
+        },
+        {
+            title: "HackOverflow",
+            description: "HackOverflow is a hackathon platform where participants team up to build innovative tech solutions for real-world problems.",
+            date: "October",
+            icon: <Users className="h-6 w-6" />,
+        },
+    ], []);
 
-    const faqItems = [
+    const faqItems = useMemo(() => [
         {
             question: "How can I join the SRKRCoding Club?",
             answer: "Simply sign up on our website and attend our weekly coding sessions. New members are always welcome!",
@@ -143,57 +182,74 @@ export default function AboutPage() {
         },
         {
             question: "What kind of events do you host?",
-            answer:
-                "We organize coding contests, hackathons, guest lectures, mentorship programs, and our flagship event CodeQuest.",
+            answer: "We organize coding contests, hackathons, guest lectures, mentorship programs, and our flagship event CodeQuest.",
         },
         {
             question: "How does CodeQuest work?",
-            answer:
-                "CodeQuest is a timed programming challenge where you solve increasingly complex problems. Your solutions are evaluated in real-time, and you compete for positions on our leaderboard.",
+            answer: "CodeQuest is a timed programming challenge where you solve increasingly complex problems. Your solutions are evaluated in real-time, and you compete for positions on our leaderboard.",
         },
         {
             question: "Are there any membership fees?",
-            answer:
-                "Basic membership is free for all SRKR students. Premium membership with additional benefits is available for a nominal annual fee.",
+            answer: "Basic membership is free for all SRKR students. Premium membership with additional benefits is available for a nominal annual fee.",
         },
         {
             question: "Can I contribute to the platform?",
-            answer:
-                "We welcome contributions from members who want to help improve our platform, create challenges, or mentor others.",
+            answer: "We welcome contributions from members who want to help improve our platform, new challenges, .",
         },
-    ]
+    ], []);
 
-    const majorEvents = [
-        {
-            title: "CodeQuest",
-            description:
-                "CodeQuest is a platform that offers daily coding challenges to enhance problem-solving skills across all levels.",
-            date: "Daily",
-            icon: <Trophy className="h-6 w-6" />,
-        },
-        {
-            title: "IconCoderz",
-            description:
-                "IconCoderz is a coding competition designed to test problem-solving skills through real-time challenges and a chance to win exciting prizes",
-            date: "February",
-            icon: <Rocket className="h-6 w-6" />,
-        },
-        {
-            title: "HackOverflow",
-            description:
-                "HackOverflow is a hackathon platform where participants team up to build innovative tech solutions for real-world problems.",
-            date: "October",
-            icon: <Users className="h-6 w-6" />,
-        },
+    // Optimized scroll handler with throttling
+    const handleScroll = useCallback(
+        throttle(() => {
+            const sections = ["hero", "codequest", "about", "offers", "events", "team", "faq", "cta"];
+            const updates: Record<string, boolean> = {};
+            let hasChanges = false;
 
-    ]
+            sections.forEach((section) => {
+                const element = document.getElementById(section);
+                if (element) {
+                    const rect = element.getBoundingClientRect();
+                    const isInView = rect.top < window.innerHeight * 0.75 && rect.bottom > 0;
+                    updates[section] = isInView;
+                    if (updates[section] !== isVisible[section]) {
+                        hasChanges = true;
+                    }
+                }
+            });
 
-    const fadeIn = {
+            if (hasChanges) {
+                setIsVisible(prev => ({ ...prev, ...updates }));
+            }
+        }, 150), // Throttle to 150ms
+        [isVisible]
+    );
+
+    // Initial loading effect
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsInitialLoading(false);
+        }, 200); // Minimal delay for smooth transition
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Scroll event listener
+    useEffect(() => {
+        if (isInitialLoading) return;
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
+        handleScroll(); // Initial call
+
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, [handleScroll, isInitialLoading]);
+
+    // Memoized animation variants
+    const fadeIn = useMemo(() => ({
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
-    }
+    }), []);
 
-    const staggerContainer = {
+    const staggerContainer = useMemo(() => ({
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
@@ -201,11 +257,16 @@ export default function AboutPage() {
                 staggerChildren: 0.1,
             },
         },
-    }
+    }), []);
 
-    const itemVariant = {
+    const itemVariant = useMemo(() => ({
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+    }), []);
+
+    // Show loading skeleton initially
+    if (isInitialLoading) {
+        return <LoadingSkeleton />;
     }
 
     return (
@@ -377,7 +438,7 @@ export default function AboutPage() {
                                             animate={{ x: 0, opacity: 1 }}
                                             transition={{ delay: 0.1 }}
                                         >
-                                            Founded in 2015, SRKRCoding Club is the premier technical community at SRKR Engineering College,
+                                            Founded in 2023, SRKRCoding Club is the premier technical community at SRKR Engineering College,
                                             dedicated to fostering coding excellence and innovation among students.
                                         </motion.p>
                                         <motion.p
@@ -490,7 +551,6 @@ export default function AboutPage() {
                                             </div>
                                         </motion.div>
 
-
                                         <motion.div
                                             className="flex items-start space-x-4 p-4 border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
                                             variants={itemVariant}
@@ -502,7 +562,6 @@ export default function AboutPage() {
                                                 <p className="font-medium text-muted-foreground">Developed multiple open-source projects with real-world applications, including CodeQuest for PODT and a live website for SRKR Coding Club.</p>
                                             </div>
                                         </motion.div>
-
                                     </motion.div>
                                 </motion.div>
                             </TabsContent>
@@ -538,33 +597,22 @@ export default function AboutPage() {
                                 <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
                                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20 "></div>
                                 <div className="relative z-20 p-8 h-full flex flex-col">
-                                    {/* Icon + Title Wrapper */}
                                     <div className="flex items-center gap-3">
-                                        {/* Icon with Blurred Border */}
                                         <div className="relative">
-                                            {/* Blurred Border Effect */}
                                             <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-
-                                            {/* Icon Container */}
                                             <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
                                             group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
                                                 <Code className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 duration-300" />
-
                                             </div>
                                         </div>
-
-                                        {/* Title */}
                                         <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300">
                                             Daily Coding Challenges
                                         </h3>
                                     </div>
-
-                                    {/* Description (Below) */}
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
-                                        Sharpen your skills with daily problems (POTD) on the CodeQuest platform, curated for all levels — from beginner to advanced.                                    </p>
-
+                                        Sharpen your skills with daily problems (POTD) on the CodeQuest platform, curated for all levels — from beginner to advanced.
+                                    </p>
                                 </div>
-
                             </motion.div>
 
                             <motion.div
@@ -577,11 +625,8 @@ export default function AboutPage() {
                                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20"></div>
                                 <div className="relative z-20 p-8 h-full flex flex-col">
                                     <div className="flex items-center gap-3">
-                                        {/* Icon */}
                                         <div className="relative">
-                                            {/* Blurred Border Effect */}
                                             <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-
                                             <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
                                             group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
                                                 <BookOpen className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
@@ -592,8 +637,8 @@ export default function AboutPage() {
                                         </h3>
                                     </div>
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
-                                        Collaborate and innovate at HackOverflow — our club's hackathon where participants team up to build real-world tech solutions.                                    </p>
-
+                                        Collaborate and innovate at HackOverflow — our club's hackathon where participants team up to build real-world tech solutions.
+                                    </p>
                                 </div>
                             </motion.div>
 
@@ -608,9 +653,7 @@ export default function AboutPage() {
                                 <div className="relative z-20 p-8 h-full flex flex-col">
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
-                                            {/* Blurred Border Effect */}
                                             <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-
                                             <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
                                             group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
                                                 <Trophy className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300 " />
@@ -623,7 +666,6 @@ export default function AboutPage() {
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
                                         Test your coding skills through competitions like IconCoders, organized by our club to solve challenging problems and win exciting prizes.
                                     </p>
-
                                 </div>
                             </motion.div>
 
@@ -638,9 +680,7 @@ export default function AboutPage() {
                                 <div className="relative z-20 p-8 h-full flex flex-col">
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
-                                            {/* Blurred Border Effect */}
                                             <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-
                                             <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
                                             group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
                                                 <Users className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
@@ -651,8 +691,8 @@ export default function AboutPage() {
                                         </h3>
                                     </div>
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
-                                        Gain practical knowledge through hands-on workshops organized by our club, focusing on modern technologies and industry practices.                                    </p>
-
+                                        Gain practical knowledge through hands-on workshops organized by our club, focusing on modern technologies and industry practices.
+                                    </p>
                                 </div>
                             </motion.div>
 
@@ -667,21 +707,19 @@ export default function AboutPage() {
                                 <div className="relative z-20 p-8 h-full flex flex-col">
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
-                                            {/* Blurred Border Effect */}
                                             <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-
                                             <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
                                             group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
                                                 <Zap className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
                                             </div>
                                         </div>
-                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white  transition-colors duration-300 mb-2">
+                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
                                             Courses
                                         </h3>
                                     </div>
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
-                                        Learn through courses conducted by our club, with live sessions covering the latest technologies and industry-relevant skills.                                    </p>
-
+                                        Learn through courses conducted by our club, with live sessions covering the latest technologies and industry-relevant skills.
+                                    </p>
                                 </div>
                             </motion.div>
 
@@ -696,9 +734,7 @@ export default function AboutPage() {
                                 <div className="relative z-20 p-8 h-full flex flex-col">
                                     <div className="flex items-center gap-3">
                                         <div className="relative">
-                                            {/* Blurred Border Effect */}
                                             <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-
                                             <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
                                             group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
                                                 <Calendar className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
@@ -711,7 +747,6 @@ export default function AboutPage() {
                                     <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
                                         Developed multiple open-source projects with real-world applications, including the CodeQuest platform and the SRKR Coding Club website.
                                     </p>
-
                                 </div>
                             </motion.div>
                         </motion.div>
@@ -720,7 +755,7 @@ export default function AboutPage() {
                     {/* Major Events */}
                     <motion.section
                         id="events"
-                        className="mb-20 px-5 "
+                        className="mb-20 px-5"
                         initial="hidden"
                         animate={isVisible.events ? "visible" : "hidden"}
                         variants={fadeIn}
@@ -732,7 +767,7 @@ export default function AboutPage() {
                         </motion.h2>
 
                         <motion.div
-                            className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-10"
+                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-10"
                             variants={staggerContainer}
                             initial="hidden"
                             animate="visible"
@@ -763,11 +798,8 @@ export default function AboutPage() {
                                                 </Badge>
                                             </div>
                                             <p className="text-muted-foreground">{event.description}</p>
-                                            <div className="mt-4 flex justify-end">
-                                            </div>
                                         </CardContent>
                                     </Card>
-
                                 </motion.div>
                             ))}
                         </motion.div>
@@ -808,7 +840,11 @@ export default function AboutPage() {
                                                 <div className="relative">
                                                     <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-primary/60 rounded-full blur opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
                                                     <Avatar className="h-40 w-42 border-2 border-primary/20 group-hover:border-primary/50 transition-all duration-300">
-                                                        <AvatarImage src={member.image} alt={member.name} />
+                                                        <AvatarImage 
+                                                            src={member.image} 
+                                                            alt={member.name}
+                                                            loading="lazy"
+                                                        />
                                                         <AvatarFallback className="bg-primary/10 text-primary">
                                                             {member.name
                                                                 .split(" ")
@@ -820,7 +856,7 @@ export default function AboutPage() {
                                             </div>
                                             <h3 className="text-xl font-semibold text-primary">{member.name}</h3>
                                             <p className="text-muted-foreground text-sm">{member.role}</p>
-                                            <div className=" pt-2 border-t border-primary/10 flex justify-center space-x-3 opacity-100 transition-opacity duration-300">
+                                            <div className="pt-2 border-t border-primary/10 flex justify-center space-x-3 opacity-100 transition-opacity duration-300">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => window.open(member.linkedin, "_blank")}>
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
@@ -839,7 +875,7 @@ export default function AboutPage() {
                                                         <circle cx="4" cy="4" r="2"></circle>
                                                     </svg>
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full " onClick={() => window.open(member.github, "_blank")}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => window.open(member.github, "_blank")}>
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         width="16"
@@ -855,8 +891,7 @@ export default function AboutPage() {
                                                         <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7a3.37 3.37 0 0 0-.94 2.61V22" />
                                                     </svg>
                                                 </Button>
-
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => window.open(member.email, "_blank")}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => window.open(`mailto:${member.email}`, "_blank")}>
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         width="16"
@@ -899,13 +934,17 @@ export default function AboutPage() {
                             {faqItems.map((item, index) => (
                                 <motion.div key={index} className="mb-4" variants={itemVariant}>
                                     <div
-                                        className={`border border-primary/10 rounded-lg shadow-sm p-4 cursor-pointer bg-card transition-all duration-300 ${activeFaq === index ? "bg-card" : "hover:bg-0"
-                                            }`}
+                                        className={`border border-primary/10 rounded-lg shadow-sm p-4 cursor-pointer bg-card transition-all duration-300 ${
+                                            activeFaq === index ? "bg-card" : "hover:bg-0"
+                                        }`}
                                         onClick={() => setActiveFaq(activeFaq === index ? null : index)}
                                     >
-                                        <div className="font-semibold text-lg text-primary  flex justify-between items-center">
+                                        <div className="font-semibold text-lg text-primary flex justify-between items-center">
                                             {item.question}
-                                            <motion.span animate={{ rotate: activeFaq === index ? 180 : 0 }} transition={{ duration: 0.3 }}>
+                                            <motion.span 
+                                                animate={{ rotate: activeFaq === index ? 180 : 0 }} 
+                                                transition={{ duration: 0.3 }}
+                                            >
                                                 <ChevronDown className="h-5 w-5 text-primary" />
                                             </motion.span>
                                         </div>
@@ -918,7 +957,7 @@ export default function AboutPage() {
                                             transition={{ duration: 0.3 }}
                                             className="overflow-hidden"
                                         >
-                                            <p className="text-muted-foreground mt-4 ">{item.answer}</p>
+                                            <p className="text-muted-foreground mt-4">{item.answer}</p>
                                         </motion.div>
                                     </div>
                                 </motion.div>
@@ -927,7 +966,7 @@ export default function AboutPage() {
                     </motion.section>
                 </div>
             </div>
+            <ScrollToTopButton/>
         </div>
-
     )
 }

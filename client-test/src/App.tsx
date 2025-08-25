@@ -51,7 +51,7 @@ function AdminApp() {
   // If no token, show the login page
   if (!token) {
     return (
-      <div className="flex-grow p-4 mt-16 md:mt-0">
+      <div className="flex-grow mt-16 md:mt-0">
         <Routes>
           <Route path="/codingclubadmin" element={<AdminLogin />} />
           <Route path="*" element={<Navigate to="/codingclubadmin" replace />} />
@@ -68,7 +68,7 @@ function AdminApp() {
       <div className="md:hidden fixed top-0 left-0 w-full bg-gray-800 text-white z-50">
         <Sidebar />
       </div>
-      <div className="flex-grow md:ml-64 p-4 mt-16 md:mt-0">
+      <div className="flex-grow md:ml-64 pl-0 md:pl-4 mt-16 md:mt-0">
         <Toaster position="bottom-right" toastOptions={{ duration: 2000 }} />
         <Routes>
           {/* <Route path="/codingclubadmin" element={<AdminLogin />} /> */}
