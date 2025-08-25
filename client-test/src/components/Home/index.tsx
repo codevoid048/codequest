@@ -6,13 +6,14 @@ import { DailyChallengeCard } from "@/components/daily-challenge-card"
 import { HeroSection } from "@/components/hero-section"
 import { FeatureCard } from "@/components/feature-card"
 import { useAuth } from "@/context/AuthContext"
+import ScrollToTopButton from "../scrolltotop"
 
 
 const Home = () => {
     const { user } = useAuth();
     
     return (
-        <div>
+        <div className="px-1">
             <HeroSection />
 
             <section className="container mx-auto py-12 space-y-6 md:py-16 lg:py-24 flex flex-col items-center">
@@ -117,6 +118,7 @@ const Home = () => {
                     </Button>
                 </div>
             </section>
+            <ScrollToTopButton/>
         </div>
     )
 }

@@ -625,29 +625,34 @@ const Challenges: React.FC = () => {
                   currentItems.map((problem, index) => (
                     <Card
                       key={problem.id}
-                      className="border-1 cursor-pointer bg-card overflow-hidden"
+                      className="border-1 cursor-pointer bg-card overflow-hidden h-full"
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
-                      <CardContent>
-                        <div className="flex flex-col sm:flex-row justify-between gap-6">
-                          <div className="space-y-2 flex-1">
-                            <div className="flex items-center text-xs text-muted-foreground">
-                              <Calendar className="h-3 w-3 mr-1" /> {problem.date}
+                      <CardContent className="h-full">
+                        <div className="flex flex-col sm:flex-row justify-between gap-6 h-full">
+                          {/* Left side - Problem details */}
+                          <div className="flex-1 flex flex-col justify-between min-h-0">
+                            <div className="space-y-2">
+                              <div className="flex items-center text-xs text-muted-foreground">
+                                <Calendar className="h-3 w-3 mr-1" /> {problem.date}
+                              </div>
+                              <h3 className="text-lg font-bold text-foreground">{problem.title}</h3>
+                              <p className="text-muted-foreground text-sm line-clamp-2">{problem.description}</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {problem.categories.map((cat: boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | Key | null | undefined) => (
+                                  <Badge
+                                    key={String(cat)}
+                                    variant="secondary"
+                                    className="text-xs py-0.5 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
+                                  >
+                                    {cat}
+                                  </Badge>
+                                ))}
+                              </div>
                             </div>
-                            <h3 className="text-lg font-bold text-foreground">{problem.title}</h3>
-                            <p className="text-muted-foreground text-sm line-clamp-1">{problem.description}</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {problem.categories.map((cat: boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | Key | null | undefined) => (
-                                <Badge
-                                  key={String(cat)}
-                                  variant="secondary"
-                                  className="text-xs py-0.5 px-2 bg-secondary dark:bg-muted text-secondary-foreground dark:text-muted-foreground"
-                                >
-                                  {cat}
-                                </Badge>
-                              ))}
-                            </div>
-                            <div className="flex flex-wrap gap-3 text-xs">
+
+                            {/* Bottom section with difficulty and platform - always at bottom */}
+                            <div className="flex flex-wrap gap-3 text-xs mt-4">
                               <span
                                 className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${getDifficultyStyle(
                                   problem.difficulty
@@ -662,16 +667,20 @@ const Challenges: React.FC = () => {
                               </span>
                             </div>
                           </div>
-                          <ProblemStatus
-                            problem={{
-                              id: problem.id.toString(),
-                              status: problem.status as "Solved" | "Unsolved",
-                              createdAt: new Date(problem.date),
-                              title: problem.title,
-                              description: problem.description,
-                              problemUrl: problem.problemUrl
-                            }}
-                          />
+
+                          {/* Right side - Action buttons */}
+                          <div className="sm:flex sm:flex-col sm:justify-end sm:items-end sm:min-w-0 sm:w-auto w-full">
+                            <ProblemStatus
+                              problem={{
+                                id: problem.id.toString(),
+                                status: problem.status as "Solved" | "Unsolved",
+                                createdAt: new Date(problem.date),
+                                title: problem.title,
+                                description: problem.description,
+                                problemUrl: problem.problemUrl
+                              }}
+                            />
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -697,7 +706,6 @@ const Challenges: React.FC = () => {
                     disabled={currentPage === 1}
                     className="text-sm py-2 px-6 w-full sm:w-auto border-border hover:border-primary disabled:opacity-50 text-foreground"
                   >
-
                     <ChevronDown className="h-4 w-4 rotate-90 ml-2" />
                     Previous
                   </Button>

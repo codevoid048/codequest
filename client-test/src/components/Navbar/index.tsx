@@ -164,40 +164,28 @@ export function Navbar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-200 ${
-        isScrolled ? "bg-gray-900/80 dark:bg-gray-100/80 backdrop-blur-md border-b border-gray-700 dark:border-gray-200" : "bg-transparent"
-      }`}
+      className={`sticky top-0 z-50 w-full transition-all duration-200 ${isScrolled ? "bg-gray-900/80 dark:bg-gray-100/80 backdrop-blur-md border-b border-gray-700 dark:border-gray-200" : "bg-transparent"
+        }`}
     >
-      <div className="container flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
+      <div className="flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
         <div className="flex items-center gap-6 md:gap-8 lg:gap-10">
           <Link to="/" className="flex items-center space-x-2">
-            <motion.div
+            {/* <motion.div
               initial={{ rotate: 0 }}
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 0.5, repeat: Number.POSITIVE_INFINITY, repeatDelay: 5 }}
             >
               <Code className="h-6 w-6 text-blue-500 dark:text-blue-600" />
-            </motion.div>
-            <span className="font-bold text-xl text-white dark:text-gray-900">CodeQuest</span>
+            </motion.div> */}
+            <img src="/Clublogo.png" alt="" width={40} height={40} className="rounded-full" />
+            <span className="font-bold text-xl text-white dark:text-gray-900">CodeQuest  -  SRKR CodingClub</span>
           </Link>
-
-          <nav className="hidden md:flex gap-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={`text-sm font-medium transition-colors hover:text-blue-500 dark:hover:text-blue-600 ${
-                  location.pathname === item.href ? "text-blue-500 dark:text-blue-600" : "text-gray-300 dark:text-gray-600"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
         </div>
 
-        <div className="hidden md:flex items-center gap-2">
-          <div className="relative search-container">
+
+        <div className="hidden md:flex items-center gap-3 px-5">
+
+          <div className="relative search-container px-3">
             <div className="flex items-center space-x-2 border border-gray-700 dark:border-gray-300 rounded-md px-3 py-2 bg-gray-800 dark:bg-white text-white dark:text-gray-900">
               <Search className="h-5 w-5 text-gray-400 dark:text-gray-600" />
               <input
@@ -237,12 +225,24 @@ export function Navbar() {
                   {searchResults.length > 0
                     ? searchResults.map(renderResultItem)
                     : debouncedQuery.length > 0 && !loading && (
-                        <div className="p-4 text-sm text-center text-gray-400 dark:text-gray-600">No results found</div>
-                      )}
+                      <div className="p-4 text-sm text-center text-gray-400 dark:text-gray-600">No results found</div>
+                    )}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
+          <nav className="hidden md:flex gap-6 pr-3">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={`text-sm font-medium transition-colors hover:text-blue-500 dark:hover:text-blue-600 ${location.pathname === item.href ? "text-blue-500 dark:text-blue-600" : "text-gray-300 dark:text-gray-600"
+                  }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
 
           {mounted && (
             <Button
@@ -252,7 +252,7 @@ export function Navbar() {
               className="mr-2 text-gray-300 dark:text-gray-600 hover:text-blue-500 dark:hover:text-blue-600"
             >
               <div className="transition-transform duration-400 group-active:rotate-360">
-                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {theme === "dark" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
               </div>
               <span className="sr-only">Toggle theme</span>
             </Button>
@@ -334,8 +334,8 @@ export function Navbar() {
                       {searchResults.length > 0
                         ? searchResults.map(renderResultItem)
                         : debouncedQuery.length > 0 && !loading && (
-                            <div className="p-4 text-sm text-center text-gray-400 dark:text-gray-600">No results found</div>
-                          )}
+                          <div className="p-4 text-sm text-center text-gray-400 dark:text-gray-600">No results found</div>
+                        )}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -346,17 +346,31 @@ export function Navbar() {
                   <Link
                     key={item.href}
                     to={item.href}
-                    className={`text-base font-medium transition-colors hover:text-blue-500 dark:hover:text-blue-600 py-2 px-3 rounded-md ${
-                      location.pathname === item.href
-                        ? "bg-blue-600 dark:bg-blue-500 text-white dark:text-white"
-                        : "text-gray-300 dark:text-gray-600"
-                    }`}
+                    className={`text-base font-medium transition-colors hover:text-blue-500 dark:hover:text-blue-600 py-2 px-3 rounded-md ${location.pathname === item.href
+                      ? "bg-blue-600 dark:bg-blue-500 text-white dark:text-white"
+                      : "text-gray-300 dark:text-gray-600"
+                      }`}
                     onClick={() => setIsOpen(false)} // Close Sheet on link click
                   >
                     {item.label}
                   </Link>
                 ))}
               </nav>
+              {mounted && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setTheme(theme === "dark" ? "light" : "dark");
+                    setIsOpen(false); // Close Sheet on theme toggle
+                  }}
+                  className="mt-4 w-full flex items-center justify-center gap-2 text-gray-300 dark:text-gray-600 border-gray-700 dark:border-gray-300 hover:bg-gray-700 dark:hover:bg-gray-200"
+                >
+                  <div className="transition-transform duration-400 group-active:rotate-360">
+                    {theme === "dark" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                  </div>
+                  <span>{theme === "dark" ? "Dark Mode" : "Light Mode"}</span>
+                </Button>
+              )}
 
               <div className="mt-6 pt-6 border-t border-gray-700 dark:border-gray-200">
                 {!isAuthenticated ? (
@@ -408,22 +422,6 @@ export function Navbar() {
                   </div>
                 )}
               </div>
-
-              {mounted && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setTheme(theme === "dark" ? "light" : "dark");
-                    setIsOpen(false); // Close Sheet on theme toggle
-                  }}
-                  className="mt-4 w-full flex items-center justify-center gap-2 text-gray-300 dark:text-gray-600 border-gray-700 dark:border-gray-300 hover:bg-gray-700 dark:hover:bg-gray-200"
-                >
-                  <div className="transition-transform duration-400 group-active:rotate-360">
-                    {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                  </div>
-                  <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-                </Button>
-              )}
             </div>
           </SheetContent>
         </Sheet>

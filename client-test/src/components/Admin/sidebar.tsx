@@ -79,17 +79,18 @@ export function Sidebar() {
 
         >
           <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="justify-center gap-2"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-5 w-5 text-yellow-400" />
-            ) : (
-              <Moon className="h-5 w-5 text-blue-600" />
-            )}
-          </Button>
+                  variant="outline"
+                  onClick={() => {
+                    setTheme(theme === "dark" ? "light" : "dark");
+                    setIsOpen(false); // Close Sheet on theme toggle
+                  }}
+                  className="mt-4 w-full flex items-center justify-center gap-2 text-gray-300 dark:text-gray-600 border-gray-700 dark:border-gray-300 hover:bg-gray-700 dark:hover:bg-gray-200"
+                >
+                  <div className="transition-transform duration-400 group-active:rotate-360">
+                    {theme === "dark" ?  <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" /> }
+                  </div>
+                  <span>{theme === "dark" ? "Dark Mode" : "Light Mode"}</span>
+                </Button>
         </motion.div>
 
         <AnimatePresence>
@@ -145,7 +146,7 @@ export function Sidebar() {
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 100 }}
       >
-        <div className="container flex h-16 items-center justify-between px-4">
+        <div className="container flex h-16 items-center justify-between px-8">
           <Link to="/" className="flex items-center space-x-2">
             <motion.div whileHover={{ scale: 1.2 }} whileTap={{ scale: 0.9 }}>
               <Code className="h-6 w-6 text-primary" />
