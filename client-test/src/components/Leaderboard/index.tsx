@@ -329,7 +329,7 @@ export default function Leaderboard() {
           <div className="sm:hidden divide-y">
             {getCurrentUsers().map((user) => (
               <div
-                key={`${user.id || user._id}`}
+                key={user.id}
                 className="flex flex-col p-3 text-sm hover:bg-accent/40 transition"
               >
                 <div className="flex items-center justify-between">
