@@ -56,17 +56,41 @@ export const updateUserPoints = async (req, res) => {
 };
 
 export const getLeaderboardData = async (req, res) => {
-    try {
-        //const users = await User.find({ isVerified: true }).select("username points solveChallenges streak rank");
-        let leaderboard = getCachedLeaderboard();
-        if (!leaderboard) {
-            leaderboard = await updateRanks();
-        }
-        res.json(leaderboard);
-    } catch (error) {
-        // console.error("Error fetching leaderboard:", error);
-        res.status(500).json({ error: "Internal server error" });
+  try {
+    const { search = "", page = 1, limit = 10 } = req.query;
+
+    let leaderboard = getCachedLeaderboard();
+    if (!leaderboard) {
+      leaderboard = await updateRanks();
     }
+
+    // Filter based on search query, if any
+    let filteredLeaderboard = leaderboard;
+    if (search.trim() !== "") {
+      const searchLower = search.toLowerCase();
+      filteredLeaderboard = leaderboard.filter(user =>
+        user.username.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Pagination logic
+    const totalUsers = filteredLeaderboard.length;
+    const totalPages = Math.ceil(totalUsers / limit);
+    const currentPage = Math.min(Math.max(parseInt(page), 1), totalPages);
+
+    const startIndex = (currentPage - 1) * limit;
+    const pagedUsers = filteredLeaderboard.slice(startIndex, startIndex + parseInt(limit));
+
+    res.json({
+      users: pagedUsers,
+      totalUsers,
+      currentPage,
+      totalPages,
+    });
+  } catch (error) {
+    // console.error("Error fetching leaderboard:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 
