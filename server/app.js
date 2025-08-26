@@ -19,14 +19,14 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({ origin : "https://codequest.srkrcodingclub.in", credentials: true }));
-// app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+// app.use(cors({ origin : "https://codequest.srkrcodingclub.in", credentials: true }));
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 
 // Increased payload size limit
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
 app.use(passport.initialize());
-app.use(express.urlencoded({ limit: '50mb', extended: false }));
+app.use(express.urlencoded({ limit: '5mb', extended: false }));
 app.use(morgan('dev'))
 app.use(express.json());
 app.use('/api/auth', authRoutes);

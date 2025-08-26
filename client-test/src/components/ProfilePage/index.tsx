@@ -35,44 +35,45 @@ import {
 } from "lucide-react"
 import toast from "react-hot-toast"
 import { PlatformManager } from "./platform-manager"
+import { fetchPlatformsData } from "@/platforms/get-platforms-data"
+
+export interface ProfileUser {
+  _id?: string
+  leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
+  // gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
+  codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
+  // codechef?: { username?: string; stars?: string; rank?: number; rating?: number }
+  profilePicture?: string
+  name?: string
+  username?: string
+  rank?: number
+  collegeName?: string
+  branch?: string
+  RegistrationNumber?: string
+  otherLinks?: { platform: string; url: string }[]
+  solveChallenges?: {
+    easy: Array<{
+      challenge: string
+      timestamp: string
+    }>
+    medium: Array<{
+      challenge: string
+      timestamp: string
+    }>
+    hard: Array<{
+      challenge: string
+      timestamp: string
+    }>
+  }
+  points?: number
+  streak?: number
+  potdSolved?: { timestamp: string }[]
+}
 
 export default function ProfilePage() {
   const { username: routeUsername } = useParams()
   const navigate = useNavigate()
   const { user, verificationString, logoutWhileDeletingUser } = useAuth()
-
-  interface ProfileUser {
-    _id?: string
-    leetCode?: { username?: string; solved?: number; rank?: number; rating?: number }
-    // gfg?: { username?: string; solved?: number; rank?: number; rating?: number }
-    codeforces?: { username?: string; solved?: number; rank?: string; rating?: number }
-    // codechef?: { username?: string; stars?: string; rank?: number; rating?: number }
-    profilePicture?: string
-    name?: string
-    username?: string
-    rank?: number
-    collegeName?: string
-    branch?: string
-    RegistrationNumber?: string
-    otherLinks?: { platform: string; url: string }[]
-    solveChallenges?: {
-      easy: Array<{
-        challenge: string
-        timestamp: string
-      }>
-      medium: Array<{
-        challenge: string
-        timestamp: string
-      }>
-      hard: Array<{
-        challenge: string
-        timestamp: string
-      }>
-    }
-    points?: number
-    streak?: number
-    potdSolved?: { timestamp: string }[]
-  }
 
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
   const [loading, setLoading] = useState(true)
@@ -122,31 +123,14 @@ export default function ProfilePage() {
   useEffect(() => {
     const updatePlatforms = async () => {
       if (!profileUser || !profileUser.username) return
-      if (!isPlatformDataStale(profileUser.username, 5)) { return }
+      if (!isPlatformDataStale(profileUser.username, 10)) { return }
 
       try {
         console.log("Updating platforms...")
-        const platformPromises = [];
-      
-        if (profileUser.leetCode?.username) {
-          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/leetcode`, { username: profileUser.leetCode.username }));
-        }
-        
-        if (profileUser.codeforces?.username) {
-          platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/codeforces`, { username: profileUser.codeforces.username }));
-        }
-        
-        // if (profileUser.codechef?.username) {
-        //   platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/codechef`, { username: profileUser.codechef.username }));
-        // }
-        
-        // if (profileUser.gfg?.username) {
-        //   platformPromises.push(axios.post(`${import.meta.env.VITE_API_BASE_URL}/platforms/gfg`, {username: profileUser.gfg.username }));
-        // }
-
-      // Execute all promises in parallel
-        await Promise.all(platformPromises);
+        const updatedUser = await fetchPlatformsData(profileUser)
+        setProfileUser(updatedUser)
         toast.success("Data updated successfully")
+        axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/user/${profileUser.username}/update-platforms`, updatedUser);
         updatePlatformCacheTimestamp(profileUser.username)
       } catch (error) {
         console.error("Error updating platforms:", error)

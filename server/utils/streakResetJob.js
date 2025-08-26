@@ -38,7 +38,7 @@ const resetUserStreaks = async () => {
   }
 };
 export const startStreakCronJob = () => {
-  cron.schedule('01 0 * * *', resetUserStreaks, {
+  cron.schedule('0 0 * * *', resetUserStreaks, { // At midnight every day
     timezone: "Asia/Kolkata"
   });
 };
