@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import axios from "axios"
 import { AnimatePresence, motion } from "framer-motion"
-import { Award, ChevronLeft, ChevronRight, ChevronUp, Crown, Medal, Search, Trophy, X, Zap } from "lucide-react"
+import { Award, ChevronLeft, ChevronRight, ChevronUp, Crown, Medal, Search, Trophy, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 
