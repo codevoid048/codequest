@@ -2,6 +2,7 @@ import { Linkedin, Instagram, User, Mail } from 'lucide-react';
 import { FaXTwitter, FaYoutube, FaWhatsapp } from 'react-icons/fa6';
 
 const Footer = () => {
+
     return (
         <footer className="relative overflow-hidden">
             {/* Gradient background */}
@@ -72,7 +73,7 @@ const Footer = () => {
                                     <User className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h4 className="text-blue-700 font-medium">David Kuppala</h4>
+                                    <h4 className='text-blue-700 font-medium'>David Kuppala</h4>
                                     <p className="text-muted-500 text-sm">+91 81217 02286</p>
                                 </div>
                             </li>

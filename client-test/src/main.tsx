@@ -6,12 +6,12 @@ import { AuthProvider } from './context/AuthContext.tsx'
 
 
 createRoot(document.getElementById('root')!).render(
-  
+
   // <StrictMode>
-    <AuthProvider>
+  <AuthProvider>
     <ThemeProvider>
       <App />
     </ThemeProvider>
-    </AuthProvider>
+  </AuthProvider>
   // </StrictMode>,
 )

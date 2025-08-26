@@ -40,6 +40,8 @@ const Challenges: React.FC = () => {
   type SortOption = "date" | "difficulty" | "status";
   const [sortOption] = useState<SortOption>("date");
   const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreChallenges, setHasMoreChallenges] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
@@ -48,42 +50,61 @@ const Challenges: React.FC = () => {
   const itemsPerPage = 5;
   const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchProblems = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges`);
-        if (res.data && Array.isArray(res.data.challenges)) {
-          const data = res.data.challenges.map((challenge: any) => {
-            const isSolved: boolean = user?.solveChallenges?.easy.some((item: { challenge: string }) => item.challenge === challenge._id) ||
-              user?.solveChallenges?.medium.some((item: { challenge: string }) => item.challenge === challenge._id) ||
-              user?.solveChallenges?.hard.some((item: { challenge: string }) => item.challenge === challenge._id);
-
-            return {
-              id: challenge._id,
-              date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              }),
-              title: challenge.title,
-              categories: challenge.category,
-              difficulty: challenge.difficulty,
-              platform: challenge.platform,
-              status: isSolved ? "Solved" : "Unsolved",
-              description: challenge.description,
-              problemUrl: challenge.problemLink,
-              _id: challenge._id,
-            };
-          });
-          setProblemsList(data);
-          setIsLoading(false);
+  const fetchProblems = async (page = 1, shouldAppend = false) => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges`, {
+        params: {
+          page,
+          limit: itemsPerPage
         }
-      } catch (error) {
-        console.error("Failed to fetch challenges:", error);
+      });
+      if (res.data && Array.isArray(res.data.challenges)) {
+        const data = res.data.challenges.map((challenge: any) => {
+          const isSolved: boolean = user?.solveChallenges?.easy.some((item: { challenge: string }) => item.challenge === challenge._id) ||
+            user?.solveChallenges?.medium.some((item: { challenge: string }) => item.challenge === challenge._id) ||
+            user?.solveChallenges?.hard.some((item: { challenge: string }) => item.challenge === challenge._id);
+
+          return {
+            id: challenge._id,
+            date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }),
+            title: challenge.title,
+            categories: challenge.category,
+            difficulty: challenge.difficulty,
+            platform: challenge.platform,
+            status: isSolved ? "Solved" : "Unsolved",
+            description: challenge.description,
+            problemUrl: challenge.problemLink,
+          };
+        });
+        setProblemsList(previousChallenges =>
+          shouldAppend ? [...previousChallenges, ...data] : data
+        );
+        const totalPages = res.data.totalPages;
+        setTotalPages(totalPages);
+        setHasMoreChallenges(page < totalPages);
+        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch challenges:", error);
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProblems();
   }, [user]);
+
+  const loadMoreChallenges = async () => {
+    if (hasMoreChallenges && !isLoading) {
+      const nextServerPage = currentPage + 1;
+      await fetchProblems(nextServerPage, true); // true means append to existing data
+      setCurrentPage(nextServerPage);
+    }
+  };
 
   // Update countdown timer every second
   useEffect(() => {
@@ -101,8 +122,11 @@ const Challenges: React.FC = () => {
         seconds: seconds.toString().padStart(2, "0"),
       });
     };
+
     updateCountdown();
+
     const timer = setInterval(updateCountdown, 1000);
+
     return () => clearInterval(timer);
   }, []);
 
@@ -161,10 +185,10 @@ const Challenges: React.FC = () => {
 
     return result;
   }, [problemsList, activeTab, selectedDifficulties, selectedCategories, searchTerm, sortOption]);
+
   const lastItemIndex = currentPage * itemsPerPage;
   const firstItemIndex = lastItemIndex - itemsPerPage;
   const currentItems = filteredProblems.slice(firstItemIndex, lastItemIndex);
-  const totalPages = Math.ceil(filteredProblems.length / itemsPerPage);
 
   const selectedDifficultiesKey = selectedDifficulties.join(",");
   const selectedCategoriesKey = selectedCategories.join(",");
@@ -710,21 +734,34 @@ const Challenges: React.FC = () => {
                     Previous
                   </Button>
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 p-0 ${currentPage === page ? "bg-primary text-primary-foreground" : "border-border text-foreground"
-                          }`}
-                      >
-                        {page}
-                      </Button>
-                    ))}
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      const page = Math.max(1, currentPage - 2) + i;
+                      if (page > totalPages) return null;
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-8 h-8 p-0 ${currentPage === page ? "bg-primary text-primary-foreground" : "border-border text-foreground"
+                            }`}
+                        >
+                          {page}
+                        </Button>
+                      );
+                    })}
                   </div>
                   <Button
                     variant="outline"
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    onClick={() => {
+                      const nextPage = currentPage + 1;
+                      setCurrentPage(nextPage);
+
+                      // Check if we need to load more data from backend
+                      const nextPageFirstIndex = (nextPage - 1) * itemsPerPage;
+                      if (nextPageFirstIndex >= problemsList.length && hasMoreChallenges) {
+                        loadMoreChallenges();
+                      }
+                    }}
                     disabled={currentPage === totalPages}
                     className="text-sm py-2 px-6 w-full sm:w-auto border-border hover:border-primary disabled:opacity-50 text-foreground"
                   >
