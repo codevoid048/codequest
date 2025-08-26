@@ -329,7 +329,7 @@ export default function Leaderboard() {
           <div className="sm:hidden divide-y">
             {getCurrentUsers().map((user) => (
               <div
-                key={user.id}
+                key={`${user.id || user._id}`}
                 className="flex flex-col p-3 text-sm hover:bg-accent/40 transition"
               >
                 <div className="flex items-center justify-between">
@@ -351,7 +351,7 @@ export default function Leaderboard() {
 
                 return (
                   <motion.div
-                    key={user.id}
+                    key={`${user.id || user._id}`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{
                       opacity: 1,
@@ -427,7 +427,7 @@ export default function Leaderboard() {
                     {/* Points */}
                     <motion.div
                       className="col-span-3 text-center font-semibold"
-                      key={`points-${user.id}-${user.points}`}
+                      key={`points-${user.id || user._id}-${user.points}`}
                       initial={{ scale: 1 }}
                       animate={{
                         scale: isUpdated ? [1, 1.2, 1] : 1,
