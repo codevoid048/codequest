@@ -12,6 +12,8 @@ import {
     Award,
     Rocket,
 } from "lucide-react"
+import { FaLinkedinIn, FaGithub } from "react-icons/fa6"
+import { SiGmail } from "react-icons/si"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -45,7 +47,7 @@ const throttle = (func: Function, delay: number) => {
     let lastExecTime = 0;
     return (...args: any[]) => {
         const currentTime = Date.now();
-        
+
         if (currentTime - lastExecTime > delay) {
             func(...args);
             lastExecTime = currentTime;
@@ -840,8 +842,8 @@ export default function AboutPage() {
                                                 <div className="relative">
                                                     <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-primary/60 rounded-full blur opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
                                                     <Avatar className="h-40 w-42 border-2 border-primary/20 group-hover:border-primary/50 transition-all duration-300">
-                                                        <AvatarImage 
-                                                            src={member.image} 
+                                                        <AvatarImage
+                                                            src={member.image}
                                                             alt={member.name}
                                                             loading="lazy"
                                                         />
@@ -857,56 +859,29 @@ export default function AboutPage() {
                                             <h3 className="text-xl font-semibold text-primary">{member.name}</h3>
                                             <p className="text-muted-foreground text-sm">{member.role}</p>
                                             <div className="pt-2 border-t border-primary/10 flex justify-center space-x-3 opacity-100 transition-opacity duration-300">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => window.open(member.linkedin, "_blank")}>
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        width="16"
-                                                        height="16"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        strokeWidth="2"
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        className="text-primary"
-                                                    >
-                                                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-                                                        <rect x="2" y="9" width="4" height="12"></rect>
-                                                        <circle cx="4" cy="4" r="2"></circle>
-                                                    </svg>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 rounded-full"
+                                                    onClick={() => window.open(member.linkedin, "_blank")}
+                                                >
+                                                    <FaLinkedinIn className="h-5 w-5 text-primary" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => window.open(member.github, "_blank")}>
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        width="16"
-                                                        height="16"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        strokeWidth="2"
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        className="text-primary"
-                                                    >
-                                                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7a3.37 3.37 0 0 0-.94 2.61V22" />
-                                                    </svg>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 rounded-full"
+                                                    onClick={() => window.open(member.github, "_blank")}
+                                                >
+                                                    <FaGithub className="h-5 w-5 text-primary" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => window.open(`mailto:${member.email}`, "_blank")}>
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        width="16"
-                                                        height="16"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        strokeWidth="2"
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        className="text-primary"
-                                                    >
-                                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                                        <polyline points="22,6 12,13 2,6"></polyline>
-                                                    </svg>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 rounded-full"
+                                                    onClick={() => window.open(member.github, "_blank")}
+                                                >
+                                                    <SiGmail className="h-8 w-8 text-primary" />
                                                 </Button>
                                             </div>
                                         </Card>
@@ -934,15 +909,14 @@ export default function AboutPage() {
                             {faqItems.map((item, index) => (
                                 <motion.div key={index} className="mb-4" variants={itemVariant}>
                                     <div
-                                        className={`border border-primary/10 rounded-lg shadow-sm p-4 cursor-pointer bg-card transition-all duration-300 ${
-                                            activeFaq === index ? "bg-card" : "hover:bg-0"
-                                        }`}
+                                        className={`border border-primary/10 rounded-lg shadow-sm p-4 cursor-pointer bg-card transition-all duration-300 ${activeFaq === index ? "bg-card" : "hover:bg-0"
+                                            }`}
                                         onClick={() => setActiveFaq(activeFaq === index ? null : index)}
                                     >
                                         <div className="font-semibold text-lg text-primary flex justify-between items-center">
                                             {item.question}
-                                            <motion.span 
-                                                animate={{ rotate: activeFaq === index ? 180 : 0 }} 
+                                            <motion.span
+                                                animate={{ rotate: activeFaq === index ? 180 : 0 }}
                                                 transition={{ duration: 0.3 }}
                                             >
                                                 <ChevronDown className="h-5 w-5 text-primary" />
@@ -966,7 +940,7 @@ export default function AboutPage() {
                     </motion.section>
                 </div>
             </div>
-            <ScrollToTopButton/>
+            <ScrollToTopButton />
         </div>
     )
 }

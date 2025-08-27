@@ -2,114 +2,81 @@ import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import axios from "axios"
 import { AnimatePresence, motion } from "framer-motion"
-import { Award, ChevronLeft, ChevronRight, ChevronUp, Crown, Medal, Search, Trophy, X, Zap } from "lucide-react"
+import { Award, ChevronLeft, ChevronRight, ChevronUp, Crown, Medal, Search, Trophy, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 
-// Number of users per page
-const USERS_PER_PAGE = 8
+const USERS_PER_PAGE = 10
 
 interface LeaderboardUser {
-  username: string,
-  points: number,
-  rank: number,
-  streak: number,
-  lastSolvedAt: string,
+  username: string
+  points: number
+  rank: number
+  streak: number
+  lastSolvedAt?: string
   solveChallenges: {
-    easy: number,
-    medium: number,
-    hard: number,
-    total: number,
-  },
-  id: number,
+    easy: number
+    medium: number
+    hard: number
+    total: number
+  }
+  id: number
   _id: string
 }
 
 export default function Leaderboard() {
   const [users, setUsers] = useState<LeaderboardUser[]>([])
-  const [filteredUsers, setFilteredUsers] = useState<LeaderboardUser[]>([])
   const [isDarkMode] = useState(false)
   const [updatedUser] = useState<number | null>(null)
-  const confettiRef = useRef(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalUsers, setTotalUsers] = useState(0)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  const [searchTerm, setSearchTerm] = useState<string>("")
-
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState<number>(1)
-
-  // Calculate total pages based on filtered users
-  const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE)
-
-  // Get current users
-  const getCurrentUsers = () => {
-    const indexOfLastUser = currentPage * USERS_PER_PAGE
-    const indexOfFirstUser = indexOfLastUser - USERS_PER_PAGE
-    return filteredUsers.slice(indexOfFirstUser, indexOfLastUser)
-  }
-
-  // Use a debounce effect to prevent too many API calls
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchTerm.trim() === "") {
-        setFilteredUsers(users)
-      } else {
-        searchUsers(searchTerm)
-      }
-    }, 300) // 300ms delay
-
-    return () => clearTimeout(timer)
-  }, [searchTerm, users])
-
-  // Function to fetch users from the search-user API
-  const searchUsers = async (query: string) => {
+  // Fetch data from backend with search and pagination
+  const fetchLeaderboard = async (search: string, page: number) => {
     try {
-      setCurrentPage(1)
-      if (!query || query.trim() === "") {
-        setFilteredUsers(users)
-        return
-      }
-
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/search-user?q=${encodeURIComponent(query)}`)
-
-      if (response.data && Array.isArray(response.data)) {
-        // The API returns users with the 'type' field, so we need to map them
-        setFilteredUsers(response.data)
-      } else {
-        console.error("Invalid response format from search API:", response.data)
-        setFilteredUsers([])
-      }
-    } catch (error) {
-      console.error("Error searching users:", error)
-      setFilteredUsers([])
-    }
-  }
-
-  // Fetch leaderboard data
-  const fetchLeaderboard = async () => {
-    try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/leaderboard`)
-      setUsers(res.data)
-      setFilteredUsers(res.data)
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/leaderboard`, {
+        params: {
+          search,
+          page,
+          limit: USERS_PER_PAGE
+        }
+      })
+      setUsers(response.data.users)
+      setTotalPages(response.data.totalPages)
+      setTotalUsers(response.data.totalUsers)
     } catch (error) {
       console.error("Error fetching leaderboard data:", error)
+      setUsers([])
+      setTotalPages(1)
+      setTotalUsers(0)
     }
   }
 
+  // Debounce the search input
   useEffect(() => {
-    fetchLeaderboard()
-  }, [])
+    const timer = setTimeout(() => {
+      setCurrentPage(1)
+      fetchLeaderboard(searchTerm, 1)
+    }, 1000)
 
-  // Reset search
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // Fetch new page when currentPage changes
+  useEffect(() => {
+    fetchLeaderboard(searchTerm, currentPage)
+  }, [currentPage])
+
   const clearSearch = () => {
     setSearchTerm("")
-    //setIsSearching(false);
     if (searchInputRef.current) {
       searchInputRef.current.blur()
     }
   }
 
-  // Get rank icon based on position
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
@@ -120,13 +87,6 @@ export default function Leaderboard() {
         return <Award className="h-5 w-5 text-amber-700" />
       default:
         return <div className="h-5 w-5 flex items-center justify-center font-bold">{rank}</div>
-    }
-  }
-
-  // Pagination functions
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
     }
   }
 
@@ -142,47 +102,45 @@ export default function Leaderboard() {
     }
   }
 
-  // Get page numbers to display
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+    }
+  }
+
+  // Pagination logic same as before, displaying page numbers intelligently
   const getPageNumbers = () => {
     const pages = []
     const maxPagesToShow = 5
 
     if (totalPages <= maxPagesToShow) {
-      // If we have less pages than max to show, display all
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i)
       }
     } else {
-      // Always include first page
       pages.push(1)
 
-      // Calculate middle pages
       let startPage = Math.max(2, currentPage - 1)
       let endPage = Math.min(totalPages - 1, currentPage + 1)
 
-      // Adjust if at boundaries
       if (currentPage <= 2) {
         endPage = 4
       } else if (currentPage >= totalPages - 1) {
         startPage = totalPages - 3
       }
 
-      // Add ellipsis if needed
       if (startPage > 2) {
         pages.push("...")
       }
 
-      // Add middle pages
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i)
       }
 
-      // Add ellipsis if needed
       if (endPage < totalPages - 1) {
         pages.push("...")
       }
 
-      // Always include last page
       pages.push(totalPages)
     }
 
@@ -194,26 +152,11 @@ export default function Leaderboard() {
       className={cn(
         "min-h-screen transition-all duration-500 px-4 sm:px-6 md:px-12 lg:px-20 bg-background text-foreground",
         isDarkMode ? "dark" : "",
-        "bg-grid-pattern",
+        "bg-grid-pattern"
       )}
     >
       <div className="container mx-auto p-1 px-2 sm:px-4 relative mt-6">
-        {/* Background decorative elements */}
-        <div className="absolute top-20 right-6 sm:right-12 md:right-20 opacity-5">
-          <motion.div
-            animate={{
-              rotate: [0, 10, 0, -10, 0],
-              scale: [1, 1.05, 1, 0.95, 1],
-            }}
-            transition={{ repeat: Number.POSITIVE_INFINITY, duration: 10 }}
-          >
-            <Zap className="h-16 w-16 sm:h-20 sm:w-20 md:h-30 md:w-30" />
-          </motion.div>
-        </div>
-
-        <div ref={confettiRef} className="absolute inset-0 pointer-events-none overflow-hidden"></div>
-
-        {/* Header */}
+        {/* Header and search UI */}
         <div className="relative z-10 sm:mb-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="text-center md:text-left">
@@ -221,7 +164,7 @@ export default function Leaderboard() {
                 <motion.div
                   animate={{
                     rotate: [0, 5, 0, -5, 0],
-                    y: [0, -5, 0, -5, 0],
+                    y: [0, -5, 0, -5, 0]
                   }}
                   transition={{ repeat: Number.POSITIVE_INFINITY, duration: 5 }}
                 >
@@ -243,11 +186,11 @@ export default function Leaderboard() {
             <div className="w-full sm:w-auto mt-4 md:mt-0 md:ml-auto">
               <div
                 className="relative flex items-center rounded-xl transition-all duration-300 w-full sm:w-72
-            border border-gray-700 dark:border-indigo-300
-            shadow-md shadow-indigo-700/30 dark:shadow-indigo-200/30
-            bg-gray-800 dark:bg-white
-            hover:border-indigo-500 dark:hover:border-indigo-400
-            hover:shadow-lg hover:shadow-indigo-500/30 dark:hover:shadow-indigo-300/30"
+                border border-gray-700 dark:border-indigo-300
+                shadow-md shadow-indigo-700/30 dark:shadow-indigo-200/30
+                bg-gray-800 dark:bg-white
+                hover:border-indigo-500 dark:hover:border-indigo-400
+                hover:shadow-lg hover:shadow-indigo-500/30 dark:hover:shadow-indigo-300/30"
               >
                 <div className="pl-1">
                   <Search className="h-4 w-4 text-white dark:text-indigo-500 ml-2" />
@@ -260,14 +203,14 @@ export default function Leaderboard() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="flex-1 bg-transparent py-2 sm:py-3 px-2 sm:px-3 outline-none transition-all duration-300
-              text-sm text-white dark:text-gray-800 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                      text-sm text-white dark:text-gray-800 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
 
                 {searchTerm && (
                   <button
                     onClick={clearSearch}
                     className="mr-2 sm:mr-3 p-1.5 rounded-full bg-indigo-600 dark:bg-indigo-500 transition-colors duration-300
-                hover:bg-indigo-500 dark:hover:bg-indigo-600"
+                  hover:bg-indigo-500 dark:hover:bg-indigo-600"
                   >
                     <X className="h-3.5 w-3.5 text-white dark:text-white" />
                   </button>
@@ -287,35 +230,34 @@ export default function Leaderboard() {
                 transition={{ delay: 0.1 }}
                 className="text-center text-xs sm:text-sm mt-2 sm:mt-3 font-medium bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent dark:from-indigo-400 dark:to-purple-400"
               >
-                {filteredUsers.length === 0
+                {users.length === 0
                   ? "No coders found"
-                  : filteredUsers.length === 1
-                    ? "1 coder found"
-                    : `${filteredUsers.length} coders found`}
+                  : users.length === 1
+                  ? "1 coder found"
+                  : `${totalUsers} coders found`}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
 
-      {/* Leaderboard */}
+      {/* Leaderboard table (desktop) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className=""
       >
         <Card
           className={cn(
             "overflow-hidden border-none shadow-xl transition-all duration-300 mt-0",
-            isDarkMode ? "bg-card/80 backdrop-blur-sm border-border/30" : "bg-card/90 backdrop-blur-sm",
+            isDarkMode ? "bg-card/80 backdrop-blur-sm border-border/30" : "bg-card/90 backdrop-blur-sm"
           )}
         >
-          {/* Table header (desktop only) */}
+          {/* Table header */}
           <div
             className={cn(
               "hidden sm:grid grid-cols-12 md:grid-cols-15 p-3 sm:p-4 font-medium border-b rounded-t-md text-xs sm:text-sm",
-              isDarkMode ? "text-primary border-border bg-muted/30" : "text-primary border-border bg-muted/50",
+              isDarkMode ? "text-primary border-border bg-muted/30" : "text-primary border-border bg-muted/50"
             )}
           >
             <div className="col-span-1 text-center">Rank</div>
@@ -325,13 +267,10 @@ export default function Leaderboard() {
             <div className="col-span-2 sm:col-span-3 text-center">Streak</div>
           </div>
 
-          {/* Mobile version (card style list) */}
+          {/* Mobile version */}
           <div className="sm:hidden divide-y">
-            {getCurrentUsers().map((user) => (
-              <div
-                key={user.id}
-                className="flex flex-col p-3 text-sm hover:bg-accent/40 transition"
-              >
+            {users.map((user) => (
+              <div key={user._id} className="flex flex-col p-3 text-sm hover:bg-accent/40 transition">
                 <div className="flex items-center justify-between">
                   <span className="font-bold flex items-center gap-2">{getRankIcon(user.rank)} {user.username}</span>
                   <span className="text-chart-4 font-semibold">{user.points} pts</span>
@@ -343,15 +282,12 @@ export default function Leaderboard() {
           {/* Desktop table body */}
           <div className={cn("hidden sm:block divide-y rounded-b-md", isDarkMode ? "divide-border/20" : "divide-border/70")}>
             <AnimatePresence>
-              {getCurrentUsers().map((user) => {
+              {users.map((user) => {
                 const isTop3 = user.rank <= 3
                 const isUpdated = user.id === updatedUser
-                const isSearchMatch =
-                  searchTerm && user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase())
-
                 return (
                   <motion.div
-                    key={user.id}
+                    key={user._id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{
                       opacity: 1,
@@ -360,7 +296,7 @@ export default function Leaderboard() {
                         ? isDarkMode
                           ? "rgba(var(--primary), 0.2)"
                           : "rgba(var(--primary), 0.1)"
-                        : "transparent",
+                        : "rgba(0, 0, 0, 0)",
                     }}
                     exit={{ opacity: 0, x: 20 }}
                     layout
@@ -368,11 +304,9 @@ export default function Leaderboard() {
                     className={cn(
                       "hover:scale-100 grid grid-cols-15 p-4 items-center relative overflow-hidden hover:text-blue-500 hover:bg-accent/80 hover:-translate-y-1 hover:shadow-lg",
                       isTop3 ? (isDarkMode ? "bg-muted/30" : "bg-muted/80") : "",
-                      "transition-all duration-300 cursor-pointer",
-                      isSearchMatch ? (isDarkMode ? "bg-primary/10" : "bg-primary/5") : "",
+                      "transition-all duration-300 cursor-pointer"
                     )}
                   >
-                    {/* Rank */}
                     <div className="col-span-1 flex justify-center">
                       <motion.div
                         className={cn(
@@ -382,16 +316,16 @@ export default function Leaderboard() {
                               ? "bg-chart-1/30"
                               : "bg-chart-1/20"
                             : user.rank === 2
-                              ? isDarkMode
-                                ? "bg-chart-2/30"
-                                : "bg-chart-2/20"
-                              : user.rank === 3
-                                ? isDarkMode
-                                  ? "bg-chart-3/30"
-                                  : "bg-chart-3/20"
-                                : isDarkMode
-                                  ? "bg-muted/30"
-                                  : "bg-muted/20",
+                            ? isDarkMode
+                              ? "bg-chart-2/30"
+                              : "bg-chart-2/20"
+                            : user.rank === 3
+                            ? isDarkMode
+                              ? "bg-chart-3/30"
+                              : "bg-chart-3/20"
+                            : isDarkMode
+                            ? "bg-muted/30"
+                            : "bg-muted/20"
                         )}
                         whileHover={{ scale: 1.1, rotate: 5 }}
                       >
@@ -399,7 +333,6 @@ export default function Leaderboard() {
                       </motion.div>
                     </div>
 
-                    {/* Username */}
                     <Link to={`/profile/${user.username}`} className="col-span-5 flex items-center gap-3">
                       <motion.span
                         className={cn(
@@ -408,10 +341,10 @@ export default function Leaderboard() {
                           user.rank === 1
                             ? "text-chart-1 font-bold"
                             : user.rank === 2
-                              ? "text-chart-2 font-bold"
-                              : user.rank === 3
-                                ? "text-chart-3 font-bold"
-                                : "",
+                            ? "text-chart-2 font-bold"
+                            : user.rank === 3
+                            ? "text-chart-3 font-bold"
+                            : ""
                         )}
                         whileHover={{
                           scale: 1.15,
@@ -424,7 +357,6 @@ export default function Leaderboard() {
                       </motion.span>
                     </Link>
 
-                    {/* Points */}
                     <motion.div
                       className="col-span-3 text-center font-semibold"
                       key={`points-${user.id}-${user.points}`}
@@ -451,14 +383,12 @@ export default function Leaderboard() {
                       </div>
                     </motion.div>
 
-                    {/* Problems */}
                     <div className="col-span-3 text-center">
                       <div className="flex items-center justify-center gap-2 transition-all duration-300 hover:text-blue-500">
                         {user.solveChallenges ? user.solveChallenges.total : 0}
                       </div>
                     </div>
 
-                    {/* Streak */}
                     <div className="col-span-3 text-center">
                       <div className="flex items-center justify-center gap-2 transition-all duration-300 hover:text-blue-500">
                         <span>{user.streak}</span>
@@ -470,18 +400,18 @@ export default function Leaderboard() {
             </AnimatePresence>
           </div>
 
-          {/* Pagination footer (unchanged, but responsive) */}
-          {filteredUsers.length > 0 && (
+          {/* Pagination footer */}
+          {users.length > 0 && (
             <div
               className={cn(
                 "p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-3",
-                isDarkMode ? "border-border/20" : "border-border",
+                isDarkMode ? "border-border/20" : "border-border"
               )}
             >
               <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                 {searchTerm
-                  ? `Showing ${Math.min(USERS_PER_PAGE, filteredUsers.length)} of ${filteredUsers.length} ${filteredUsers.length === 1 ? "result" : "results"}`
-                  : `Page ${currentPage} of ${Math.ceil(filteredUsers.length / USERS_PER_PAGE)}`}
+                  ? `Showing ${users.length} of ${totalUsers} results`
+                  : `Page ${currentPage} of ${totalPages}`}
               </div>
 
               <div className="flex items-center space-x-1">
@@ -495,17 +425,17 @@ export default function Leaderboard() {
                     currentPage === 1
                       ? "opacity-50 cursor-not-allowed"
                       : isDarkMode
-                        ? "hover:bg-accent/50 text-primary"
-                        : "hover:bg-accent/80 text-primary",
+                      ? "hover:bg-accent/50 text-primary"
+                      : "hover:bg-accent/80 text-primary"
                   )}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </motion.button>
 
                 <div className="flex items-center space-x-1">
-                  {getPageNumbers().map((page, index) => (
+                  {getPageNumbers().map((page, idx) => (
                     <motion.button
-                      key={index}
+                      key={idx}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => typeof page === "number" && goToPage(page)}
@@ -517,11 +447,11 @@ export default function Leaderboard() {
                             ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
                             : "bg-primary text-primary-foreground shadow-md"
                           : page === "..."
-                            ? "cursor-default"
-                            : isDarkMode
-                              ? "hover:bg-accent/50 text-foreground"
-                              : "hover:bg-accent/80 text-foreground",
-                        page === currentPage && "transform scale-110",
+                          ? "cursor-default"
+                          : isDarkMode
+                          ? "hover:bg-accent/50 text-foreground"
+                          : "hover:bg-accent/80 text-foreground",
+                        page === currentPage && "transform scale-110"
                       )}
                     >
                       {page}
@@ -539,8 +469,8 @@ export default function Leaderboard() {
                     currentPage === totalPages
                       ? "opacity-50 cursor-not-allowed"
                       : isDarkMode
-                        ? "hover:bg-accent/50 text-primary"
-                        : "hover:bg-accent/80 text-primary",
+                      ? "hover:bg-accent/50 text-primary"
+                      : "hover:bg-accent/80 text-primary"
                   )}
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -551,6 +481,5 @@ export default function Leaderboard() {
         </Card>
       </motion.div>
     </div>
-
   )
 }
