@@ -204,7 +204,8 @@ export default function Admin() {
         },
         {
           headers: { "Content-Type": "application/json" },
-        }
+          withCredentials: true
+        },
       );
       console.log("Registration successful:", response.data);
 
