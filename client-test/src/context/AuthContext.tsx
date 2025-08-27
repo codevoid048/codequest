@@ -31,28 +31,24 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
   //const [loading, setLoading] = useState<boolean>(true);
-    const [verificationString, setVerificationString] = useState("")
-  // Function to fetch user data from the backend
+  const [verificationString, setVerificationString] = useState("")
+
   const fetchUser = async () => {
     try {
       const storedToken = localStorage.getItem("auth_token");
-    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/me`, {
-      withCredentials: true,
-      headers: { Authorization: `Bearer ${storedToken}` }, // Ensure token is sent
-    });
       
-    // console.log("API response:", res.data); // Log full response
-    // console.log("Token from API:", res.data.token);
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/me`, {
+        withCredentials: true,
+        headers: { Authorization: `Bearer ${storedToken}` }, // Ensure token is sent
+      });
 
       if (res.data && res.data.user) {
         setUser(res.data.user);
         setIsAuthenticated(true);
 
-        // Make sure we're getting the token correctly from the response
         const authToken = res.data.token || storedToken;
         setToken(authToken);
 
-        // Also store token in localStorage for persistence
         if (authToken) {
           localStorage.setItem('auth_token', authToken);
         }

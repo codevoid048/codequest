@@ -22,6 +22,7 @@ export function DailyChallengeCard() {
 
   const [problemsList, setProblemsList] = useState<challenge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const fetchProblems = async () => {
       try {
@@ -44,6 +45,7 @@ export function DailyChallengeCard() {
             problemUrl: challenge.problemLink,
             points: challenge.points,
           }));
+          
           setProblemsList(data);
           setIsLoading(false);
         }
@@ -54,6 +56,8 @@ export function DailyChallengeCard() {
     fetchProblems();
 
   }, []);
+
+
   const dailyProblem = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize time to midnight
@@ -66,6 +70,8 @@ export function DailyChallengeCard() {
 
     return todayProblem || problemsList[0]; // Default to first problem if no match found
   }, [problemsList]);
+
+
   const getDifficultyStyle = (difficulty: string) => {
     return {
       Easy: "text-emerald-400 bg-emerald-900/50 dark:text-emerald-600 dark:bg-emerald-100",
@@ -73,6 +79,7 @@ export function DailyChallengeCard() {
       Hard: "text-rose-400 bg-rose-900/50 dark:text-rose-600 dark:bg-rose-100",
     }[difficulty] || "";
   };
+
   const getDifficultyIcon = (difficulty: string) => {
     return {
       Easy: <Award className="h-4 w-4 text-emerald-400 dark:text-emerald-600" />,
@@ -95,7 +102,7 @@ export function DailyChallengeCard() {
         </div>
       ) : (
         <Card className="overflow-hidden border-2 transition-all duration-300 hover:border-primary/50 hover:shadow-lg w-full">
-          <CardHeader className="bg-muted/50 pb-4 mt-0">
+          <CardHeader className="pb-4 mt-0">
             <div className="flex flex-row items-center gap-3 flex-wrap mt-3">
               <Badge
                 variant="outline"
@@ -138,7 +145,7 @@ export function DailyChallengeCard() {
             </div>
           </CardContent>
 
-          <CardFooter className="bg-muted/30 flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center">
+          <CardFooter className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center">
             <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
               Solve this challenge to earn {dailyProblem?.points} points
             </p>
