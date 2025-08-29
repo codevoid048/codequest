@@ -272,16 +272,21 @@ const Challenges: React.FC = () => {
   const checkPotdSolved = async () => {
     setIsRefreshing(true);
     try {
-      await fetchDailyChallenge();
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/challenges/check-potd-status`, {
+        dailyChallengeId: dailyProblem?._id
+      }, {
+        withCredentials: true
+      });
+      const { message, isSolved } = response.data;
       if (isSolved) {
-        toast.success("Problem of the Day is Solved!");
+        window.location.reload();
+        toast.success(message || "Problem of the Day marked as solved!");
+      } else {
+        toast.error(message || "Haven't solved the Problem of the Day yet.");
       }
-      else {
-        toast.error("Haven't solved the Problem of the Day yet.");
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating POTD status:", error);
-      toast.error("Error Checking for Status");
+      toast.error("Challenge NOT solved Today");
     } finally {
       setIsRefreshing(false);
     }
