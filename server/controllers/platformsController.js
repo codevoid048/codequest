@@ -272,54 +272,11 @@ export const solvedChallenges = async (req, res) => {
 }
 
 
-export const fetchLeetCodeGraphql = async (req, res) => {
-  const username = req.body.username;
+export const fetchLeetCodeStatus = async (username, challengeTitle) => {
   const query = `
     {
       matchedUser(username: "${username}") {
         username
-        profile {
-          realName
-          userAvatar
-          ranking
-          reputation
-          starRating
-          aboutMe
-          skillTags
-        }
-        submitStats: submitStatsGlobal {
-          acSubmissionNum {
-            difficulty
-            count
-            submissions
-          }
-          totalSubmissionNum {
-            difficulty
-            count
-            submissions
-          }
-        }
-        badges {
-          id
-          displayName
-          icon
-          creationDate
-        }
-        upcomingBadges {
-          name
-          icon
-        }
-        activeBadge {
-          displayName
-          icon
-        }
-      }
-      userContestRanking(username: "${username}") {
-        attendedContestsCount
-        rating
-        globalRanking
-        totalParticipants
-        topPercentage
       }
       recentSubmissionList(username: "${username}", limit: 20) {
         title
@@ -332,13 +289,62 @@ export const fetchLeetCodeGraphql = async (req, res) => {
   `;
   try {
     const response = await axios.post('https://leetcode.com/graphql', { query });
-    return res.json(response.data.data);
+    const { matchedUser, recentSubmissionList } = response.data.data;
+    
+    if (!matchedUser) {
+      throw new Error("Invalid LeetCode username");
+    }
+
+    if (!recentSubmissionList || recentSubmissionList.length === 0) {
+      throw new Error("No submissions found");
+    }
+
+    const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+    
+    const solvedToday = recentSubmissionList.some(submission => {
+      const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+      return submission.title === challengeTitle && submission.statusDisplay === "Accepted" && submissionDate === today;
+    });
+
+    if (solvedToday) {
+      return { success: true, message: "Challenge solved today" };
+    } else {
+      return { success: false, message: "Challenge not solved today" };
+    }
+
   } catch (error) {
     // console.error('Error fetching user data from LeetCode:', error);
-    return null;
+    return { success: false, message: "Failed to fetch LeetCode data" };
   }
 };
 
+export const fetchCodeforcesStatus = async (username, challengeTitle) => {
+  try {
+    const response = await axios.get(`https://codeforces.com/api/user.status?handle=${username}&from=1&count=20`);
+    const submissions = response.data;
+
+    if (!submissions || !submissions.result) {
+      return { success: false, message: "Invalid Codeforces username or no submissions found" };
+    }
+
+    const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+
+    const solvedProblem = submissions.result.find((submission) => {
+      const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+      return submission.problem.name === challengeTitle && submission.verdict === "OK" && submissionDate === today;
+    });
+
+    if (solvedProblem) {
+      return { success: true, message: "Challenge solved today" };
+    } else {
+      return { success: false, message: "Challenge not solved today" };
+    }
+
+  } catch (error) {
+    console.error('Error fetching user data from Codeforces:', error);
+    return { success: false, message: "Failed to fetch Codeforces data" };
+  }
+}
 
 export const heatmap = async (req, res) => {
   try {

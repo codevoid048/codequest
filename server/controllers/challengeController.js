@@ -1,26 +1,29 @@
 import { Challenge } from "../models/Challenge.js";
 import { Solution } from "../models/Solution.js";
 import { User } from "../models/User.js";
+import { fetchLeetCodeStatus, fetchCodeforcesStatus } from "./platformsController.js";
+import { postPotdChallenge } from "../utils/postPOTD.js";
+import e from "express";
 
 export const getChallenges = async (req, res) => {
     try {
-        const { 
-            category, 
-            difficulty, 
-            status, 
-            search, 
+        const {
+            category,
+            difficulty,
+            status,
+            search,
             userId,
             sortBy = 'createdAt',
             sortOrder = 'desc'
         } = req.query;
-        
+
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const filter = {};
         const authenticatedUser = req.user;
 
         let targetUser = null;
-        
+
         if (userId) {
             try {
                 targetUser = await User.findById(userId).select('solveChallenges _id');
@@ -37,7 +40,7 @@ export const getChallenges = async (req, res) => {
         if (category && category !== 'all') {
             filter.category = { $in: category.split(',') };
         }
-        
+
         if (difficulty && difficulty !== 'all') {
             filter.difficulty = { $in: difficulty.split(',') };
         }
@@ -95,31 +98,52 @@ export const getChallenges = async (req, res) => {
 export const getDailyChallenge = async (req, res) => {
     try {
         const { userId } = req.query;
+        const authenticatedUser = req.user;
 
-        const today = new Date();
+        // Create today's date in IST timezone
+        const now = new Date();
+        const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+        const istNow = new Date(now.getTime() + istOffset);
+        
+        const today = new Date(istNow);
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
+        // Convert back to UTC for database query
+        const todayUTC = new Date(today.getTime() - istOffset);
+        const tomorrowUTC = new Date(tomorrow.getTime() - istOffset);
+
         let dailyChallenge = await Challenge.findOne({
             createdAt: {
-                $gte: today,
-                $lt: tomorrow
+                $gte: todayUTC,
+                $lt: tomorrowUTC
             }
-        }).sort({ createdAt: -1 }).select("-__v");
+        }).sort({ createdAt: -1 });
 
         if (!dailyChallenge) {
-            dailyChallenge = await Challenge.findOne().sort({ createdAt: -1 }).select("-__v");
+            dailyChallenge = await Challenge.findOne().sort({ createdAt: -1 });
         }
 
         if (!dailyChallenge) {
             return res.status(404).json({ message: 'No daily challenge found' });
         }
 
+        let targetUser = null;
         let isSolved = false;
+
         if (userId) {
-            console.log(dailyChallenge.solvedUsers);
-            isSolved = dailyChallenge.solvedUsers?.includes(userId) || false;
+            try {
+                targetUser = await User.findById(userId).select('solveChallenges _id');
+                if (targetUser) {
+                    isSolved = dailyChallenge.solvedUsers?.includes(targetUser._id) || false;
+                }
+            } catch (error) {
+                // Invalid user ID, continue without user context
+            }
+        } else if (authenticatedUser) {
+            targetUser = authenticatedUser;
+            isSolved = dailyChallenge.solvedUsers?.includes(authenticatedUser._id) || false;
         }
 
         // Return challenge with solved status
@@ -208,6 +232,81 @@ export const getSolutionByChallengeId = async (req, res) => {
         }
 
     } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
+export const checkPOTDStatus = async (req, res) => {
+    try {
+        const { dailyChallengeId } = req.body;
+        const user = req.user;
+        const userId = req.user._id;
+
+        const dailyChallenge = await Challenge.findById(dailyChallengeId);
+        if (!dailyChallenge) {
+            return res.status(404).json({ message: 'Daily challenge not found', isSolved: false });
+        }
+
+        let isSolved = dailyChallenge.solvedUsers?.includes(userId) || false;
+
+        if (isSolved) {
+            return res.status(200).json({ message: "Daily challenge already solved", isSolved });
+        }
+
+        let responseStatus;
+
+        if (dailyChallenge.platform === 'LeetCode') {
+            responseStatus = await fetchLeetCodeStatus(user?.leetCode?.username, dailyChallenge.title);
+        }
+
+        if (dailyChallenge.platform === 'Codeforces') {
+            responseStatus = await fetchCodeforcesStatus(user?.codeforces?.username, dailyChallenge.title);
+        }
+
+        if (responseStatus && responseStatus.success) {
+            const now = new Intl.DateTimeFormat("en-IN", {
+                timeZone: "Asia/Kolkata",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+            }).formatToParts(new Date());
+            
+            let year = "", month = "", day = "", hour = "", minute = "", second = "";
+            
+            now.forEach(part => {
+                if (part.type === "year") year = part.value;
+                if (part.type === "month") month = part.value;
+                if (part.type === "day") day = part.value;
+                if (part.type === "hour") hour = part.value;
+                if (part.type === "minute") minute = part.value;
+                if (part.type === "second") second = part.value;
+            });
+            
+            const timestamp = {
+                date: `${year}-${month}-${day}`,
+                time: `${hour}:${minute}:${second}`
+            };
+
+            const postresponse = await postPotdChallenge(userId, timestamp, dailyChallengeId, dailyChallenge.difficulty);
+            if (postresponse.success) {
+                isSolved = true;
+                return res.status(200).json({ message: "POTD challenge posted successfully", isSolved });
+            } else {
+                return res.status(400).json({ message: "Failed to post POTD challenge", isSolved: false });
+            }
+        } else {
+            const platformName = dailyChallenge.platform;
+            const errorMessage = responseStatus ? responseStatus.message : `Failed to fetch ${platformName} data`;
+            return res.status(400).json({ message: errorMessage, isSolved: false });
+        }
+
+    } catch (error) {
+        console.error("Check POTD status error:", error);
         res.status(500).json({ message: 'Server error' });
     }
 };

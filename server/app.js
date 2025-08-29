@@ -43,10 +43,10 @@ app.use('/api', typeSenseRoutes);
 warmupLeaderboardCache();
 startStreakCronJob();
 
-// Schedule leaderboard update every half-hour
+// Schedule leaderboard update every 10 minutes
 setInterval(() => {
   warmupLeaderboardCache();
-}, 30 * 60 * 1000);
+}, 10 * 60 * 1000);
 
 app.get('/hello', (req, res) => { return res.status(200).send("Hello, World!") })
 
