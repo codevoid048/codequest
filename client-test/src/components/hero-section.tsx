@@ -6,7 +6,16 @@ import { Button } from "@/components/ui/button"
 import { ParticlesBackground } from "@/components/particles-background"
 import { useAuth } from "@/context/AuthContext"
 
-export function HeroSection() {
+type Stats = {
+  usersCount: number
+  challengesCount: number
+}
+
+interface HeroSectionProps {
+  stats: Stats
+}
+
+export function HeroSection({ stats }: HeroSectionProps) {
     const [mounted, setMounted] = useState(false)
     const { user } = useAuth()
 
@@ -71,6 +80,7 @@ export function HeroSection() {
                     </Button>
                 </motion.div>
 
+                {/* ✅ Fixed Stats */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -81,11 +91,15 @@ export function HeroSection() {
                     <div className="relative z-10 flex flex-wrap justify-center gap-4 py-8">
                         <div className="flex items-center space-x-2 bg-background/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border">
                             <div className="size-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <p className="text-sm font-medium">10,000+ active users</p>
+                            <p className="text-sm font-medium">
+                                {stats?.usersCount?.toLocaleString() || 0} active users
+                            </p>
                         </div>
                         <div className="flex items-center space-x-2 bg-background/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border">
                             <div className="size-2 bg-blue-500 rounded-full animate-pulse"></div>
-                            <p className="text-sm font-medium">500+ coding challenges</p>
+                            <p className="text-sm font-medium">
+                                {stats?.challengesCount?.toLocaleString() || 0} coding challenges
+                            </p>
                         </div>
                         <div className="flex items-center space-x-2 bg-background/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md border">
                             <div className="size-2 bg-purple-500 rounded-full animate-pulse"></div>

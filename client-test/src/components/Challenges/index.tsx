@@ -95,8 +95,8 @@ const Challenges: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchProblems();
-  }, [user]);
+    fetchProblems(currentPage);
+  }, [currentPage, user]);
 
   const loadMoreChallenges = async () => {
     if (hasMoreChallenges && !isLoading) {
@@ -692,19 +692,20 @@ const Challenges: React.FC = () => {
                             </div>
                           </div>
 
-                          {/* Right side - Action buttons */}
-                          <div className="sm:flex sm:flex-col sm:justify-end sm:items-end sm:min-w-0 sm:w-auto w-full">
-                            <ProblemStatus
-                              problem={{
-                                id: problem.id.toString(),
-                                status: problem.status as "Solved" | "Unsolved",
-                                createdAt: new Date(problem.date),
-                                title: problem.title,
-                                description: problem.description,
-                                problemUrl: problem.problemUrl
-                              }}
-                            />
-                          </div>
+                          {user &&
+                            <div className="sm:flex sm:flex-col sm:justify-end sm:items-end sm:min-w-0 sm:w-auto w-full">
+                              <ProblemStatus
+                                problem={{
+                                  id: problem.id.toString(),
+                                  status: problem.status as "Solved" | "Unsolved",
+                                  createdAt: new Date(problem.date),
+                                  title: problem.title,
+                                  description: problem.description,
+                                  problemUrl: problem.problemUrl
+                                }}
+                              />
+                            </div>
+                          }
                         </div>
                       </CardContent>
                     </Card>
@@ -741,8 +742,12 @@ const Challenges: React.FC = () => {
                         <Button
                           key={page}
                           variant={currentPage === page ? "default" : "outline"}
-                          onClick={() => setCurrentPage(page)}
-                          className={`w-8 h-8 p-0 ${currentPage === page ? "bg-primary text-primary-foreground" : "border-border text-foreground"
+                          onClick={() => {
+                            setCurrentPage(page);
+                          }}
+                          className={`w-8 h-8 p-0 ${currentPage === page
+                              ? "bg-primary text-primary-foreground"
+                              : "border-border text-foreground"
                             }`}
                         >
                           {page}
@@ -775,16 +780,18 @@ const Challenges: React.FC = () => {
         </div>
       </div>
 
-      {showPopup && (
-        <ChallengePopup
-          userStreak={user?.streak || 0}
-          onClose={() => {
-            setShowPopup(false);
-            if (dailyProblem) markPopupShownToday(dailyProblem.id);
-          }}
-        />
-      )}
-    </div>
+      {
+        showPopup && (
+          <ChallengePopup
+            userStreak={user?.streak || 0}
+            onClose={() => {
+              setShowPopup(false);
+              if (dailyProblem) markPopupShownToday(dailyProblem.id);
+            }}
+          />
+        )
+      }
+    </div >
   )
 }
 

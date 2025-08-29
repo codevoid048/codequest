@@ -12,6 +12,7 @@ import dotenv from "dotenv";
 import adminAuthRoutes from "./routes/adminAuthRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import platformRoute from "./routes/platformsRoute.js";
+import statsRoutes from "./routes/statsRoutes.js"
 import userRoutes from "./routes/userRoutes.js";
 import typeSenseRoutes from "./routes/typeSenseRoutes.js";
 import { startStreakCronJob } from './utils/streakResetJob.js';
@@ -35,6 +36,7 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/auth/admin', adminAuthRoutes);
 app.use('/admin', adminRoutes);
 app.use('/platforms', platformRoute);
+app.use('/api', statsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api', typeSenseRoutes);
 
