@@ -273,10 +273,15 @@ const Challenges: React.FC = () => {
     setIsRefreshing(true);
     try {
       await fetchDailyChallenge();
-      toast.success("Problem of the Day is Solved!");
+      if (isSolved) {
+        toast.success("Problem of the Day is Solved!");
+      }
+      else {
+        toast.error("Haven't solved the Problem of the Day yet.");
+      }
     } catch (error) {
       console.error("Error updating POTD status:", error);
-      toast.error("Haven't solved the Problem of the Day yet.");
+      toast.error("Error Checking for Status");
     } finally {
       setIsRefreshing(false);
     }
