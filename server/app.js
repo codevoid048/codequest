@@ -48,6 +48,8 @@ setInterval(() => {
   warmupLeaderboardCache();
 }, 30 * 60 * 1000);
 
+app.get('/hello', (req, res) => { return res.status(200).send("Hello, World!") })
+
 app.use((err, req, res, next) => {
   //console.error(err.stack);
   res.status(500).json({ message: 'Something went wrong!' });

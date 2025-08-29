@@ -2,3 +2,5 @@ node_modules
 npm-debug.log
 .env
 typesense-data/
+
+.serverless/

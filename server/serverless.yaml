@@ -1,0 +1,38 @@
+service: codequest-server
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ap-south-1
+  stage: v1
+  environment:
+    NODE_ENV: production
+    MONGO_URI: ${env:MONGO_URI}
+    BASE_URL: ${env:BASE_URL}
+    CLIENT_URL: ${env:CLIENT_URL}
+    JWT_SECRET: ${env:JWT_SECRET}
+    EMAIL_USER: ${env:EMAIL_USER}
+    EMAIL_PASS: ${env:EMAIL_PASS}
+    GOOGLE_CLIENT_ID: ${env:GOOGLE_CLIENT_ID}
+    GOOGLE_CLIENT_SECRET: ${env:GOOGLE_CLIENT_SECRET}
+    GITHUB_CLIENT_ID: ${env:GITHUB_CLIENT_ID}
+    GITHUB_CLIENT_SECRET: ${env:GITHUB_CLIENT_SECRET}
+    RESET_TOKEN_EXPIRY: ${env:RESET_TOKEN_EXPIRY}
+    CLOUDINARY_CLOUD_NAME: ${env:CLOUDINARY_CLOUD_NAME}
+    CLOUDINARY_API_KEY: ${env:CLOUDINARY_API_KEY}
+    CLOUDINARY_API_SECRET: ${env:CLOUDINARY_API_SECRET}
+    CLOUDINARY_URL: ${env:CLOUDINARY_URL}
+  apiGateway:
+    binaryMediaTypes:
+      - 'multipart/form-data'
+
+# plugins:
+#   - serverless-offline
+
+functions:
+  app:
+    handler: server.handler
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
