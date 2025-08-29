@@ -443,13 +443,13 @@ export default function ProfilePage() {
     <TooltipProvider>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <motion.div
-          className="grid grid-cols-1 lg:grid-cols-4 gap-6"
+          className="flex flex-col lg:flex-row gap-6"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* Sidebar - Profile Details */}
-          <motion.div className="lg:col-span-1" variants={cardVariants}>
+          <motion.div className="lg:w-1/4" variants={cardVariants}>
             <Card className="overflow-hidden shadow-lg border-0 relative">
               {/* Settings Icon - Only show for own profile */}
               {isOwnProfile && (
@@ -565,9 +565,7 @@ export default function ProfilePage() {
                 <PlatformManager
                   userPlatforms={{
                     leetCode: profileUser.leetCode,
-                    //gfg: profileUser.gfg,
                     codeforces: profileUser.codeforces,
-                    //codechef: profileUser.codechef,
                   }}
                   onVerifyPlatform={handleVerifyPlatform}
                 />
@@ -588,14 +586,6 @@ export default function ProfilePage() {
                         color: "#FFA116",
                         type: "leetcode",
                       },
-                      // {
-                      //   name: "GeeksForGeeks",
-                      //   handle: profileUser.gfg?.username || "-",
-                      //   solved: profileUser.gfg?.solved,
-                      //   rating: profileUser.gfg?.rating,
-                      //   color: "#2F8D46",
-                      //   type: "gfg",
-                      // },
                       {
                         name: "CodeForces",
                         handle: profileUser.codeforces?.username || "-",
@@ -604,14 +594,6 @@ export default function ProfilePage() {
                         color: "#318CE7",
                         type: "codeforces",
                       },
-                      // {
-                      //   name: "CodeChef",
-                      //   handle: profileUser.codechef?.username || "-",
-                      //   stars: profileUser.codechef?.stars || "1*",
-                      //   rating: profileUser.codechef?.rating,
-                      //   color: "#745D0B",
-                      //   type: "codechef",
-                      // },
                     ].map((platform) => (
                       <motion.div
                         key={platform.name}
@@ -635,20 +617,6 @@ export default function ProfilePage() {
                                 )}
                               </div>
                             )}
-                            {/* {platform.type === "codechef" && platform.stars !== undefined && (
-                              <div className="text-xs">
-                                <span className="text-muted-foreground">Stars:</span>{" "}
-                                {platform.handle !== "-" ? (
-                                  <span className="font-semibold" style={{ color: platform.color }}>
-                                    {platform.stars}
-                                  </span>
-                                ) : (
-                                  <span className="font-semibold" style={{ color: platform.color }}>
-                                    --
-                                  </span>
-                                )}
-                              </div>
-                            )} */}
                             {platform.rating !== undefined && (
                               <div className="text-xs">
                                 <span className="text-muted-foreground">Rating:</span>{" "}
@@ -674,9 +642,9 @@ export default function ProfilePage() {
           </motion.div>
 
           {/* Main Content - Stats Cards */}
-          <motion.div className="lg:col-span-3" variants={cardVariants}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+          <motion.div className="lg:w-3/4" variants={cardVariants}>
+            <div className="flex flex-col md:flex-row gap-4">
+              <motion.div variants={cardVariants} whileHover={{ y: -5 }} className="md:w-1/3">
                 <Card className="shadow-lg border-0 overflow-hidden">
                   <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
                   <CardContent className="pt-6">
@@ -695,7 +663,7 @@ export default function ProfilePage() {
                 </Card>
               </motion.div>
 
-              <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+              <motion.div variants={cardVariants} whileHover={{ y: -5 }} className="md:w-1/3">
                 <Card className="shadow-lg border-0 overflow-hidden">
                   <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
                   <CardContent className="pt-6">
@@ -714,7 +682,7 @@ export default function ProfilePage() {
                 </Card>
               </motion.div>
 
-              <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+              <motion.div variants={cardVariants} whileHover={{ y: -5 }} className="md:w-1/3">
                 <Card className="shadow-lg border-0 overflow-hidden">
                   <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
                   <CardContent className="pt-6">
@@ -744,11 +712,11 @@ export default function ProfilePage() {
                   <CardDescription>Track your progress across difficulty levels</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="flex flex-col sm:flex-row gap-6">
                     <motion.div
                       variants={cardVariants}
                       whileHover={{ scale: 1.03 }}
-                      className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm"
+                      className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm sm:w-1/3"
                     >
                       <div className="relative w-28 h-28 mx-auto">
                         <svg className="w-full h-full" viewBox="0 0 36 36">
@@ -776,7 +744,7 @@ export default function ProfilePage() {
                     <motion.div
                       variants={cardVariants}
                       whileHover={{ scale: 1.03 }}
-                      className="text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm"
+                      className="text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm sm:w-1/3"
                     >
                       <div className="relative w-28 h-28 mx-auto">
                         <svg className="w-full h-full" viewBox="0 0 36 36">
@@ -804,7 +772,7 @@ export default function ProfilePage() {
                     <motion.div
                       variants={cardVariants}
                       whileHover={{ scale: 1.03 }}
-                      className="text-center p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm"
+                      className="text-center p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm sm:w-1/3"
                     >
                       <div className="relative w-28 h-28 mx-auto">
                         <svg className="w-full h-full" viewBox="0 0 36 36">
@@ -924,18 +892,16 @@ export default function ProfilePage() {
                                   return (
                                     <motion.div
                                       key={dayIndex}
-                                      className={`h-4 w-4 rounded-sm ${getIntensityColor(contributionCount)} ${
-                                        isToday ? "ring-2 ring-black dark:ring-white" : ""
-                                      } ${inStreak && isSolved ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
+                                      className={`h-4 w-4 rounded-sm ${getIntensityColor(contributionCount)} ${isToday ? "ring-2 ring-black dark:ring-white" : ""
+                                        } ${inStreak && isSolved ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
                                       style={{
                                         gridRow: dayOfWeek + 1,
                                         gridColumn: Math.floor((dayIndex + firstDayOfMonth) / 7) + 1,
                                       }}
-                                      title={`${date.toLocaleDateString()}: ${
-                                        contributionCount > 0
+                                      title={`${date.toLocaleDateString()}: ${contributionCount > 0
                                           ? `${contributionCount} contribution${contributionCount > 1 ? "s" : ""}`
                                           : "No contributions"
-                                      }`}
+                                        }`}
                                       whileHover={{ scale: 1.5, zIndex: 10 }}
                                       transition={{ duration: 0.2 }}
                                     />

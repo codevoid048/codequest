@@ -3,18 +3,18 @@ import Admin from "../models/Admin.js";
 
 
 export const protectAdmin = async (req, res, next) => {
-    let token;
+    let AdminToken;
 
     try {
 
-        token = req.cookies.token;
+        AdminToken = req.cookies.Admintoken;
         // console.log("Token from cookies:", token);
 
-        if (!token) {
+        if (!AdminToken) {
             return res.status(401).json({ message: 'No token, authorization denied' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(AdminToken, process.env.JWT_SECRET);
         // console.log("Decoded token:", decoded);
 
         req.user = await Admin.findById(decoded.id).select('-password');

@@ -57,7 +57,7 @@ export const updateUserPoints = async (req, res) => {
 
 export const getLeaderboardData = async (req, res) => {
   try {
-    const { search = "", page = 1, limit = 10 } = req.query;
+    const { search = "", page, limit } = req.query;
 
     let leaderboard = getCachedLeaderboard();
     if (!leaderboard) {

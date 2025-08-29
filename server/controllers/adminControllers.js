@@ -1,19 +1,85 @@
 import { User } from "../models/User.js";
 import { Challenge } from "../models/Challenge.js";
 import { Solution } from "../models/Solution.js";
-// import moment from "moment-timezone";
-export const getUsers = async(req, res) => {
-    try{
-        const users = await User.find({}).select("-password");
-        // console.log(users)
-        res.json(users);
-    }catch(err){
-        // console.error(err);
-        res.status(500).json({ error: "error in getting users", details: err.message });
+
+export const getUsers = async (req, res) => {
+    try {
+        const {
+            page = 1,
+            limit = 20,
+            search = "",
+            collegeName = "",
+            branch = "",
+            sortBy = "createdAt",
+            sortDirection = "desc"
+        } = req.query;
+
+        const pageNumber = parseInt(page);
+        const pageLimit = parseInt(limit);
+        const skip = (pageNumber - 1) * pageLimit;
+
+        let searchQuery = {};
+        
+        if (search) {
+            searchQuery.$or = [
+                { username: { $regex: search, $options: 'i' } },
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { collegeName: { $regex: search, $options: 'i' } },
+                { branch: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        if (collegeName) {
+            const colleges = Array.isArray(collegeName) ? collegeName : collegeName.split(',');
+            searchQuery.collegeName = { $in: colleges };
+        }
+
+        if (branch) {
+            const branches = Array.isArray(branch) ? branch : branch.split(',');
+            searchQuery.branch = { $in: branches };
+        }
+
+        const sortObject = {};
+        sortObject[sortBy] = sortDirection === 'asc' ? 1 : -1;
+
+        const totalUsers = await User.countDocuments(searchQuery);
+
+        const users = await User.find(searchQuery)
+            .select("-password -resetPasswordToken -resetPasswordExpires -googleId -githubId -otp -otpExpires -gfg -leetCode -codechef -codeforces -otherLinks -solveChallenges")
+            .sort(sortObject)
+            .skip(skip)
+            .limit(pageLimit);
+
+        const uniqueColleges = await User.distinct('collegeName', { collegeName: { $exists: true, $ne: "" } });
+        const uniqueBranches = await User.distinct('branch', { branch: { $exists: true, $ne: "" } });
+
+        const totalPages = Math.ceil(totalUsers / pageLimit);
+
+        res.json({
+            users,
+            pagination: {
+                currentPage: pageNumber,
+                totalPages,
+                totalUsers,
+                limit: pageLimit,
+                hasNextPage: pageNumber < totalPages,
+                hasPrevPage: pageNumber > 1
+            },
+            filters: {
+                colleges: uniqueColleges,
+                branches: uniqueBranches
+            }
+        });
+
+    } catch (err) {
+        console.error("Error in getUsers:", err);
+        res.status(500).json({ 
+            error: "Error in getting users", 
+            details: err.message 
+        });
     }
-}
-
-
+};
 
 export const addChallenge = async (req, res) => {
     try {
@@ -28,7 +94,6 @@ export const addChallenge = async (req, res) => {
             platform,
             solution,
         } = req.body;
-
 
         // Validate required fields
         if (!title || !description || !category || !difficulty || !points || !problemLink || !platform) {
@@ -58,7 +123,6 @@ export const addChallenge = async (req, res) => {
         
         const savedChallenge = await newChallenge.save();
 
-
         let savedSolution = null;
         if (solution) {
             // Create solution with all fields, including explanation
@@ -73,7 +137,6 @@ export const addChallenge = async (req, res) => {
             });
 
             savedSolution = await newSolution.save();
-            
         }
         
         return res.status(201).json({
@@ -84,7 +147,7 @@ export const addChallenge = async (req, res) => {
         });
 
     } catch (error) {
-        // console.error("Error in addChallenge:", error);
+        console.error("Error in addChallenge:", error);
         res.status(500).json({ 
             success: false, 
             message: "Server error",

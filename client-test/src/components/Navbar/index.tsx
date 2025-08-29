@@ -22,10 +22,10 @@ export function Navbar() {
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
 
-  // Close mobile menu when screen size becomes large (>=768px)
+  // Close mobile menu when screen size becomes large (>=1120px)
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
+      if (window.innerWidth >= 1120) {
         setIsOpen(false); // Close Sheet on large screens
       }
     };
@@ -177,7 +177,7 @@ export function Navbar() {
             >
               <Code className="h-6 w-6 text-blue-500 dark:text-blue-600" />
             </motion.div> */}
-            <img src="/Clublogo.png" alt="" width={40} height={40} className="rounded-full" />
+            <img src="/Clublogo.webp" alt="" width={40} height={40} className="rounded-full" />
             <p className="flex flex-col">
               <span className="font-bold text-xl text-white tracking-wide dark:text-gray-900">CodeQuest</span>
               <span className="text-right text-[8px] font-bold">SRKR Coding Club</span>
@@ -186,7 +186,7 @@ export function Navbar() {
         </div>
 
 
-        <div className="hidden md:flex items-center gap-3 px-5">
+        <div className="hidden min-[1120px]:flex items-center gap-3 px-5">
 
           <div className="relative search-container px-3">
             <div className="flex items-center space-x-2 border border-gray-700 dark:border-gray-300 rounded-md px-3 py-2 bg-gray-800 dark:bg-white text-white dark:text-gray-900">
@@ -234,7 +234,7 @@ export function Navbar() {
               )}
             </AnimatePresence>
           </div>
-          <nav className="hidden md:flex gap-6 pr-3">
+          <nav className="hidden min-[1120px]:flex gap-6 pr-3">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -282,7 +282,7 @@ export function Navbar() {
 
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden text-gray-300 dark:text-gray-600 hover:text-blue-500 dark:hover:text-blue-600">
+            <Button variant="ghost" size="icon" className="max-[1119px]:block hidden text-gray-300 dark:text-gray-600 hover:text-blue-500 dark:hover:text-blue-600">
               <Menu className="h-6 w-6" />
               <span className="sr-only">Toggle menu</span>
             </Button>
@@ -299,7 +299,7 @@ export function Navbar() {
               </Link>
 
               <div className="relative search-container mb-6">
-                <div className="flex items-center space-x-2 border border-gray-700 dark:border-webpack.config.jsgray-300 rounded-md px-3 py-2 bg-gray-800 dark:bg-white">
+                <div className="flex items-center space-x-2 border border-gray-700 dark:border-gray-300 rounded-md px-3 py-2 bg-gray-800 dark:bg-white">
                   <Search className="h-5 w-5 text-gray-400 dark:text-gray-600" />
                   <input
                     type="text"

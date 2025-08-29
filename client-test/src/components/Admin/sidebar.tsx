@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuth } from "@/context/AuthContext";
+import { useAdminStore } from "@/context/AdminContext";
 import { useTheme } from "@/context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Code, Menu, Moon, Sun, X } from "lucide-react";
@@ -12,7 +12,7 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAdminAuthenticated, logout } = useAdminStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,6 +25,7 @@ export function Sidebar() {
 
   const navItems = [
     { href: "/codingclubadmin/", label: "Home" },
+    { href: "/codingclubadmin/dashboard", label: "Dashboard" },
     { href: "/codingclubadmin/leaderboard", label: "Leaderboard" },
     { href: "/codingclubadmin/users", label: "Users" },
     { href: "/codingclubadmin/challenges", label: "Challenges" },
@@ -94,7 +95,7 @@ export function Sidebar() {
         </motion.div>
 
         <AnimatePresence>
-          {!isAuthenticated ? (
+          {!isAdminAuthenticated ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

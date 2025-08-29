@@ -26,20 +26,48 @@ interface Challenge {
   solvedUsers: any[];
 }
 
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalUsers: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+interface FilterOptions {
+  colleges: string[];
+  branches: string[];
+}
+
+interface FetchUsersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  collegeName?: string[];
+  branch?: string[];
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+}
+
 interface AdminState {
   users: User[];
+  isAdminAuthenticated: boolean;
   challenges: Challenge[];
   loading: boolean;
   error: string | null;
   token: string | null;
-  fetchUsers: () => Promise<void>;
+  pagination: PaginationInfo | null;
+  filterOptions: FilterOptions | null;
+  fetchUsers: (params?: FetchUsersParams) => Promise<void>;
   fetchChallenges: () => Promise<void>;
   login: (token: string) => void;
   logout: () => void;
 }
 
-export const useAdminStore = create<AdminState>((set) => {
-  const token = localStorage.getItem("admin-token");
+export const useAdminStore = create<AdminState>((set, get) => {
+  const token = localStorage.getItem("Admintoken");
+  const isAdminAuthenticated = !!token;
 
   return {
     users: [],
@@ -47,33 +75,66 @@ export const useAdminStore = create<AdminState>((set) => {
     loading: false,
     error: null,
     token,
+    isAdminAuthenticated,
+    pagination: null,
+    filterOptions: null,
 
-    // Fetch users from the API
-    fetchUsers: async () => {
+    // Fetch users from the API with pagination and filtering
+    fetchUsers: async (params: FetchUsersParams = {}) => {
       try {
         set({ loading: true, error: null });
 
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/admin/users`);
+        const {
+          page = 1,
+          limit = 20,
+          search = "",
+          collegeName = [],
+          branch = [],
+          sortBy = "createdAt",
+          sortDirection = "desc"
+        } = params;
 
-        let users: User[] = [];
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+          sortBy,
+          sortDirection
+        });
 
-        if (Array.isArray(response.data)) {
-          users = response.data;
-        } else if (response.data && typeof response.data === "object") {
-          const userData = response.data.users || response.data.data || [];
-          if (Array.isArray(userData)) {
-            users = userData;
-          } else {
-            throw new Error("Invalid data format received from API");
+        if (search) queryParams.append('search', search);
+        if (collegeName.length > 0) queryParams.append('collegeName', collegeName.join(','));
+        if (branch.length > 0) queryParams.append('branch', branch.join(','));
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/admin/users?${queryParams}`,
+          {
+            headers: {
+              Authorization: `Bearer ${get().token}`,
+            },
+            withCredentials: true,
           }
+        );
+
+        if (response.data) {
+          const { users, pagination, filters } = response.data;
+          
+          set({ 
+            users: users || [],
+            pagination,
+            filterOptions: filters
+          });
         } else {
           throw new Error("Invalid data format received from API");
         }
 
-        set({ users });
       } catch (err) {
         console.error("Error fetching users:", err);
-        set({ error: (err as Error).message });
+        set({ 
+          error: err instanceof Error ? err.message : "Failed to fetch users",
+          users: [],
+          pagination: null,
+          filterOptions: null
+        });
       } finally {
         set({ loading: false });
       }
@@ -100,14 +161,14 @@ export const useAdminStore = create<AdminState>((set) => {
 
     // Login function to set token and store it in local storage
     login: (token: string) => {
-      localStorage.setItem("admin-token", token);
-      set({ token });
+      localStorage.setItem("Admintoken", token);
+      set({ token, isAdminAuthenticated: true });
     },
 
     // Logout function to remove token from local storage
     logout: () => {
-      localStorage.removeItem("admin-token");
-      set({ token: null });
+      localStorage.removeItem("Admintoken");
+      set({ token: null, isAdminAuthenticated: false, users: [], pagination: null, filterOptions: null });
     },
   };
 });

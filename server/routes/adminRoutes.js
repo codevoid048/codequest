@@ -3,7 +3,7 @@ import {addChallenge, getUsers,} from '../controllers/adminControllers.js';
 import { protectAdmin } from '../middleware/adminAuth.js';
 const router = express.Router();
 
-router.post('/add-challenges',addChallenge);
-router.get('/users', getUsers);
+router.post('/add-challenges', protectAdmin, addChallenge);
+router.get('/users', protectAdmin, getUsers);
 
 export default router;
