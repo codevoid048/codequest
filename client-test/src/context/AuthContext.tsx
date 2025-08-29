@@ -4,7 +4,7 @@ import React, { createContext, useState, useEffect, ReactNode } from "react";
 import axios from "axios";
 // Define the user type
 interface User {
-  id: string;
+  _id: string;
   email: string;
   name: string;
   [key: string]: any; // Allow dynamic properties

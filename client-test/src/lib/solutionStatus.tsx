@@ -24,7 +24,7 @@ const SolutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
     nextDay.setHours(0, 0, 0, 0);
 
     const now = new Date();
-    return now >= nextDay;
+    return user && now >= nextDay;
   };
 
   const handleViewSolution = (e: React.MouseEvent) => {
@@ -38,27 +38,15 @@ const SolutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
     });
   };
 
-  const isChallengeSolved = (challengeId: string) => {
-    if (!user?.solveChallenges) return false;
-
-    // Check if the challenge ID exists in any difficulty array
-    return (
-      user.solveChallenges.easy.some((item: { challenge: string }) => item.challenge === challengeId) ||
-      user.solveChallenges.medium.some((item: { challenge: string }) => item.challenge === challengeId) ||
-      user.solveChallenges.hard.some((item: { challenge: string }) => item.challenge === challengeId)
-    );
-  };
-
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const isSolved = isChallengeSolved(problem.id) ? "Solved" : "Not Solved";
+  const isSolved = problem.status === "Solved" ? "Solved" : "Not Solved";
 
   return (
     <div className="flex w-full gap-2 self-start sm:self-center">
       {isSolved === "Solved" ? (
-        <>
-          {problem.status = "Solved"}
+        <div className="flex w-full gap-2">
           <Button
             size="sm"
             className="flex-1 text-xs py-1 px-2 bg-green-600 hover:bg-green-700 text-white border-0 transition-colors duration-200"
@@ -69,34 +57,43 @@ const SolutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
           >
             <CheckCircle className="h-3 w-3 mr-1" /> Solved
           </Button>
-        </>
+          {canShowSolutionButton() && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 text-xs py-1 px-2 border-blue-500 hover:bg-blue-500/10 hover:text-blue-500 transition-colors duration-200 text-foreground"
+              onClick={handleViewSolution}
+            >
+              <Eye className="h-3 w-3 mr-1" /> View Solution
+            </Button>
+          )}
+        </div>
       ) : (
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex-1 text-xs py-1 px-2 border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
-          onClick={(e) => {
-            e.stopPropagation();
-            window.open(problem.problemUrl, "_blank");
-          }}
-        >
-          <Code className="h-3 w-3 mr-1" /> Solve Now
-        </Button>
-      )}
-
-      {canShowSolutionButton() && (
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex-1 text-xs py-1 px-2 border-blue-500 hover:bg-blue-500/10 hover:text-blue-500 transition-colors duration-200 text-foreground"
-          onClick={handleViewSolution}
-        >
-          <Eye className="h-3 w-3 mr-1" /> View Solution
-        </Button>
+        <div className="flex w-full gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 text-xs py-1 px-2 border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(problem.problemUrl, "_blank");
+            }}
+          >
+            <Code className="h-3 w-3 mr-1" /> Solve Now
+          </Button>
+          {canShowSolutionButton() && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 text-xs py-1 px-2 border-blue-500 hover:bg-blue-500/10 hover:text-blue-500 transition-colors duration-200 text-foreground"
+              onClick={handleViewSolution}
+            >
+              <Eye className="h-3 w-3 mr-1" /> View Solution
+            </Button>
+          )}
+        </div>
       )}
     </div>
-
-
   );
 };
 
