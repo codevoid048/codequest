@@ -21,6 +21,7 @@ import AdminLogin from './components/Admin/index';
 import Dashboard from './components/Admin/Dashboard.tsx';
 import { useAdminStore } from './context/AdminContext.tsx';
 import AdminChallenges from './components/Admin/AdminChallenges.tsx';
+import AdminHome from './components/Admin/home.tsx';
 
 function UserApp() {
   return (
@@ -72,7 +73,8 @@ function AdminApp() {
         <Toaster position="bottom-right" toastOptions={{ duration: 2000 }} />
         <Routes>
           {/* <Route path="/codingclubadmin" element={<AdminLogin />} /> */}
-          <Route path="/codingclubadmin" element={<Dashboard />} />
+          <Route path="/codingclubadmin" element={<AdminHome />} />
+          <Route path="/codingclubadmin/dashboard" element={<Dashboard />} />
           <Route path="/codingclubadmin/users" element={<UserDashboard />} />
           <Route path="/codingclubadmin/challenges" element={<AdminChallenges />} />
           <Route path="/codingclubadmin/users/profile/:username" element={<ProfilePage />} />

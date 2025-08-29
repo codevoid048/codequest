@@ -7,7 +7,6 @@ import { ParticlesBackground } from "@/components/particles-background";
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
 import toast from "react-hot-toast";
-import { useAuth } from "../../context/AuthContext";
 import { useAdminStore } from "@/context/AdminContext";
 import { Eye, EyeOff } from "lucide-react"; // Import Eye icons
 
@@ -16,9 +15,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false); // State for password visibility
-  const { login } = useAuth();
   const navigate = useNavigate();
-  const { login: storeLogin} = useAdminStore(); // Access store login action
+  const { login } = useAdminStore(); // Access store login action
   
   // Toggle password visibility
   const togglePasswordVisibility = () => {
@@ -43,8 +41,7 @@ export default function LoginPage() {
       );
       console.log("Response:", response); // Debugging
       if (response.status === 200) {
-        storeLogin(response.data.token); // Save token in Zustand store
-        login(); // Assuming login is a function that sets user state
+        login(response.data.token); // Assuming login is a function that sets user state
         toast.success(response.data.message);
         
         navigate("/codingclubadmin"); // Redirect to homepage
