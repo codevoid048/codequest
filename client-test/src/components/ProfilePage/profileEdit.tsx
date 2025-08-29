@@ -1,18 +1,14 @@
-"use client"
-
 import type React from "react"
 
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Upload, CheckCircle, User, Mail, Hash, BookOpen, Building, X, Crop, ChevronDown, Check } from "lucide-react"
+import { Upload, CheckCircle, User, Mail, Hash, BookOpen, Building, X, ChevronDown, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Slider } from "@/components/ui/slider"
-import { 
+import {
     Command,
     CommandEmpty,
     CommandGroup,
@@ -29,20 +25,7 @@ import axios from "axios"
 import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-hot-toast"
-import Cropper from "react-easy-crop"
 import institutions from "@/lib/colleges"
-
-interface Point {
-    x: number
-    y: number
-}
-
-interface Area {
-    x: number
-    y: number
-    width: number
-    height: number
-}
 
 export default function ProfileEditForm() {
     const { user, token, fetchUser } = useAuth()
@@ -79,12 +62,6 @@ export default function ProfileEditForm() {
     })
 
     const [image, setImage] = useState<string | null>(null)
-    const [cropDialogOpen, setCropDialogOpen] = useState(false)
-    const [crop, setCrop] = useState<Point>({ x: 0, y: 0 })
-    const [zoom, setZoom] = useState(1)
-    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
-    const [imageSrc, setImageSrc] = useState<string | null>(null)
-    const [imageUploading, setImageUploading] = useState(false)
     const [collegePopoverOpen, setCollegePopoverOpen] = useState(false)
 
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -93,7 +70,7 @@ export default function ProfileEditForm() {
     const [imageError, setImageError] = useState<string | null>(null)
     const navigate = useNavigate();
 
-    // If user data is available, pre-fill the form
+    // Pre-fill the form with user data
     useEffect(() => {
         if (user) {
             setFormData((prevData) => ({
@@ -108,7 +85,6 @@ export default function ProfileEditForm() {
                 isAffiliate: user.isAffiliate || false,
             }))
 
-            // Handle coding profiles
             if (user.leetCode?.username) {
                 handleLinkChange("leetcode", user.leetCode.username)
             }
@@ -122,7 +98,6 @@ export default function ProfileEditForm() {
                 handleLinkChange("gfg", user.gfg.username)
             }
 
-            // Handle other links
             if (user.otherLinks && Array.isArray(user.otherLinks)) {
                 user.otherLinks.forEach((link) => {
                     if (link.platform && link.url) {
@@ -137,7 +112,6 @@ export default function ProfileEditForm() {
         }
     }, [user, token])
 
-    // Attempt to refresh auth token on component mount
     useEffect(() => {
         fetchUser()
     }, [])
@@ -147,7 +121,6 @@ export default function ProfileEditForm() {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0]
 
-            // Check file size (limit to 6MB)
             if (file.size > 6 * 1024 * 1024) {
                 setImageError("Image size should be less than 6MB")
                 return
@@ -156,76 +129,11 @@ export default function ProfileEditForm() {
             const reader = new FileReader()
             reader.onload = (event) => {
                 const result = event.target?.result as string
-                setImageSrc(result)
-                setCropDialogOpen(true)
+                setImage(result)
+                setFormData((prev) => ({ ...prev, image: result }))
             }
             reader.readAsDataURL(file)
         }
-    }
-
-    const onCropComplete = useCallback((croppedAreaPixels: Area) => {
-        setCroppedAreaPixels(croppedAreaPixels)
-    }, [])
-
-    const createImage = (url: string): Promise<HTMLImageElement> =>
-        new Promise((resolve, reject) => {
-            const image = new Image()
-            image.addEventListener("load", () => resolve(image))
-            image.addEventListener("error", (error) => reject(error))
-            image.crossOrigin = "anonymous" // This helps avoid CORS issues
-            image.src = url
-        })
-
-    const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<string> => {
-        const image = await createImage(imageSrc)
-        const canvas = document.createElement("canvas")
-        const ctx = canvas.getContext("2d")
-
-        if (!ctx) {
-            throw new Error("Could not get canvas context")
-        }
-
-        // Set canvas size to the cropped size
-        canvas.width = pixelCrop.width
-        canvas.height = pixelCrop.height
-
-        // Draw the cropped image onto the canvas
-        ctx.drawImage(
-            image,
-            pixelCrop.x,
-            pixelCrop.y,
-            pixelCrop.width,
-            pixelCrop.height,
-            0,
-            0,
-            pixelCrop.width,
-            pixelCrop.height,
-        )
-
-        // As Base64 string
-        return canvas.toDataURL("image/jpeg", 0.9)
-    }
-
-    const handleCropSave = async () => {
-        if (imageSrc && croppedAreaPixels) {
-            try {
-                setImageUploading(true)
-                const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels)
-                setImage(croppedImage)
-                setFormData((prev) => ({ ...prev, image: croppedImage }))
-                setCropDialogOpen(false)
-            } catch (e) {
-                console.error("Error cropping image:", e)
-                toast.error("Failed to crop image. Please try again.")
-            } finally {
-                setImageUploading(false)
-            }
-        }
-    }
-
-    const handleCropCancel = () => {
-        setCropDialogOpen(false)
-        setImageSrc(null)
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -264,7 +172,6 @@ export default function ProfileEditForm() {
         setIsLoading(true)
         setButtonText("Saving...")
 
-        // Basic validation
         if (!formData.name) {
             toast.error("Name is required")
             setIsLoading(false)
@@ -272,9 +179,7 @@ export default function ProfileEditForm() {
             return
         }
 
-        // Get token from context or localStorage as fallback
         const currentToken = token || localStorage.getItem("auth_token")
-
         if (!currentToken) {
             toast.error("You are not authenticated. Please log in.")
             setIsLoading(false)
@@ -293,9 +198,7 @@ export default function ProfileEditForm() {
 
             if (response.status === 200) {
                 toast.success("Profile updated successfully!")
-                // Refresh user data after successful update
                 await new Promise((resolve) => setTimeout(resolve, 1000))
-                // Fetch updated user data
                 await fetchUser()
                 setButtonText("Saved!")
                 setTimeout(() => setButtonText("Save Profile"), 3000)
@@ -317,58 +220,6 @@ export default function ProfileEditForm() {
         <div className="min-h-screen p-6 pb-10 flex items-center justify-center bg-background overflow-hidden">
             <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-background"></div>
-
-            {/* Image Cropping Dialog */}
-            <Dialog open={cropDialogOpen} onOpenChange={setCropDialogOpen}>
-                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Crop className="h-5 w-5" /> Crop Profile Picture
-                        </DialogTitle>
-                    </DialogHeader>
-
-                    <div className="relative h-[300px] w-full mt-4">
-                        {imageSrc && (
-                            <Cropper
-                                image={imageSrc}
-                                crop={crop}
-                                zoom={zoom}
-                                aspect={1}
-                                cropShape="round"
-                                onCropChange={setCrop}
-                                onCropComplete={onCropComplete}
-                                onZoomChange={setZoom}
-                            />
-                        )}
-                    </div>
-
-                    <div className="mt-4 space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="zoom">Zoom</Label>
-                            <div className="flex items-center gap-2">
-                                <Slider
-                                    id="zoom"
-                                    min={1}
-                                    max={3}
-                                    step={0.1}
-                                    value={[zoom]}
-                                    onValueChange={(value) => setZoom(value[0])}
-                                />
-                                <span className="text-sm text-muted-foreground w-10 text-center">{zoom.toFixed(1)}x</span>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={handleCropCancel}>
-                                Cancel
-                            </Button>
-                            <Button onClick={handleCropSave} disabled={imageUploading}>
-                                {imageUploading ? "Processing..." : "Apply"}
-                            </Button>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
 
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
@@ -441,20 +292,6 @@ export default function ProfileEditForm() {
 
                                     {imageError && <p className="text-xs text-red-500 mt-2">{imageError}</p>}
                                     <p className="text-xs text-muted-foreground mt-2">Click to upload a profile picture (max 6MB)</p>
-                                    {image && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            className="mt-2"
-                                            onClick={() => {
-                                                setImageSrc(image)
-                                                setCropDialogOpen(true)
-                                            }}
-                                        >
-                                            <Crop className="h-4 w-4 mr-2" /> Recrop Image
-                                        </Button>
-                                    )}
                                 </motion.div>
 
                                 {/* Personal Information */}
@@ -610,6 +447,6 @@ export default function ProfileEditForm() {
                     </CardContent>
                 </Card>
             </motion.div>
-        </div>
+        </div >
     )
 }

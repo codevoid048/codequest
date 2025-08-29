@@ -177,7 +177,7 @@ export function Navbar() {
             >
               <Code className="h-6 w-6 text-blue-500 dark:text-blue-600" />
             </motion.div> */}
-            <img src="/Clublogo.png" alt="" width={40} height={40} className="rounded-full" />
+            <img src="/Clublogo.webp" alt="" width={40} height={40} className="rounded-full" />
             <p className="flex flex-col">
               <span className="font-bold text-xl text-white tracking-wide dark:text-gray-900">CodeQuest</span>
               <span className="text-right text-[8px] font-bold">SRKR Coding Club</span>

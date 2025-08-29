@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
-import darkImage from "@/assets/darkImage.png";
-import lightImage from "@/assets/lightImage.jpg";
+import darkImage from "@/assets/darkImage.webp";
+import lightImage from "@/assets/lightImage.webp";
 
 interface ChallengePopupProps {
   userStreak: number;
