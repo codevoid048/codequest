@@ -73,7 +73,7 @@ const Footer = () => {
                                     <User className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h4 className='text-blue-700 font-medium'>David Kuppala</h4>
+                                    <h4 className='font-medium'>David Kuppala</h4>
                                     <p className="text-muted-500 text-sm">+91 81217 02286</p>
                                 </div>
                             </li>
@@ -82,7 +82,7 @@ const Footer = () => {
                                     <User className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h4 className="text-blue-700 font-medium">Ankith Pissay</h4>
+                                    <h4 className="font-medium">Ankith Pissay</h4>
                                     <p className="text-muted-500 text-sm">+91 91005 79797</p>
                                 </div>
                             </li>
@@ -91,7 +91,7 @@ const Footer = () => {
                                     <User className="w-5 h-5" />
                                 </div>
                                 <div className="mt-0">
-                                    <h4 className="text-blue-700 font-medium">William Keri</h4>
+                                    <h4 className="font-medium">William Keri</h4>
                                     <p className="text-muted-500 text-sm">+91 99665 42463</p>
                                 </div>
                             </li>
