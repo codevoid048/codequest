@@ -94,29 +94,50 @@ export const getChallenges = async (req, res) => {
 // New endpoint for daily challenge
 export const getDailyChallenge = async (req, res) => {
     try {
+        const { userId } = req.query;
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
-        // Find today's challenge
         let dailyChallenge = await Challenge.findOne({
             createdAt: {
                 $gte: today,
                 $lt: tomorrow
             }
-        }).sort({ createdAt: -1 });
+        }).sort({ createdAt: -1 }).select("-__v");
 
-        // If no challenge for today, get the latest challenge
         if (!dailyChallenge) {
-            dailyChallenge = await Challenge.findOne().sort({ createdAt: -1 });
+            dailyChallenge = await Challenge.findOne().sort({ createdAt: -1 }).select("-__v");
         }
 
         if (!dailyChallenge) {
             return res.status(404).json({ message: 'No daily challenge found' });
         }
 
-        return res.status(200).json(dailyChallenge);
+        let isSolved = false;
+        if (userId) {
+            console.log(dailyChallenge.solvedUsers);
+            isSolved = dailyChallenge.solvedUsers?.includes(userId) || false;
+        }
+
+        // Return challenge with solved status
+        const response = {
+            _id: dailyChallenge._id,
+            title: dailyChallenge.title,
+            description: dailyChallenge.description,
+            category: dailyChallenge.category,
+            problemLink: dailyChallenge.problemLink,
+            points: dailyChallenge.points,
+            categories: dailyChallenge.categories,
+            difficulty: dailyChallenge.difficulty,
+            createdAt: dailyChallenge.createdAt,
+            platform: dailyChallenge.platform,
+            isSolved
+        };
+
+        return res.status(200).json(response);
 
     } catch (error) {
         console.error("Get daily challenge error:", error);

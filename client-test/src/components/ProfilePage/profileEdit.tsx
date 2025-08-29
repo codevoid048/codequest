@@ -179,7 +179,7 @@ export default function ProfileEditForm() {
             return
         }
 
-        const currentToken = token || localStorage.getItem("auth_token")
+        const currentToken = token
         if (!currentToken) {
             toast.error("You are not authenticated. Please log in.")
             setIsLoading(false)
