@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import axios from "axios";
-import { useState } from "react";
 
 interface User {
   _id: string;
