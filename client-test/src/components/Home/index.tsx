@@ -8,8 +8,6 @@ import { HeroSection } from "@/components/hero-section"
 import { FeatureCard } from "@/components/feature-card"
 import { useAuth } from "@/context/AuthContext"
 import ScrollToTopButton from "../scrolltotop"
-import ConfettiPapers from "@/lib/welcome-animations"
-
 
 const Home = () => {
     const { user } = useAuth();
@@ -137,7 +135,6 @@ const Home = () => {
             </section>
 
             <ScrollToTopButton />
-            <ConfettiPapers />
         </div>
     )
 }
