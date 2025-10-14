@@ -179,7 +179,7 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="container ml-0 md:mx-3 px-4 py-4 max-w-7xl">
+    <div className="container ml-0 md:mx-3 px-16 py-16">
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -393,12 +393,11 @@ export default function UserDashboard() {
 
       {/* Users Table Header */}
       <div className="dark:bg-slate-50 bg-slate-800 rounded-lg p-4 mb-2 shadow-sm border dark:border-slate-200 border-slate-700">
-        <div className="grid grid-cols-12 gap-4 text-sm font-medium dark:text-slate-700 text-slate-300">
-          <div className="col-span-4 flex items-center">User Info</div>
-          <div className="col-span-3 hidden md:block">College</div>
-          <div className="col-span-2 hidden md:block">Branch</div>
-          <div className="col-span-2 hidden lg:block">Joined</div>
-          <div className="col-span-1"></div>
+        <div className="grid grid-cols-4 gap-4 text-sm font-medium dark:text-slate-700 text-slate-300">
+          <div className="flex items-center">User Info</div>
+          <div className="hidden md:block">College</div>
+          <div className="hidden md:block">Branch</div>
+          <div className="hidden lg:block">Joined</div>
         </div>
       </div>
 
@@ -436,8 +435,8 @@ export default function UserDashboard() {
                 onClick={() => navigate(`/codingclubadmin/users/profile/${user.username}`)}
               >
                 <CardContent>
-                  <div className="grid grid-cols-12 gap-4 items-center">
-                    <div className="col-span-4 flex items-center space-x-3">
+                  <div className="grid grid-cols-4 gap-4 items-center">
+                    <div className="flex items-center space-x-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.username} />
                         <AvatarFallback className="bg-gradient-to-r from-violet-500 to-indigo-500 text-white text-sm font-medium">
@@ -451,7 +450,7 @@ export default function UserDashboard() {
                         <p className="text-xs dark:text-slate-500 text-slate-400 truncate">@{user.username}</p>
                       </div>
                     </div>
-                    <div className="col-span-3 hidden md:block">
+                    <div className="hidden md:block">
                       <Badge
                         variant="outline"
                         className="dark:bg-indigo-50 bg-indigo-900/20 dark:text-indigo-700 text-indigo-400 dark:border-indigo-200 border-indigo-700 text-xs font-medium truncate max-w-full"
@@ -460,7 +459,7 @@ export default function UserDashboard() {
                         {user.collegeName || "N/A"}
                       </Badge>
                     </div>
-                    <div className="col-span-2 hidden md:block">
+                    <div className="hidden md:block">
                       <Badge
                         variant="outline"
                         className="dark:bg-sky-50 bg-sky-900/20 dark:text-sky-700 text-sky-400 dark:border-sky-200 border-sky-700 text-xs font-medium truncate max-w-full"
@@ -469,23 +468,10 @@ export default function UserDashboard() {
                         {user.branch || "N/A"}
                       </Badge>
                     </div>
-                    <div className="col-span-2 hidden lg:block">
+                    <div className="hidden lg:block">
                       <p className="text-xs dark:text-slate-500 text-slate-400">
                         {formatDate(user.createdAt)}
                       </p>
-                    </div>
-                    <div className="col-span-1 flex justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity dark:hover:bg-slate-100 hover:bg-slate-700"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          navigate(`/codingclubadmin/users/profile/${user.username}`)
-                        }}
-                      >
-                        <MoreHorizontal size={16} />
-                      </Button>
                     </div>
                   </div>
                   

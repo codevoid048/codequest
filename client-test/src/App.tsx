@@ -21,7 +21,6 @@ import AdminLogin from './components/Admin/index';
 import Dashboard from './components/Admin/Dashboard.tsx';
 import { useAdminStore } from './context/AdminContext.tsx';
 import AdminChallenges from './components/Admin/AdminChallenges.tsx';
-import AdminHome from './components/Admin/home.tsx';
 
 function UserApp() {
   return (
@@ -66,15 +65,11 @@ function AdminApp() {
       <div className="w-64 min-h-screen fixed left-0 top-0 bg-gray-800 text-white hidden md:block">
         <Sidebar />
       </div>
-      <div className="md:hidden fixed top-0 left-0 w-full bg-gray-800 text-white z-50">
-        <Sidebar />
-      </div>
       <div className="flex-grow md:ml-64 pl-0 md:pl-4 mt-16 md:mt-0">
         <Toaster position="bottom-right" toastOptions={{ duration: 2000 }} />
         <Routes>
           {/* <Route path="/codingclubadmin" element={<AdminLogin />} /> */}
-          <Route path="/codingclubadmin" element={<AdminHome />} />
-          <Route path="/codingclubadmin/dashboard" element={<Dashboard />} />
+          <Route path="/codingclubadmin" element={<Dashboard />} />
           <Route path="/codingclubadmin/users" element={<UserDashboard />} />
           <Route path="/codingclubadmin/challenges" element={<AdminChallenges />} />
           <Route path="/codingclubadmin/users/profile/:username" element={<ProfilePage />} />
