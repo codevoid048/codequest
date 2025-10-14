@@ -1,6 +1,6 @@
 import { User } from "../models/User.js"
 import NodeCache from "node-cache"
-const leaderBoardCache = new NodeCache({ stdTTL: 600 });
+const leaderBoardCache = new NodeCache({ stdTTL: 300 }); // 5 minutes
 
 const formatLeaderboardUser = (user) => {
     const easy = user.solveChallenges?.easy?.length || 0;

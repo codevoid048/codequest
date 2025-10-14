@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { ArrowRight, Code, Trophy, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
@@ -8,13 +9,27 @@ import { FeatureCard } from "@/components/feature-card"
 import { useAuth } from "@/context/AuthContext"
 import ScrollToTopButton from "../scrolltotop"
 
-
 const Home = () => {
     const { user } = useAuth();
-    
+    const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0 });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
+                const data = await res.json();
+                setStats(data);
+            } catch (error) {
+                console.error("Failed to fetch stats:", error);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
     return (
         <div className="px-1">
-            <HeroSection />
+            <HeroSection stats={stats} />
 
             <section className="container mx-auto py-12 space-y-6 md:py-16 lg:py-24 flex flex-col items-center">
                 <div className="text-center space-y-4 max-w-[900px]">
@@ -78,7 +93,7 @@ const Home = () => {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3 w-full max-w-4xl">
                     <Card>
                         <CardHeader>
-                            <CardTitle>10,000+</CardTitle>
+                            <CardTitle>{stats.usersCount.toLocaleString()}+</CardTitle>
                             <CardDescription>Active Users</CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -88,7 +103,7 @@ const Home = () => {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>500+</CardTitle>
+                            <CardTitle>{stats.challengesCount.toLocaleString()}+</CardTitle>
                             <CardDescription>Challenges</CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -118,7 +133,8 @@ const Home = () => {
                     </Button>
                 </div>
             </section>
-            <ScrollToTopButton/>
+
+            <ScrollToTopButton />
         </div>
     )
 }

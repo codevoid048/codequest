@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 
 import ChallengePopup from "./ChallengePopup";
@@ -8,9 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
-import { postPotdChallenge } from "@/lib/potdchallenge";
 import ProblemStatus from "@/lib/solutionStatus";
-import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "@/platforms/leetcode";
 import { Award, Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, Code, Filter, Flame, Lightbulb, RefreshCw, Search, Tag, } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -27,43 +25,145 @@ interface Challenge {
   _id: string;
 }
 
+interface FilterOptions {
+  categories: string[];
+  difficulties: string[];
+  platforms: string[];
+}
+
 type FilterTab = "all" | "solved" | "unsolved";
 
-// Main Challenges component
 const Challenges: React.FC = () => {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [countdown, setCountdown] = useState({ hours: "00", minutes: "00", seconds: "00" });
   const [problemsList, setProblemsList] = useState<Challenge[]>([]);
+  const [dailyProblem, setDailyProblem] = useState<Challenge | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  type SortOption = "date" | "difficulty" | "status";
-  const [sortOption] = useState<SortOption>("date");
   const [currentPage, setCurrentPage] = useState(1);
-  const [hasMoreChallenges, setHasMoreChallenges] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDailyLoading, setIsDailyLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSolved, setIsSolved] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    categories: [],
+    difficulties: [],
+    platforms: []
+  });
   const itemsPerPage = 5;
   const { user } = useAuth();
 
-  const fetchProblems = async (page = 1, shouldAppend = false) => {
-    try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges`, {
-        params: {
-          page,
-          limit: itemsPerPage
-        }
-      });
-      if (res.data && Array.isArray(res.data.challenges)) {
-        const data = res.data.challenges.map((challenge: any) => {
-          const isSolved: boolean = user?.solveChallenges?.easy.some((item: { challenge: string }) => item.challenge === challenge._id) ||
-            user?.solveChallenges?.medium.some((item: { challenge: string }) => item.challenge === challenge._id) ||
-            user?.solveChallenges?.hard.some((item: { challenge: string }) => item.challenge === challenge._id);
+  // Debounced search function
+  const useDebounce = (value: string, delay: number) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
 
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        setDebouncedValue(value);
+      }, delay);
+
+      return () => {
+        clearTimeout(handler);
+      };
+    }, [value, delay]);
+
+    return debouncedValue;
+  };
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Fetch filter options
+  const fetchFilterOptions = useCallback(async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges/filter-options`);
+      if (res.data) {
+        setFilterOptions(res.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch filter options:", error);
+    }
+  }, []);
+
+  // Fetch daily challenge separately
+  const fetchDailyChallenge = useCallback(async () => {
+    try {
+      setIsDailyLoading(true);
+      const params = user ? { userId: user._id } : {};
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges/daily`, { params });
+      if (res.data) {
+        const challenge = res.data;
+        const formattedChallenge: Challenge = {
+          id: challenge._id,
+          date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
+          title: challenge.title,
+          categories: challenge.category,
+          difficulty: challenge.difficulty,
+          platform: challenge.platform,
+          status: challenge.isSolved ? "Solved" : "Unsolved",
+          description: challenge.description,
+          problemUrl: challenge.problemLink,
+          _id: challenge._id
+        };
+
+        setDailyProblem(formattedChallenge);
+        setIsSolved(challenge.isSolved || false);
+      }
+    } catch (error) {
+      console.error("Failed to fetch daily challenge:", error);
+    } finally {
+      setIsDailyLoading(false);
+    }
+  }, [user]);
+
+  // Fetch challenges with filters and pagination
+  const fetchChallenges = useCallback(async (page = 1, resetList = true) => {
+    try {
+      if (resetList) {
+        setIsLoading(true);
+      }
+
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: itemsPerPage.toString(),
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      });
+
+      // Add filters to params
+      if (selectedDifficulties.length > 0) {
+        params.append('difficulty', selectedDifficulties.join(','));
+      }
+      
+      if (selectedCategories.length > 0) {
+        params.append('category', selectedCategories.join(','));
+      }
+
+      if (debouncedSearchTerm.trim()) {
+        params.append('search', debouncedSearchTerm.trim());
+      }
+
+      // Add userId if user is logged in (for filtering their solved/unsolved challenges)
+      if (user) {
+        params.append('userId', user._id);
+      }
+
+      // Add status filter if user is logged in and tab is not 'all'
+      if (user && activeTab !== 'all') {
+        params.append('status', activeTab);
+      }
+
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges?${params.toString()}`);
+      
+      if (res.data && Array.isArray(res.data.challenges)) {
+        const formattedChallenges = res.data.challenges.map((challenge: any) => {
           return {
             id: challenge._id,
             date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
@@ -75,47 +175,68 @@ const Challenges: React.FC = () => {
             categories: challenge.category,
             difficulty: challenge.difficulty,
             platform: challenge.platform,
-            status: isSolved ? "Solved" : "Unsolved",
+            status: activeTab === 'solved' ? "Solved" : activeTab === 'unsolved' ? "Unsolved" : "Unsolved", // Set status based on active tab
             description: challenge.description,
             problemUrl: challenge.problemLink,
+            _id: challenge._id
           };
         });
-        setProblemsList(previousChallenges =>
-          shouldAppend ? [...previousChallenges, ...data] : data
-        );
-        const totalPages = res.data.totalPages;
-        setTotalPages(totalPages);
-        setHasMoreChallenges(page < totalPages);
-        setIsLoading(false);
+
+        if (resetList) {
+          setProblemsList(formattedChallenges);
+        } else {
+          setProblemsList(prev => [...prev, ...formattedChallenges]);
+        }
+
+        setTotalPages(res.data.totalPages);
+        setCurrentPage(page);
       }
     } catch (error) {
       console.error("Failed to fetch challenges:", error);
+    } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedDifficulties, selectedCategories, debouncedSearchTerm, user, itemsPerPage, activeTab]);
+
+  // No need for client-side filtering since backend handles status filtering
+  const filteredProblems = problemsList;
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchFilterOptions();
+    fetchDailyChallenge();
+  }, [fetchFilterOptions, fetchDailyChallenge]);
 
   useEffect(() => {
-    fetchProblems();
-  }, [user]);
-
-  const loadMoreChallenges = async () => {
-    if (hasMoreChallenges && !isLoading) {
-      const nextServerPage = currentPage + 1;
-      await fetchProblems(nextServerPage, true); // true means append to existing data
-      setCurrentPage(nextServerPage);
+    if (filterOptions.categories.length > 0) { // Only fetch when filter options are loaded
+      fetchChallenges(1, true);
     }
-  };
+  }, [fetchChallenges, filterOptions]);
+
+  useEffect(() => {
+    if (!user && activeTab !== 'all') {
+      setActiveTab('all');
+    }
+  }, [user, activeTab]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (filterOptions.categories.length > 0) {
+      setCurrentPage(1);
+      fetchChallenges(1, true);
+    }
+  }, [selectedDifficulties, selectedCategories, debouncedSearchTerm, activeTab]);
 
   // Update countdown timer every second
   useEffect(() => {
     const updateCountdown = () => {
-      const now = new Date()
-      const midnight = new Date(now)
-      midnight.setHours(24, 0, 0, 0)
-      const timeDiff = midnight.getTime() - now.getTime()
-      const hours = Math.floor(timeDiff / (1000 * 60 * 60))
-      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000)
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      const timeDiff = midnight.getTime() - now.getTime();
+      const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
       setCountdown({
         hours: hours.toString().padStart(2, "0"),
         minutes: minutes.toString().padStart(2, "0"),
@@ -124,84 +245,9 @@ const Challenges: React.FC = () => {
     };
 
     updateCountdown();
-
     const timer = setInterval(updateCountdown, 1000);
-
     return () => clearInterval(timer);
   }, []);
-
-  const dailyProblem = useMemo(() => {
-    if (problemsList.length === 0) return null;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const todayProblem = problemsList.find((problem) => {
-      const problemDate = new Date(problem.date)
-      problemDate.setHours(0, 0, 0, 0)
-      return problemDate.getTime() === today.getTime()
-    })
-
-    return todayProblem || problemsList[0];
-  }, [problemsList]);
-
-  const uniqueCategories = useMemo(() => [...new Set(problemsList.flatMap((p) => p.categories))], [problemsList]);
-
-  const difficultyLevels = ["Easy", "Medium", "Hard"];
-
-  // Filter and sort problems based on user selections
-  const filteredProblems = useMemo(() => {
-    const today = new Date();
-    today.setDate(today.getDate() - 1);
-    today.setHours(0, 0, 0, 0);
-    const result = problemsList.filter((problem) => {
-      const problemDate = new Date(problem.date);
-      problemDate.setHours(0, 0, 0, 0);
-
-      const isPastOrToday = problemDate <= today
-      const matchesTab = activeTab === "all" || problem.status.toLowerCase() === activeTab
-      const matchesDifficulty = selectedDifficulties.length === 0 || selectedDifficulties.includes(problem.difficulty)
-      const matchesCategory =
-        selectedCategories.length === 0 || problem.categories.some((cat: string) => selectedCategories.includes(cat));
-      const matchesSearch =
-        !searchTerm ||
-        problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        problem.description.toLowerCase().includes(searchTerm.toLowerCase())
-      return isPastOrToday && matchesTab && matchesDifficulty && matchesCategory && matchesSearch
-    })
-
-    result.sort((a, b) => {
-      switch (sortOption) {
-        case "date":
-          return new Date(b.date).getTime() - new Date(a.date).getTime()
-        case "difficulty":
-          return ["Easy", "Medium", "Hard"].indexOf(a.difficulty) - ["Easy", "Medium", "Hard"].indexOf(b.difficulty)
-        case "status":
-          return a.status.localeCompare(b.status)
-        default:
-          return 0
-      }
-    })
-
-    return result;
-  }, [problemsList, activeTab, selectedDifficulties, selectedCategories, searchTerm, sortOption]);
-
-  const lastItemIndex = currentPage * itemsPerPage;
-  const firstItemIndex = lastItemIndex - itemsPerPage;
-  const currentItems = filteredProblems.slice(firstItemIndex, lastItemIndex);
-
-  const selectedDifficultiesKey = selectedDifficulties.join(",");
-  const selectedCategoriesKey = selectedCategories.join(",");
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    activeTab,
-    selectedDifficultiesKey,   // or just selectedDifficulties
-    selectedCategoriesKey,     // same here
-    searchTerm,
-    sortOption,
-  ]);
 
   // Toggle difficulty filter
   const toggleDifficulty = (difficulty: string) => {
@@ -221,90 +267,37 @@ const Challenges: React.FC = () => {
     );
   };
 
-  const checkIfProblemSolved = async () => {
-    try {
-      console.log("called");
-      const dateOnly = new Intl.DateTimeFormat("en-IN", {
-        timeZone: "Asia/Kolkata",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }).format(new Date()).split('/').reverse().join('-');
-      if (dailyProblem?.platform === "LeetCode") {
-        const leetCodeData = await fetchLeetCodeProfile(`${user?.leetCode?.username}`);
-        if (leetCodeData?.recentSubmissionList) {
-          const solvedProblem = leetCodeData.recentSubmissionList.find((submission: { title: string; timestamp: string; statusDisplay: string }) => {
-            const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-            const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-            return submission.title === dailyProblem?.title && submission.statusDisplay === "Accepted" && submissionDate === today;
-          });
-
-          if (solvedProblem) {
-            setIsSolved(true);
-            postPotdChallenge(user?.username, dailyProblem?._id, dailyProblem?.difficulty);
-            localStorage.setItem('potdSolvedDate', dateOnly); // Store today's date
-            return true;
-          }
-          else {
-            toast.error("You haven't solved today's problem yet!");
-            return false;
-          }
-        }
-      } else if (dailyProblem?.platform === "Codeforces") {
-        const codeforcesData = await fetchCodeforcesProfile(`${user?.codeforces?.username}`);
-        console.log("called codeforces api", codeforcesData);
-        if (codeforcesData?.result) {
-          const solvedProblem = codeforcesData.result.find((submission: { creationTimeSeconds: number; problem: { name: string }; verdict: string }) => {
-            const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-            const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-            return submission.problem.name === dailyProblem?.title && submission.verdict === "OK" &&
-              submissionDate === today;
-          });
-
-          if (solvedProblem) {
-            setIsSolved(true);
-            postPotdChallenge(user?.username, dailyProblem?._id, dailyProblem?.difficulty);
-            console.log("potd posted successfully");
-            localStorage.setItem('potdSolvedDate', dateOnly);
-            return true;
-          }
-          else {
-            toast.error("You haven't solved today's problem yet!");
-            return false;
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error checking challenge status:", error);
-    }
-  };
-
+  // Removed checkIfProblemSolved function - now using backend API for solve status
 
   const checkPotdSolved = async () => {
     setIsRefreshing(true);
     try {
-      const today = new Intl.DateTimeFormat("en-IN", {
-        timeZone: "Asia/Kolkata",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }).format(new Date()).split('/').reverse().join('-');
-      const storedDate = localStorage.getItem('potdSolvedDate');
-      console.log("checkPotdSolved", today);
-      if (storedDate === today) {
-        toast.success("You have already solved today's problem!");
-        setIsSolved(true);
-        setIsRefreshing(false);
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/challenges/check-potd-status`, {
+        dailyChallengeId: dailyProblem?._id
+      }, {
+        withCredentials: true
+      });
+      const { message, isSolved } = response.data;
+      if (isSolved) {
+        window.location.reload();
+        toast.success(message || "Problem of the Day marked as solved!");
       } else {
-        toast.loading("Checking if you solved today's problem...", { id: "potd-check" });
-        await checkIfProblemSolved();
-        setIsRefreshing(false);
+        toast.error(message || "Haven't solved the Problem of the Day yet.");
       }
-    } catch (error) {
-      console.error("Error checking POTD solved:", error);
+    } catch (error: any) {
+      console.error("Error updating POTD status:", error);
+      toast.error("Challenge NOT solved Today");
+    } finally {
+      setIsRefreshing(false);
     }
-  }
+  };
 
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
+      fetchChallenges(newPage, true);
+    }
+  };
 
   // Styling for difficulty levels
   const getDifficultyStyle = (difficulty: string) => {
@@ -331,22 +324,6 @@ const Challenges: React.FC = () => {
   // Open challenge link in a new tab
   const openProblemLink = (url?: string) => url && window.open(url, "_blank");
 
-  // Mark popup as shown for today
-  const markPopupShownToday = (problemId: number) => {
-    const key = `popup_shown_${problemId}_${new Date().toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" })}`;
-    localStorage.setItem(key, "true");
-  };
-
-  // const isChallengeSolved = (challengeId: string) => {
-  //   if (!user?.solveChallenges) return false;
-  //   // Check if the challenge ID exists in any difficulty array
-  //   return (
-  //     user.solveChallenges.easy.some((item: { challenge: string; }) => item.challenge === challengeId) ||
-  //     user.solveChallenges.medium.some((item: { challenge: string; }) => item.challenge === challengeId) ||
-  //     user.solveChallenges.hard.some((item: { challenge: string; }) => item.challenge === challengeId)
-  //   );
-  // };
-
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Daily Challenge Section */}
@@ -363,16 +340,15 @@ const Challenges: React.FC = () => {
             </div>
             {user ? (
               <div className="flex items-center gap-4 mx-auto sm:mx-0">
-                {/* Streak with light bulb icon */}
                 <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
                   <Lightbulb className="h-5 w-5 text-yellow-500 animate-pulse" />
                   <span className="font-semibold">{user?.streak} day streak</span>
                 </div>
-
-                {/* POTD Solved counter */}
                 <div className="flex items-center gap-2 bg-secondary/50 dark:bg-muted/50 px-3 py-1 rounded-lg">
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span className="font-semibold">{user?.solveChallenges?.easy?.length + user?.solveChallenges?.medium?.length + user?.solveChallenges?.hard?.length} solved</span>
+                  <span className="font-semibold">
+                    {user?.solveChallenges?.easy?.length + user?.solveChallenges?.medium?.length + user?.solveChallenges?.hard?.length} solved
+                  </span>
                 </div>
               </div>
             ) : null}
@@ -391,11 +367,12 @@ const Challenges: React.FC = () => {
               </span>
             </div>
           </div>
-          {isLoading ? (
+          
+          {isDailyLoading ? (
             <div className="flex justify-center items-center h-40">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
             </div>
-          ) : (
+          ) : dailyProblem ? (
             <div
               className="mt-6 bg-gray-800 dark:bg-muted rounded-xl p-4 sm:p-6 cursor-pointer"
               onClick={() => openProblemLink(dailyProblem?.problemUrl)}
@@ -404,16 +381,16 @@ const Challenges: React.FC = () => {
                 <div className="space-y-3 flex-1">
                   <div className="flex items-center text-sm text-gray-400 dark:text-gray-600">
                     <Calendar className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-600" />
-                    {dailyProblem?.date}
+                    {dailyProblem.date}
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold text-gray-200 dark:text-gray-800 line-clamp-1">
-                    {dailyProblem?.title}
+                    {dailyProblem.title}
                   </h3>
                   <p className="text-gray-400 dark:text-gray-600 text-sm line-clamp-2">
-                    {dailyProblem?.description}
+                    {dailyProblem.description}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {dailyProblem?.categories.map((cat: boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | Key | null | undefined) => (
+                    {dailyProblem.categories.map((cat: any) => (
                       <Badge
                         key={String(cat)}
                         variant="secondary"
@@ -427,40 +404,42 @@ const Challenges: React.FC = () => {
                 <div className="flex flex-col gap-4 justify-center">
                   {isSolved ? (
                     <Button className="bg-green-600 hover:bg-green-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full">
-                      Solved
+                      <CheckCircle className="h-3 w-3 mr-1" /> Solved
                     </Button>
                   ) : (
-                    <Button
-                      className="bg-primary hover:bg-primary/90 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openProblemLink(dailyProblem?.problemUrl);
-                      }}
-                    >
-                      Solve Now
-                    </Button>
+                    <>
+                      <Button
+                        className="bg-primary hover:bg-primary/90 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 px-6 py-2 rounded-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openProblemLink(dailyProblem?.problemUrl);
+                        }}
+                      >
+                        Solve Now
+                      </Button>
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          checkPotdSolved();
+                        }}
+                        className="bg-primary/20 hover:bg-primary/30 text-primary border-0 shadow-md hover:shadow-lg transition-all duration-300 rounded-full flex items-center gap-2"
+                        disabled={isRefreshing}
+                      >
+                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        Check Status
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      checkPotdSolved();
-                    }}
-                    className="bg-primary/20 hover:bg-primary/30 text-primary border-0 shadow-md hover:shadow-lg transition-all duration-300 rounded-full flex items-center gap-2"
-                    disabled={isRefreshing}
-                  >
-                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    Check Status
-                  </Button>
                 </div>
               </div>
               <div className="mt-4 pt-4 border-t border-gray-700 dark:border-gray-300 flex flex-wrap gap-3 text-sm">
                 <span className="flex items-center gap-2 bg-secondary dark:bg-white px-2 py-1 rounded-full text-gray-300 dark:text-gray-700">
                   <Code className="h-4 w-4 text-primary" />
-                  {dailyProblem?.platform}
+                  {dailyProblem.platform}
                 </span>
               </div>
             </div>
-          )}
+          ) : null}
         </CardContent>
       </Card>
 
@@ -481,113 +460,85 @@ const Challenges: React.FC = () => {
             </Button>
           </div>
           <Card className={`shadow-lg border-0 bg-card ${isFilterOpen ? "block" : "hidden lg:block"}`}>
-            {difficultyLevels.length > 0 ? (
-              <CardContent className="p-6 space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
-                    <Flame className="h-5 w-5 mr-2 text-amber-400 dark:text-amber-900" /> Difficulty
-                  </h3>
-                  <div className="flex flex-col gap-3">
-                    {difficultyLevels.map((level) => (
-                      <div key={level} className="flex items-center gap-3">
-                        <button
-                          onClick={() => toggleDifficulty(level)}
-                          className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedDifficulties.includes(level) ? "bg-primary border-primary" : "border-border"
-                            }`}
-                        >
-                          {selectedDifficulties.includes(level) && (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="h-3 w-3 text-primary-foreground"
-                            >
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          )}
-                        </button>
-                        <label
-                          htmlFor={level}
-                          className="text-sm font-medium flex items-center gap-2 cursor-pointer text-foreground"
-                          onClick={() => toggleDifficulty(level)}
-                        >
-                          {getDifficultyIcon(level)}
-                          <span>{level}</span>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+            <CardContent className="p-6 space-y-6">
+              <div>
+                <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
+                  <Flame className="h-5 w-5 mr-2 text-amber-400 dark:text-amber-900" /> Difficulty
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {filterOptions.difficulties.map((level) => (
+                    <div key={level} className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleDifficulty(level)}
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedDifficulties.includes(level) ? "bg-primary border-primary" : "border-border"
+                          }`}
+                      >
+                        {selectedDifficulties.includes(level) && (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-3 w-3 text-primary-foreground"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        )}
+                      </button>
+                      <label
+                        htmlFor={level}
+                        className="text-sm font-medium flex items-center gap-2 cursor-pointer text-foreground"
+                        onClick={() => toggleDifficulty(level)}
+                      >
+                        {getDifficultyIcon(level)}
+                        <span>{level}</span>
+                      </label>
+                    </div>
+                  ))}
                 </div>
-                <div className="border-t border-border pt-6">
-                  <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
-                    <Tag className="h-5 w-5 mr-2 text-primary" /> Categories
-                  </h3>
-                  <div className="flex flex-col gap-3">
-                    {uniqueCategories.map((cat) => (
-                      <div key={cat} className="flex items-center gap-3">
-                        <button
-                          onClick={() => toggleCategory(cat)}
-                          className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedCategories.includes(cat) ? "bg-primary border-primary" : "border-border"
-                            }`}
-                        >
-                          {selectedCategories.includes(cat) && (
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="h-3 w-3 text-primary-foreground"
-                            >
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                          )}
-                        </button>
-                        <label
-                          htmlFor={cat}
-                          className="text-sm font-medium cursor-pointer text-foreground"
-                          onClick={() => toggleCategory(cat)}
-                        >
-                          {cat}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+              </div>
+              <div className="border-t border-border pt-6">
+                <h3 className="text-lg font-medium mb-4 flex items-center text-foreground">
+                  <Tag className="h-5 w-5 mr-2 text-primary" /> Categories
+                </h3>
+                <div className="flex flex-col gap-3">
+                  {filterOptions.categories.map((cat) => (
+                    <div key={cat} className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleCategory(cat)}
+                        className={`flex h-5 w-5 items-center justify-center rounded-md border ${selectedCategories.includes(cat) ? "bg-primary border-primary" : "border-border"
+                          }`}
+                      >
+                        {selectedCategories.includes(cat) && (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-3 w-3 text-primary-foreground"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        )}
+                      </button>
+                      <label
+                        htmlFor={cat}
+                        className="text-sm font-medium cursor-pointer text-foreground"
+                        onClick={() => toggleCategory(cat)}
+                      >
+                        {cat}
+                      </label>
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
-            ) : (
-              <CardContent className="p-6 space-y-6">
-                <div>
-                  <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
-                  <div className="flex flex-col gap-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
-                        <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="h-1 w-full bg-muted animate-pulse"></div>
-                <div>
-                  <div className="h-6 w-32 bg-muted animate-pulse rounded mb-4"></div>
-                  <div className="flex flex-col gap-3">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className="h-5 w-5 bg-muted animate-pulse rounded-md"></div>
-                        <div className="h-5 w-24 bg-muted animate-pulse rounded"></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            )}
+              </div>
+            </CardContent>
           </Card>
         </div>
 
@@ -595,7 +546,7 @@ const Challenges: React.FC = () => {
         <div className="lg:w-3/4 w-full">
           <div className="space-y-4 mb-6">
             <div className="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-6">
-              {["all", "solved", "unsolved"].map((tab) => (
+              {user ? ["all", "solved", "unsolved"].map((tab) => (
                 <Button
                   key={tab}
                   variant={activeTab === tab ? "default" : "outline"}
@@ -622,7 +573,21 @@ const Challenges: React.FC = () => {
                     </span>
                   )}
                 </Button>
-              ))}
+              )) : (
+                <Button
+                  variant={activeTab === "all" ? "default" : "outline"}
+                  onClick={() => setActiveTab("all")}
+                  className={`text-sm py-2 px-4 w-full sm:w-auto transition-all duration-300 ${activeTab === "all"
+                    ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0 shadow-md"
+                    : "border-border hover:border-primary text-foreground"
+                    }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Code className="h-4 w-4" />
+                    All Problems
+                  </span>
+                </Button>
+              )}
               <div className="relative w-full sm:w-64 group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors duration-200" />
                 <Input
@@ -645,8 +610,8 @@ const Challenges: React.FC = () => {
           ) : (
             <>
               <div className="space-y-4">
-                {currentItems.length > 0 ? (
-                  currentItems.map((problem, index) => (
+                {filteredProblems.length > 0 ? (
+                  filteredProblems.map((problem, index) => (
                     <Card
                       key={problem.id}
                       className="border-1 cursor-pointer bg-card overflow-hidden h-full"
@@ -654,7 +619,6 @@ const Challenges: React.FC = () => {
                     >
                       <CardContent className="h-full">
                         <div className="flex flex-col sm:flex-row justify-between gap-6 h-full">
-                          {/* Left side - Problem details */}
                           <div className="flex-1 flex flex-col justify-between min-h-0">
                             <div className="space-y-2">
                               <div className="flex items-center text-xs text-muted-foreground">
@@ -663,7 +627,7 @@ const Challenges: React.FC = () => {
                               <h3 className="text-lg font-bold text-foreground">{problem.title}</h3>
                               <p className="text-muted-foreground text-sm line-clamp-2">{problem.description}</p>
                               <div className="flex flex-wrap gap-1.5">
-                                {problem.categories.map((cat: boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | Key | null | undefined) => (
+                                {problem.categories.map((cat: any) => (
                                   <Badge
                                     key={String(cat)}
                                     variant="secondary"
@@ -675,7 +639,6 @@ const Challenges: React.FC = () => {
                               </div>
                             </div>
 
-                            {/* Bottom section with difficulty and platform - always at bottom */}
                             <div className="flex flex-wrap gap-3 text-xs mt-4">
                               <span
                                 className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${getDifficultyStyle(
@@ -692,19 +655,22 @@ const Challenges: React.FC = () => {
                             </div>
                           </div>
 
-                          {/* Right side - Action buttons */}
-                          <div className="sm:flex sm:flex-col sm:justify-end sm:items-end sm:min-w-0 sm:w-auto w-full">
-                            <ProblemStatus
-                              problem={{
-                                id: problem.id.toString(),
-                                status: problem.status as "Solved" | "Unsolved",
-                                createdAt: new Date(problem.date),
-                                title: problem.title,
-                                description: problem.description,
-                                problemUrl: problem.problemUrl
-                              }}
-                            />
-                          </div>
+                          {user && (
+                            <div className="sm:flex sm:flex-col sm:justify-end sm:items-end sm:min-w-0 sm:w-auto w-full">
+                              <ProblemStatus
+                                problem={{
+                                  id: problem.id.toString(),
+                                  status: activeTab === 'all' ? (user?.solveChallenges?.easy.some((item: { challenge: string }) => item.challenge === problem._id) ||
+                                    user?.solveChallenges?.medium.some((item: { challenge: string }) => item.challenge === problem._id) ||
+                                    user?.solveChallenges?.hard.some((item: { challenge: string }) => item.challenge === problem._id) ? "Solved" : "Unsolved") : problem.status,
+                                  createdAt: new Date(problem.date),
+                                  title: problem.title,
+                                  description: problem.description,
+                                  problemUrl: problem.problemUrl
+                                }}
+                              />
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -726,12 +692,11 @@ const Challenges: React.FC = () => {
                 <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
                   <Button
                     variant="outline"
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className="text-sm py-2 px-6 w-full sm:w-auto border-border hover:border-primary disabled:opacity-50 text-foreground"
                   >
                     <ChevronDown className="h-4 w-4 rotate-90 ml-2" />
-                    Previous
                   </Button>
                   <div className="flex items-center gap-1">
                     {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -741,8 +706,10 @@ const Challenges: React.FC = () => {
                         <Button
                           key={page}
                           variant={currentPage === page ? "default" : "outline"}
-                          onClick={() => setCurrentPage(page)}
-                          className={`w-8 h-8 p-0 ${currentPage === page ? "bg-primary text-primary-foreground" : "border-border text-foreground"
+                          onClick={() => handlePageChange(page)}
+                          className={`w-8 h-8 p-0 ${currentPage === page
+                              ? "bg-primary text-primary-foreground"
+                              : "border-border text-foreground"
                             }`}
                         >
                           {page}
@@ -752,20 +719,10 @@ const Challenges: React.FC = () => {
                   </div>
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      const nextPage = currentPage + 1;
-                      setCurrentPage(nextPage);
-
-                      // Check if we need to load more data from backend
-                      const nextPageFirstIndex = (nextPage - 1) * itemsPerPage;
-                      if (nextPageFirstIndex >= problemsList.length && hasMoreChallenges) {
-                        loadMoreChallenges();
-                      }
-                    }}
+                    onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className="text-sm py-2 px-6 w-full sm:w-auto border-border hover:border-primary disabled:opacity-50 text-foreground"
                   >
-                    Next
                     <ChevronUp className="h-4 w-4 rotate-90 mr-2" />
                   </Button>
                 </div>
@@ -780,12 +737,11 @@ const Challenges: React.FC = () => {
           userStreak={user?.streak || 0}
           onClose={() => {
             setShowPopup(false);
-            if (dailyProblem) markPopupShownToday(dailyProblem.id);
           }}
         />
       )}
     </div>
-  )
-}
+  );
+};
 
 export default Challenges;

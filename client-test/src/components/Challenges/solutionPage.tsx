@@ -15,7 +15,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-
+import axios from 'axios';
+import { useAuth } from '@/context/AuthContext';
 interface SolutionData {
   title: string;
   description: string;
@@ -165,6 +166,7 @@ const CategoryPill: React.FC<{ category: string; index: number }> = ({ category,
 const SolutionPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth()
   const [solution, setSolution] = useState<SolutionData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -192,13 +194,19 @@ const SolutionPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/challenges/solution/${problemId}`);
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges/solution/${problemId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${user?.token}`
+            },
+            withCredentials: true
+          }
+        );
+        if (response.status !== 200) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data: SolutionData = await response.json();
+        const data: SolutionData = response.data;
         console.log("data", data);
         if (data) {
           setSolution(data);
@@ -328,7 +336,7 @@ const SolutionPage: React.FC = () => {
             <div className="p-4 bg-red-500/10 rounded-full">
               <AlertCircle className="h-8 w-8" />
             </div>
-            <p className="font-medium">{error}</p>
+            <p className="font-medium">Login to view solution</p>
             <Button
               variant="outline"
               className="mt-4 border-red-500/20 text-red-500 hover:bg-red-500/10"

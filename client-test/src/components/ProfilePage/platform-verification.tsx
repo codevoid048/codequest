@@ -159,10 +159,10 @@ export function PlatformVerification({ platformType, isLinked, username, stats, 
             <div className="text-xs text-muted-foreground">@{username}</div>
           </div>
           <div className="flex flex-col items-end space-y-1 text-right">
-            {stats?.solved !== undefined && platformType !== "codechef" && (
+            {stats?.rank !== undefined && (
               <div className="text-xs">
-                <span className="text-muted-foreground">Solved:</span>{" "}
-                <span className="font-semibold">{stats.solved}</span>
+                <span className="text-muted-foreground">Rank:</span>{" "}
+                <span className="font-semibold">{stats.rank}</span>
               </div>
             )}
             {platformType === "codechef" && stats?.rating !== undefined && (

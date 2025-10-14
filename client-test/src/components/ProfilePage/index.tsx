@@ -583,6 +583,7 @@ export default function ProfilePage() {
                         handle: profileUser.leetCode?.username || "-",
                         solved: profileUser.leetCode?.solved,
                         rating: profileUser.leetCode?.rating,
+                        rank: profileUser.leetCode?.rank,
                         color: "#FFA116",
                         type: "leetcode",
                       },
@@ -591,6 +592,7 @@ export default function ProfilePage() {
                         handle: profileUser.codeforces?.username || "-",
                         solved: profileUser.codeforces?.solved,
                         rating: profileUser.codeforces?.rating,
+                        rank: profileUser.codeforces?.rank,
                         color: "#318CE7",
                         type: "codeforces",
                       },
@@ -607,11 +609,11 @@ export default function ProfilePage() {
                             <div className="text-xs text-muted-foreground">@{platform.handle}</div>
                           </div>
                           <div className="flex flex-col items-end space-y-1 text-right">
-                            {platform.solved !== undefined && platform.type !== "codechef" && (
+                            {platform.rank !== undefined && (
                               <div className="text-xs">
-                                <span className="text-muted-foreground">Solved:</span>{" "}
+                                <span className="text-muted-foreground">Rank:</span>{" "}
                                 {platform.handle !== "-" ? (
-                                  <span className="font-semibold">{platform.solved}</span>
+                                  <span className="font-semibold">{platform.rank}</span>
                                 ) : (
                                   <span className="font-semibold">--</span>
                                 )}

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { ArrowRight, Clock, Award, Flame } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 
 import axios from "axios"
 export function DailyChallengeCard() {
-  interface challenge {
+  interface Challenge {
     id: number;
     date: string;
     title: string;
@@ -20,16 +20,17 @@ export function DailyChallengeCard() {
     points: number;
   }
 
-  const [problemsList, setProblemsList] = useState<challenge[]>([]);
+  const [problemsList, setProblemsList] = useState<Challenge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProblems = async () => {
+    const fetchDailyChallenge = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges`);
-
-        if (res.data && Array.isArray(res.data.challenges)) {
-          const data = res.data.challenges.map((challenge: any) => ({
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges/daily`);
+        
+        if (res.data) {
+          const challenge = res.data;
+          const formattedChallenge: Challenge = {
             id: challenge._id,
             date: new Date(challenge.createdAt).toLocaleDateString("en-US", {
               month: "short",
@@ -40,36 +41,28 @@ export function DailyChallengeCard() {
             categories: challenge.category,
             difficulty: challenge.difficulty,
             platform: challenge.platform,
-            status: "Unsolved",
+            status: "Unsolved", // Default status for daily challenge
             description: challenge.description,
             problemUrl: challenge.problemLink,
             points: challenge.points,
-          }));
+          };
           
-          setProblemsList(data);
+          setProblemsList([formattedChallenge]); // Set as single item array
           setIsLoading(false);
         }
       } catch (error) {
-        console.error("Failed to fetch problems", error);
+        console.error("Failed to fetch daily challenge", error);
+        // Set a fallback challenge or show error state
+        setProblemsList([]);
+        setIsLoading(false);
       }
     };
-    fetchProblems();
-
+    
+    fetchDailyChallenge();
   }, []);
 
 
-  const dailyProblem = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize time to midnight
-
-    const todayProblem = problemsList.find((problem) => {
-      const problemDate = new Date(problem.date);
-      problemDate.setHours(0, 0, 0, 0); // Normalize problem date
-      return problemDate.getTime() === today.getTime();
-    });
-
-    return todayProblem || problemsList[0]; // Default to first problem if no match found
-  }, [problemsList]);
+  const dailyProblem = problemsList[0]; // Since we only fetch the daily challenge
 
 
   const getDifficultyStyle = (difficulty: string) => {
@@ -100,7 +93,7 @@ export function DailyChallengeCard() {
         <div className="flex justify-center items-center h-40">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
-      ) : (
+      ) : dailyProblem ? (
         <Card className="overflow-hidden border-2 transition-all duration-300 hover:border-primary/50 hover:shadow-lg w-full">
           <CardHeader className="pb-4 mt-0">
             <div className="flex flex-row items-center gap-3 flex-wrap mt-3">
@@ -114,25 +107,25 @@ export function DailyChallengeCard() {
 
               <span
                 className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium flex items-center gap-2 w-fit ${getDifficultyStyle(
-                  dailyProblem?.difficulty
+                  dailyProblem.difficulty
                 )}`}
               >
-                {getDifficultyIcon(dailyProblem?.difficulty)}
-                {dailyProblem?.difficulty}
+                {getDifficultyIcon(dailyProblem.difficulty)}
+                {dailyProblem.difficulty}
               </span>
             </div>
 
 
             <CardTitle className="text-xl sm:text-2xl mt-2 break-words">
-              {dailyProblem?.title}
+              {dailyProblem.title}
             </CardTitle>
-            <CardDescription className="text-sm sm:text-base">{dailyProblem?.date}</CardDescription>
+            <CardDescription className="text-sm sm:text-base">{dailyProblem.date}</CardDescription>
           </CardHeader>
 
           <CardContent className="pt-0">
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">
-                {dailyProblem?.categories.map((cat) => (
+                {dailyProblem.categories.map((cat) => (
                   <Badge
                     key={cat}
                     variant="secondary"
@@ -147,16 +140,26 @@ export function DailyChallengeCard() {
 
           <CardFooter className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between sm:items-center">
             <p className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
-              Solve this challenge to earn {dailyProblem?.points} points
+              Solve this challenge to earn {dailyProblem.points} points
             </p>
 
             <Button asChild className="group w-full sm:w-auto">
-              <a href={dailyProblem?.problemUrl} target="_blank" rel="noopener noreferrer">
+              <a href={dailyProblem.problemUrl} target="_blank" rel="noopener noreferrer">
                 Solve Challenge
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
               </a>
             </Button>
           </CardFooter>
+        </Card>
+      ) : (
+        <Card className="overflow-hidden border-2 w-full">
+          <CardContent className="p-8 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <Clock className="h-12 w-12 text-muted-foreground" />
+              <p className="text-muted-foreground text-lg">No daily challenge available</p>
+              <p className="text-muted-foreground text-sm">Check back later for today's challenge!</p>
+            </div>
+          </CardContent>
         </Card>
       )}
     </motion.div>

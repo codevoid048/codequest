@@ -4,7 +4,7 @@ import React, { createContext, useState, useEffect, ReactNode } from "react";
 import axios from "axios";
 // Define the user type
 interface User {
-  id: string;
+  _id: string;
   email: string;
   name: string;
   [key: string]: any; // Allow dynamic properties
@@ -35,25 +35,25 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const storedToken = localStorage.getItem("auth_token");
+      // const storedToken = localStorage.getItem("auth_token");
       
       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/me`, {
         withCredentials: true,
-        headers: { Authorization: `Bearer ${storedToken}` }, // Ensure token is sent
+        // headers: { Authorization: `Bearer ${storedToken}` }, // Ensure token is sent
       });
 
       if (res.data && res.data.user) {
         setUser(res.data.user);
         setIsAuthenticated(true);
 
-        const authToken = res.data.token || storedToken;
+        const authToken = res.data.token;
         setToken(authToken);
 
-        if (authToken) {
-          localStorage.setItem('auth_token', authToken);
-        }
+        // if (authToken) {
+        //   localStorage.setItem('auth_token', authToken);
+        // }
 
-        console.log("Token set in context:", authToken);
+        // console.log("Token set in context:", authToken);
       }
       console.log("user after login:", user);
     } catch (error) {
@@ -61,19 +61,13 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       setToken(null);
-      localStorage.removeItem('auth_token');
+      // localStorage.removeItem('auth_token');
     }
   };
 
   // Check for stored token on initial load
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedToken) {
-      setToken(storedToken);
-      fetchUser(); // Validate the token by fetching user data
-    } else {
-      fetchUser(); // Try to fetch user data anyway (in case of cookie auth)
-    }
+    fetchUser();
   }, []);
 
   // Login function
@@ -91,7 +85,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       setToken(null);
-      localStorage.removeItem('auth_token');
+      // localStorage.removeItem('auth_token');
 
       window.location.href = "/";
     } catch (error) {
@@ -104,7 +98,7 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       setToken(null);
-      localStorage.removeItem('auth_token');
+      // localStorage.removeItem('auth_token');
     }
     catch (error) {
       console.error("Logout Failed: ", error);
