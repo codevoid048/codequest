@@ -48,7 +48,6 @@ export const getChallenges = async (req, res) => {
         if (search && search.trim()) {
             filter.$or = [
                 { title: { $regex: search.trim(), $options: 'i' } },
-                { description: { $regex: search.trim(), $options: 'i' } },
                 { category: { $regex: search.trim(), $options: 'i' } }
             ];
         }
@@ -202,17 +201,31 @@ export const getChallengeById = async (req, res) => {
 export const getSolutionByChallengeId = async (req, res) => {
     try {
         const { id } = req.params;
+        const authenticatedUser = req.user;
 
         const solution = await Solution.findOne({ challenge: id })
             .populate('challenge', 'title description category problemLink')
             .select('-_id -__v');
 
         if (solution) {
+            // Check if user has solved this challenge
+            let isSolved = false;
+            if (authenticatedUser) {
+                const solvedChallengeIds = [
+                    ...(authenticatedUser.solveChallenges?.easy || []).map(item => item.challenge?.toString()),
+                    ...(authenticatedUser.solveChallenges?.medium || []).map(item => item.challenge?.toString()),
+                    ...(authenticatedUser.solveChallenges?.hard || []).map(item => item.challenge?.toString())
+                ].filter(Boolean);
+
+                isSolved = solvedChallengeIds.includes(id);
+            }
+
             const formattedSolution = {
                 title: solution.challenge.title,
                 description: solution.challenge.description,
                 category: solution.challenge.category,
                 problemLink: solution.challenge.problemLink,
+                solved: isSolved,
                 codeSnippets: {
                     explanation: solution.explanation,
                     python: solution.python,

@@ -22,6 +22,7 @@ interface SolutionData {
   description: string;
   category: string[];
   problemLink: string;
+  solved?: boolean;
   codeSnippets: {
     explanation: string;
     python: string;
@@ -163,6 +164,21 @@ const CategoryPill: React.FC<{ category: string; index: number }> = ({ category,
   );
 };
 
+// Solved Status Badge component
+const SolvedBadge: React.FC = () => {
+  return (
+    <motion.div
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.3, delay: 0.2 }}
+      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 text-green-600 border border-green-500/20"
+    >
+      <Check className="h-3.5 w-3.5" />
+      <span className="text-xs font-medium">Solved</span>
+    </motion.div>
+  );
+};
+
 const SolutionPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -207,7 +223,6 @@ const SolutionPage: React.FC = () => {
         }
 
         const data: SolutionData = response.data;
-        console.log("data", data);
         if (data) {
           setSolution(data);
         } else {
@@ -281,10 +296,13 @@ const SolutionPage: React.FC = () => {
                   <div className="p-1.5 sm:p-2 rounded-xl bg-primary/10 dark:bg-primary/20 shadow-inner border border-primary/10">
                     <TerminalSquare className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
-                  <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-                      {solution.title}
-                    </h1>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                        {solution.title}
+                      </h1>
+                      {solution.solved && <SolvedBadge />}
+                    </div>
                     <p className="text-xs sm:text-sm text-muted-foreground">Solution Explorer</p>
                   </div>
                 </motion.div>

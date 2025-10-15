@@ -55,7 +55,7 @@ const Challenges: React.FC = () => {
     platforms: []
   });
   const itemsPerPage = 5;
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   // Debounced search function
   const useDebounce = (value: string, delay: number) => {
@@ -289,6 +289,11 @@ const Challenges: React.FC = () => {
 
   const checkPotdSolved = async () => {
     setIsRefreshing(true);
+    if(!isAuthenticated) {
+      toast.error("Please login to check status");
+      setIsRefreshing(false)
+      return;
+    }
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/challenges/check-potd-status`, {
         dailyChallengeId: dailyProblem?._id
@@ -304,7 +309,7 @@ const Challenges: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Error updating POTD status:", error);
-      toast.error("Challenge NOT solved Today");
+      toast.error("Challenge not solved today");
     } finally {
       setIsRefreshing(false);
     }
@@ -340,7 +345,16 @@ const Challenges: React.FC = () => {
   };
 
   // Open challenge link in a new tab
-  const openProblemLink = (url?: string) => url && window.open(url, "_blank");
+  const openProblemLink = (url?: string) => {
+    if(!isAuthenticated) {
+      toast.error("Please login to open problem");
+      return;
+    } else {
+      if(url) {
+        window.open(url, "_blank")
+      }
+    }
+  };
 
   return (
     <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
