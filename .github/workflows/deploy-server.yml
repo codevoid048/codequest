@@ -26,6 +26,11 @@ jobs:
         cd server
         npm ci
         
+    - name: Clear serverless cache (if any v4 exists)
+      run: |
+        cd server
+        rm -rf node_modules/.cache/serverless-framework || true
+        
     - name: Deploy to AWS Lambda
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
