@@ -24,8 +24,7 @@ export function Sidebar() {
   }, [isScrolled]);
 
   const navItems = [
-    { href: "/codingclubadmin/", label: "Home" },
-    { href: "/codingclubadmin/dashboard", label: "Dashboard" },
+    { href: "/codingclubadmin", label: "Dashboard" },
     { href: "/codingclubadmin/leaderboard", label: "Leaderboard" },
     { href: "/codingclubadmin/users", label: "Users" },
     { href: "/codingclubadmin/challenges", label: "Challenges" },
