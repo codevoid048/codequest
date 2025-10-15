@@ -8,7 +8,7 @@ dotenv.config();
 
 connectDB();
 
-// const PORT = process.env.PORT || 5000
-// app.listen(PORT, () => { console.log(`Server is running at ${PORT}`); })
+const PORT = process.env.PORT || 5000
+app.listen(PORT, () => { console.log(`Server is running at ${PORT}`); })
 
-export const handler = serverless(app);
+// export const handler = serverless(app);
