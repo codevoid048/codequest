@@ -9,9 +9,13 @@ const getLastSolvedDate = (challenges = []) => {
 
 const resetUserStreaks = async () => {
   try {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
+    // Use IST timezone for consistent date calculation
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istNow = new Date(now.getTime() + istOffset);
+    
+    const yesterday = new Date(istNow);
+    yesterday.setDate(istNow.getDate() - 1);
     const yesterStr = yesterday.toISOString().split("T")[0];
 
     const users = await User.find({ isVerified: true });
@@ -32,12 +36,13 @@ const resetUserStreaks = async () => {
         }
     }
 
-    console.log("Streak check completed");
+    console.log(`Streak check completed for ${users.length} users on ${yesterStr}`);
   } catch (err) {
-    // console.error("Error resetting streaks:", err.message);
+    console.error("Error resetting streaks:", err.message);
   }
 };
 export const startStreakCronJob = () => {
+  console.log('Streak reset cron job scheduled for midnight IST');
   cron.schedule('0 0 * * *', resetUserStreaks, { // At midnight every day
     timezone: "Asia/Kolkata"
   });

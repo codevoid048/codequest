@@ -4,7 +4,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "start": "nodemon server.js",
+    "deploy": "npx serverless deploy",
+    "deploy:dev": "npx serverless deploy --stage dev",
+    "deploy:prod": "npx serverless deploy --stage prod",
+    "remove": "npx serverless remove",
+    "logs": "npx serverless logs -f app --tail",
+    "offline": "npx serverless offline"
   },
   "type": "module",
   "author": "SRKR CODING CLUB",
@@ -40,6 +46,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "serverless": "^4.21.0",
     "serverless-offline": "^14.4.0"
   }
 }
