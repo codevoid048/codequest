@@ -94,6 +94,7 @@ const Challenges: React.FC = () => {
       setIsDailyLoading(true);
       const params = user ? { userId: user._id } : {};
       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/challenges/daily`, { params });
+      
       if (res.data) {
         const challenge = res.data;
         const formattedChallenge: Challenge = {
@@ -115,9 +116,16 @@ const Challenges: React.FC = () => {
 
         setDailyProblem(formattedChallenge);
         setIsSolved(challenge.isSolved || false);
+      } else {
+        // No daily challenge data
+        setDailyProblem(null);
+        setIsSolved(false);
       }
     } catch (error) {
       console.error("Failed to fetch daily challenge:", error);
+      // Backend returns 404 when no challenge is posted for today
+      setDailyProblem(null);
+      setIsSolved(false);
     } finally {
       setIsDailyLoading(false);
     }
@@ -218,6 +226,16 @@ const Challenges: React.FC = () => {
       setActiveTab('all');
     }
   }, [user, activeTab]);
+
+  // Show toast when user is not logged in
+  useEffect(() => {
+    if (!user) {
+      toast.error("Sign in to view status and solutions", {
+        duration: 2000,
+        position: 'bottom-right',
+      });
+    }
+  }, [user]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -400,9 +418,9 @@ const Challenges: React.FC = () => {
                   <h3 className="text-xl sm:text-2xl font-bold text-gray-200 dark:text-gray-800 line-clamp-1">
                     {dailyProblem.title}
                   </h3>
-                  <p className="text-gray-400 dark:text-gray-600 text-sm line-clamp-2">
+                  {/* <p className="text-gray-400 dark:text-gray-600 text-sm line-clamp-2">
                     {dailyProblem.description}
-                  </p>
+                  </p> */}
                   <div className="flex flex-wrap gap-2">
                     {dailyProblem.categories.map((cat: any) => (
                       <Badge
@@ -454,15 +472,19 @@ const Challenges: React.FC = () => {
               </div>
             </div>
           ) : (
-            <Card className="overflow-hidden my-4 w-full border-0">
-              <CardContent className="p-8 text-center">
-                <div className="flex flex-col items-center gap-4">
-                  <Clock className="h-12 w-12 text-muted-foreground" />
-                  <p className="text-muted-foreground text-lg">No daily challenge available</p>
-                  <p className="text-muted-foreground text-sm">Check back later for today's challenge!</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="mt-6 bg-gray-800 dark:bg-muted rounded-xl p-4 sm:p-6 flex flex-col items-center justify-center text-center space-y-4 h-40">
+              <div className="bg-amber-500/20 dark:bg-amber-500/30 p-3 rounded-full">
+                <Clock className="h-8 w-8 text-amber-500" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-200 dark:text-gray-800">
+                  No Problem Posted Today
+                </h3>
+                <p className="text-gray-400 dark:text-gray-600 text-sm">
+                  Please wait until a new daily challenge is posted. Check back soon!
+                </p>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -649,7 +671,7 @@ const Challenges: React.FC = () => {
                                 <Calendar className="h-3 w-3 mr-1" /> {problem.date}
                               </div>
                               <h3 className="text-lg font-bold text-foreground">{problem.title}</h3>
-                              <p className="text-muted-foreground text-sm line-clamp-2">{problem.description}</p>
+                              {/* <p className="text-muted-foreground text-sm line-clamp-2">{problem.description}</p> */}
                               <div className="flex flex-wrap gap-1.5">
                                 {problem.categories.map((cat: any) => (
                                   <Badge

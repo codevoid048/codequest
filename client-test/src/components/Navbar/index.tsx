@@ -14,6 +14,7 @@ export function Navbar() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // State for Sheet open/closed
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
@@ -90,11 +91,14 @@ export function Navbar() {
       if (showDropdown && !(event.target as Element).closest(".search-container")) {
         setShowDropdown(false);
       }
+      if (showProfileDropdown && !(event.target as Element).closest(".profile-dropdown-container")) {
+        setShowProfileDropdown(false);
+      }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showDropdown]);
+  }, [showDropdown, showProfileDropdown]);
 
   const renderResultItem = (item: any, idx: number) => {
     if (item.type === "challenge") {
@@ -262,20 +266,47 @@ export function Navbar() {
           )}
 
           {!isAuthenticated ? (
-            <>
-              <Button variant="outline" asChild className="text-gray-300 dark:text-gray-600 border-gray-700 dark:border-gray-300 hover:bg-gray-700 dark:hover:bg-gray-200">
-                <Link to="/login">Log In</Link>
-              </Button>
-              <Button asChild className="bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600">
-                <Link to="/register">Sign Up</Link>
-              </Button>
-            </>
+            <Button asChild className="bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600">
+              <Link to="/register">Enter</Link>
+            </Button>
           ) : (
-            <div className="flex items-center gap-4">
-              <Link to={`/profile/${user?.username}`}>{renderUserAvatar()}</Link>
-              <Button onClick={logout} variant="outline" className="text-gray-300 dark:text-gray-600 border-gray-700 dark:border-gray-300 hover:bg-gray-700 dark:hover:bg-gray-200">
-                Logout
+            <div className="relative profile-dropdown-container">
+              <Button 
+                variant="ghost" 
+                className="p-0 h-auto"
+                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+              >
+                {renderUserAvatar()}
               </Button>
+              
+              <AnimatePresence>
+                {showProfileDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-2 w-32 bg-gray-800 dark:bg-white border border-gray-700 dark:border-gray-200 rounded-md shadow-lg z-50 overflow-hidden"
+                  >
+                    <Link
+                      to={`/profile/${user?.username}`}
+                      className="block px-4 py-2 text-sm text-gray-300 dark:text-gray-700 hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors"
+                      onClick={() => setShowProfileDropdown(false)}
+                    >
+                      View Profile
+                    </Link>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setShowProfileDropdown(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-400 dark:text-red-600 hover:bg-red-600/20 dark:hover:bg-red-100 hover:text-red-300 dark:hover:text-red-700 transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>
@@ -377,23 +408,13 @@ export function Navbar() {
 
               <div className="mt-6 pt-6 border-t border-gray-700 dark:border-gray-200">
                 {!isAuthenticated ? (
-                  <div className="flex flex-col gap-3">
-                    <Button
-                      variant="outline"
-                      asChild
-                      className="w-full text-gray-300 dark:text-gray-600 border-gray-700 dark:border-gray-300 hover:bg-gray-700 dark:hover:bg-gray-200"
-                      onClick={() => setIsOpen(false)} // Close Sheet on click
-                    >
-                      <Link to="/login">Log In</Link>
-                    </Button>
-                    <Button
-                      asChild
-                      className="w-full bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600"
-                      onClick={() => setIsOpen(false)} // Close Sheet on click
-                    >
-                      <Link to="/register">Sign Up</Link>
-                    </Button>
-                  </div>
+                  <Button
+                    asChild
+                    className="w-full bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600"
+                    onClick={() => setIsOpen(false)} // Close Sheet on click
+                  >
+                    <Link to="/register">Enter</Link>
+                  </Button>
                 ) : (
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-3">

@@ -44,12 +44,12 @@ const SolutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
   const isSolved = problem.status === "Solved" ? "Solved" : "Not Solved";
 
   return (
-    <div className="flex w-full gap-2 self-start sm:self-center">
+    <div className="flex flex-col w-full gap-2 self-start sm:self-center">
       {isSolved === "Solved" ? (
-        <div className="flex w-full gap-2">
+        <div className="flex flex-col w-full gap-2">
           <Button
             size="sm"
-            className="flex-1 text-xs py-1 px-2 bg-green-600 hover:bg-green-700 text-white border-0 transition-colors duration-200"
+            className="w-full text-xs py-1 px-2 bg-green-600 hover:bg-green-700 text-white border-0 transition-colors duration-200"
             onClick={(e) => {
               e.stopPropagation();
               window.open(problem.problemUrl, "_blank");
@@ -61,7 +61,7 @@ const SolutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
             <Button
               size="sm"
               variant="outline"
-              className="flex-1 text-xs py-1 px-2 border-blue-500 hover:bg-blue-500/10 hover:text-blue-500 transition-colors duration-200 text-foreground"
+              className="w-full text-xs py-1 px-2 border-blue-500 hover:bg-blue-500/10 hover:text-blue-500 transition-colors duration-200 text-foreground"
               onClick={handleViewSolution}
             >
               <Eye className="h-3 w-3 mr-1" /> View Solution
@@ -69,11 +69,11 @@ const SolutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
           )}
         </div>
       ) : (
-        <div className="flex w-full gap-2">
+        <div className="flex flex-col w-full gap-2">
           <Button
             size="sm"
             variant="outline"
-            className="flex-1 text-xs py-1 px-2 border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
+            className="w-full text-xs py-1 px-2 border-primary hover:bg-primary/10 hover:text-primary transition-colors duration-200 text-foreground"
             onClick={(e) => {
               e.stopPropagation();
               window.open(problem.problemUrl, "_blank");
@@ -85,7 +85,7 @@ const SolutionStatus: React.FC<ProblemStatusProps> = ({ problem }) => {
             <Button
               size="sm"
               variant="outline"
-              className="flex-1 text-xs py-1 px-2 border-blue-500 hover:bg-blue-500/10 hover:text-blue-500 transition-colors duration-200 text-foreground"
+              className="w-full text-xs py-1 px-2 border-blue-500 hover:bg-blue-500/10 hover:text-blue-500 transition-colors duration-200 text-foreground"
               onClick={handleViewSolution}
             >
               <Eye className="h-3 w-3 mr-1" /> View Solution

@@ -120,8 +120,9 @@ export const getDailyChallenge = async (req, res) => {
             }
         }).sort({ createdAt: -1 });
 
+        // If no challenge found for today, return 404 instead of fallback to most recent
         if (!dailyChallenge) {
-            return res.status(404).json({ message: 'No daily challenge found' });
+            return res.status(404).json({ message: 'No challenge posted for today' });
         }
 
         let targetUser = null;
