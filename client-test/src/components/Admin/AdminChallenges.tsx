@@ -21,6 +21,7 @@ import React, {
 } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAdminStore } from "@/context/AdminContext";
+import { solvedChallenges } from "@/lib/potdchallenge";
 
 // Interfaces
 interface Challenge {
@@ -440,6 +441,22 @@ const AdminChallenges: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date");
+  const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges:0 });
+
+   useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
+                const data = await res.json();
+                setStats(data);
+            } catch (error) {
+                console.error("Failed to fetch stats:", error);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
   const [statistics, setStatistics] = useState<Statistics>({
     totalProblems: 0,
     averageSolveRate: 0,
@@ -503,7 +520,6 @@ const AdminChallenges: React.FC = () => {
 
       setProcessedChallenges(processedData);
       setFilteredChallenges(processedData);
-      calculateStatistics(processedData);
       setIsLoading(false);
     } else if (!storeLoading) {
       // If we're not loading and have no challenges, ensure we're not showing loading state
@@ -511,63 +527,65 @@ const AdminChallenges: React.FC = () => {
     }
   }, [storeRawChallenges, storeLoading, totalUsersCount]);
 
-  // Calculate statistics based on challenge data
-  const calculateStatistics = useCallback((challengesData: Challenge[]) => {
-    if (challengesData.length === 0) return;
+  
 
-    const totalProblems = challengesData.length;
+  // // Calculate statistics based on challenge data
+  // const calculateStatistics = useCallback((challengesData: Challenge[]) => {
+  //   if (challengesData.length === 0) return;
 
-    // Calculate average solve rate
-    const totalSolveRate = challengesData.reduce((sum, challenge) => {
-      return sum + (challenge.solvedPercentage || 0);
-    }, 0);
-    const averageSolveRate = totalProblems > 0 ? Math.round(totalSolveRate / totalProblems) : 0;
+  //   const totalProblems = challengesData.length;
 
-    // Find category performance
-    const categoryPerformance: Record<string, { count: number; totalRate: number }> = {};
+  //   // Calculate average solve rate
+  //   const totalSolveRate = challengesData.reduce((sum, challenge) => {
+  //     return sum + (challenge.solvedPercentage || 0);
+  //   }, 0);
+  //   const averageSolveRate = totalProblems > 0 ? Math.round(totalSolveRate / totalProblems) : 0;
 
-    challengesData.forEach((challenge) => {
-      const categories = Array.isArray(challenge.category)
-        ? challenge.category
-        : [challenge.category];
+  //   // Find category performance
+  //   const categoryPerformance: Record<string, { count: number; totalRate: number }> = {};
 
-      categories.forEach((cat) => {
-        if (!cat) return; // Skip empty categories
+  //   challengesData.forEach((challenge) => {
+  //     const categories = Array.isArray(challenge.category)
+  //       ? challenge.category
+  //       : [challenge.category];
 
-        if (!categoryPerformance[cat]) {
-          categoryPerformance[cat] = { count: 0, totalRate: 0 };
-        }
-        categoryPerformance[cat].count += 1;
-        categoryPerformance[cat].totalRate += challenge.solvedPercentage || 0;
-      });
-    });
+  //     categories.forEach((cat) => {
+  //       if (!cat) return; // Skip empty categories
 
-    let topPerformer = "";
-    let topPerformanceRate = 0;
-    let lowestPerformer = "";
-    let lowestPerformanceRate = 100;
+  //       if (!categoryPerformance[cat]) {
+  //         categoryPerformance[cat] = { count: 0, totalRate: 0 };
+  //       }
+  //       categoryPerformance[cat].count += 1;
+  //       categoryPerformance[cat].totalRate += challenge.solvedPercentage || 0;
+  //     });
+  //   });
 
-    Object.entries(categoryPerformance).forEach(([category, data]) => {
-      if (data.count === 0) return; // Skip if no challenges in this category
+  //   let topPerformer = "";
+  //   let topPerformanceRate = 0;
+  //   let lowestPerformer = "";
+  //   let lowestPerformanceRate = 100;
 
-      const avgRate = data.totalRate / data.count;
-      if (avgRate > topPerformanceRate) {
-        topPerformanceRate = avgRate;
-        topPerformer = category;
-      }
-      if (avgRate < lowestPerformanceRate && data.count > 1) {
-        lowestPerformanceRate = avgRate;
-        lowestPerformer = category;
-      }
-    });
+  //   Object.entries(categoryPerformance).forEach(([category, data]) => {
+  //     if (data.count === 0) return; // Skip if no challenges in this category
 
-    setStatistics({
-      totalProblems,
-      averageSolveRate,
-      topPerformer,
-      lowestPerformer,
-    });
-  }, []);
+  //     const avgRate = data.totalRate / data.count;
+  //     if (avgRate > topPerformanceRate) {
+  //       topPerformanceRate = avgRate;
+  //       topPerformer = category;
+  //     }
+  //     if (avgRate < lowestPerformanceRate && data.count > 1) {
+  //       lowestPerformanceRate = avgRate;
+  //       lowestPerformer = category;
+  //     }
+  //   });
+
+  //   setStatistics({
+  //     totalProblems,
+  //     averageSolveRate,
+  //     topPerformer,
+  //     lowestPerformer,
+  //   });
+  // }, []);
 
   // Get today's challenge
   const todayChallenge = useMemo(() => {
@@ -648,12 +666,12 @@ const AdminChallenges: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           title="Total Problems"
-          value={statistics.totalProblems}
+          value={stats.challengesCount}
           icon={<Calendar className="h-6 w-6 text-blue-500" />}
         />
         <StatCard
           title="Average Solve Rate"
-          value={statistics.averageSolveRate}
+          value={stats.solvedChallenges/stats.challengesCount}
           icon={<SlidersHorizontal className="h-6 w-6 text-blue-500" />}
         />
         <StatCard

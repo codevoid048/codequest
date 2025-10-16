@@ -9,15 +9,59 @@ const formatCount = (num) => {
 };
 
 export const getCounts = async (req, res) => {
-    try {
-        const usersCount = await User.countDocuments();
-        const challengesCount = await Challenge.countDocuments();
+  try {
+    const usersCount = await User.countDocuments();
+    const challengesCount = await Challenge.countDocuments();
+    const collegesCount = await User.distinct("college").then(colleges => colleges.length);
+    const affiliatesCount = await User.countDocuments({ isAffiliate: true });
+    const solvedChallenges = await Challenge.countDocuments({
+      solvedUsers: { $exists: true, $not: { $size: 0 } }
+    });
 
-        res.status(200).json({
-            usersCount: formatCount(usersCount),
-            challengesCount: formatCount(challengesCount),
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Server error" });
-    }
+    // 🔹 Count challenges by difficulty (Easy, Medium, Hard)
+    const difficulties = await Challenge.aggregate([
+      {
+        $group: {
+          _id: {
+            $switch: {
+              branches: [
+                { case: { $eq: [{ $toLower: "$difficulty" }, "easy"] }, then: "Easy" },
+                { case: { $eq: [{ $toLower: "$difficulty" }, "medium"] }, then: "Medium" },
+                { case: { $eq: [{ $toLower: "$difficulty" }, "hard"] }, then: "Hard" }
+              ],
+              default: "Unknown"
+            }
+          },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // 🔹 Format difficulty data into a consistent structure
+    const difficultyMap = { Easy: 0, Medium: 0, Hard: 0 };
+    difficulties.forEach(d => {
+      if (difficultyMap[d._id] !== undefined) {
+        difficultyMap[d._id] = d.count;
+      }
+    });
+
+    const difficultyData = [
+      { name: "Easy", value: difficultyMap.Easy, color: "#10b981" },
+      { name: "Medium", value: difficultyMap.Medium, color: "#f59e0b" },
+      { name: "Hard", value: difficultyMap.Hard, color: "#ef4444" }
+    ];
+
+    // 🔹 Send all counts + difficulty data
+    res.status(200).json({
+      usersCount: formatCount(usersCount),
+      challengesCount: formatCount(challengesCount),
+      collegesCount: formatCount(collegesCount),
+      affiliatesCount: formatCount(affiliatesCount),
+      solvedChallenges: formatCount(solvedChallenges),
+      difficultyDistribution: difficultyData
+    });
+  } catch (error) {
+    console.error("Error in getCounts:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };

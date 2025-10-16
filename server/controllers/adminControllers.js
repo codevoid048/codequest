@@ -43,7 +43,7 @@ export const getUsers = async (req, res) => {
         const sortObject = {};
         sortObject[sortBy] = sortDirection === 'asc' ? 1 : -1;
 
-        const totalUsers = await User.countDocuments(searchQuery);
+        const totalUsers = await User.countDocuments();
 
         const users = await User.find(searchQuery)
             .select("-password -resetPasswordToken -resetPasswordExpires -googleId -githubId -otp -otpExpires -gfg -leetCode -codechef -codeforces -otherLinks -solveChallenges")

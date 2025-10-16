@@ -59,6 +59,7 @@ interface TodayChallenge {
 
 export default function Dashboard() {
   const { users, challenges, fetchUsers, fetchChallenges } = useAdminStore();
+  const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0,collegesCount:0 ,affiliatesCount:0 });
   const [collegeData, setCollegeData] = useState<CollegeData[]>([]);
   const [problemDifficultyData, setProblemDifficultyData] = useState<ProblemDifficultyData[]>([]);
   const [userWeeklyData, setUserWeeklyData] = useState<UserWeeklyData[]>([]);
@@ -80,6 +81,21 @@ export default function Dashboard() {
     fetchUsers();
     fetchChallenges();
   }, [fetchUsers, fetchChallenges]);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
+                const data = await res.json();
+                setStats(data);
+                setProblemDifficultyData(data.difficultyDistribution);
+            } catch (error) {
+                console.error("Failed to fetch stats:", error);
+            }
+        };
+
+        fetchStats();
+    }, []);
 
   // Calculate weekly user registration data from actual database
   useEffect(() => {
@@ -119,9 +135,6 @@ export default function Dashboard() {
     }
   }, [users]);
 
-  // Count number of affiliates
-  const affiliatesCount = users.filter(user => user.isAffiliate === true).length;
-
   // Updated college data processing function
   useEffect(() => {
     if (users.length > 0) {
@@ -160,38 +173,6 @@ export default function Dashboard() {
   // Calculate challenge difficulty distribution from actual database
   useEffect(() => {
     if (challenges.length > 0) {
-      console.log("Processing challenge difficulty data...", challenges);
-
-      const difficultyCount: Record<string, number> = {
-        Easy: 0,
-        Medium: 0,
-        Hard: 0
-      };
-
-      challenges.forEach(challenge => {
-        if (challenge.difficulty) {
-          // Make sure we only count valid difficulties
-          const difficulty = challenge.difficulty.trim();
-          if (difficultyCount[difficulty] !== undefined) {
-            difficultyCount[difficulty]++;
-          } else {
-            // Handle case variations (easy, EASY, etc.)
-            const normalizedDifficulty = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
-            if (difficultyCount[normalizedDifficulty] !== undefined) {
-              difficultyCount[normalizedDifficulty]++;
-            }
-          }
-        }
-      });
-
-      const difficultyData: ProblemDifficultyData[] = [
-        { name: "Easy", value: difficultyCount.Easy, color: '#10b981' }, // Green
-        { name: "Medium", value: difficultyCount.Medium, color: '#f59e0b' }, // Amber
-        { name: "Hard", value: difficultyCount.Hard, color: '#ef4444' } // Red
-      ];
-
-      console.log("Difficulty distribution calculated:", difficultyData);
-      setProblemDifficultyData(difficultyData);
 
       // Set today's challenge data
       const latestChallenge = challenges[0];
@@ -213,7 +194,7 @@ export default function Dashboard() {
   }, [challenges]);
 
   // Calculate number of unique colleges
-  const uniqueCollegesCount = collegeData.length;
+  // const uniqueCollegesCount = collegeData.length;
 
 
   type SolvedStats = {
@@ -274,7 +255,7 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{users.length}</div>
+              <div className="text-2xl font-bold">{stats.usersCount}</div>
             </CardContent>
           </Card>
           <Card>
@@ -283,7 +264,7 @@ export default function Dashboard() {
               <Code2 className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{challenges.length}</div>
+              <div className="text-2xl font-bold">{stats.challengesCount}</div>
             </CardContent>
           </Card>
           <Card>
@@ -292,16 +273,16 @@ export default function Dashboard() {
               <GraduationCap className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{uniqueCollegesCount}</div>
+              <div className="text-2xl font-bold">{stats.collegesCount}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Affiliates</CardTitle>
-              <GraduationCap className="h-4 w-4 text-primary" />
+              <GraduationCap className="h-4 w-4 text-primary"/>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{affiliatesCount}</div>
+              <div className="text-2xl font-bold">{stats.affiliatesCount}</div>
             </CardContent>
           </Card>
         </div>
@@ -389,14 +370,14 @@ export default function Dashboard() {
                           className="h-full bg-primary"
                           style={{
                             width: todayChallenge.attempted > 0
-                              ? `${(todayChallenge.solved / users.length) * 100}%`
+                              ? `${(todayChallenge.solved / stats.usersCount) * 100}%`
                               : '0%'
                           }}
                         />
                       </div>
                       <div className="mt-2 text-xs text-center text-muted-foreground dark:text-black">
                         {users.length > 0
-                          ? ` ${Math.round((todayChallenge.solved / users.length) * 100)}% Success Rate (${todayChallenge.solved}/${users.length} users)`
+                          ? ` ${Math.round((todayChallenge.solved / users.length) * 100)}% Success Rate (${todayChallenge.solved}/${stats.usersCount} users)`
                           : "0 / 0 users"}
                       </div>
                     </div>
@@ -438,7 +419,7 @@ export default function Dashboard() {
                   </ResponsiveContainer>
                   {/* Show total count */}
                   <div className="mt-2 text-center text-sm text-muted-foreground">
-                    Total Problems: {problemDifficultyData.reduce((sum, item) => sum + item.value, 0)}
+                    Total Problems: {stats.challengesCount}
                   </div>
                 </CardContent>
               </Card>
