@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { Toast } from "react-hot-toast";
 import {
   Calendar,
   ChevronDown,
@@ -250,34 +251,30 @@ const ProblemCard = memo(
     const { fetchChallenges } = useAdminStore();
     const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges: 0 });
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
-        const data = await res.json();
-        setStats(data);
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
-      }
-    };
+    useEffect(() => {
+      const fetchStats = async () => {
+        try {
+          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
+          const data = await res.json();
+          setStats(data);
+        } catch (error) {
+          console.error("Failed to fetch stats:", error);
+        }
+      };
 
-    fetchStats();
-  }, []);
+      fetchStats();
+    }, []);
 
-    const handleUpdatePOTD = useCallback(async () => {
+    const navigate = useNavigate();
+    const handleUpdatePOTD = useCallback(() => {
+      // Navigate to AddChallenge page and just send a flag
       setIsLoading(true);
-      try {
-        // In a real implementation, make an API call here
-        // Simulation for the demo
-        await new Promise(resolve => setTimeout(resolve, 200));
-        await fetchChallenges(); // Refresh challenges after update
-        
-      } catch (error) {
-        console.error("Error updating POTD:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }, [fetchChallenges]);
+      setTimeout(50000)
+      navigate("/codingclubadmin/addchallenge", {
+        state: { fromAdmin: true },
+      });
+      toast.success("Redirected to AddChallenge page to view/update POTD!");
+    }, [navigate]);
 
     const getDifficultyColor = useCallback((difficulty: string): string => {
       switch (difficulty.toLowerCase()) {
@@ -304,9 +301,9 @@ const ProblemCard = memo(
         <div className="overflow-hidden px-1">
           <div className="h-1 rounded-full overflow-hidden">
             <div
-              style={{ width: `${challenge.solvedPercentage/stats.usersCount}%` }}
+              style={{ width: `${challenge.solvedPercentage / stats.usersCount}%` }}
               className="h-2 bg-blue-600 dark:bg-blue-500"
-              aria-label={`${challenge.solvedPercentage/stats.usersCount}% solved`}
+              aria-label={`${challenge.solvedPercentage / stats.usersCount}% solved`}
             />
           </div>
         </div>

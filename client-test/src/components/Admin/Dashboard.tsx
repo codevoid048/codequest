@@ -465,7 +465,7 @@ export default function Dashboard() {
                           position: 'right',
                           fill: '#666',
                           fontSize: 12,
-                          formatter: (value: { users: number }) => value.users
+                          formatter: (value: { users: number }) => value.user
                         }}
                       />
                     </BarChart>

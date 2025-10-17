@@ -1,6 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import {
   ChevronDown,
   Plus,
@@ -58,6 +59,8 @@ const platformOptions = ["LeetCode", "GeeksforGeeks", "CodeChef", "Codeforces"];
 
 export default function Admin() {
   const currentDate = new Date();
+  const location = useLocation();
+  const isFromAdmin = location.state?.fromAdmin || false;
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -85,6 +88,8 @@ export default function Admin() {
   const [challengeId, setChallengeId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isFromAdmin) {
+      // If opened from Admin, fetch today’s challenge from backend
     const fetchTodayChallenge = async () => {
       try {
         const res = await axios.get(
@@ -92,6 +97,7 @@ export default function Admin() {
           { withCredentials: true }
         );
         const challenge = res.data.challenge;
+        if (!challenge) return;
 
         setFormData({
           title: challenge.title,
@@ -119,7 +125,8 @@ export default function Admin() {
     };
 
     fetchTodayChallenge();
-  }, []);
+  }
+  }, [isFromAdmin]);
 
 
   // Calculate form completion progress
@@ -263,7 +270,12 @@ export default function Admin() {
       // );
       // console.log("Registration successful:", response.data);
 
-      const response = await axios.post(endpoint, payload, {
+      const response = challengeId ?
+      await axios.put(endpoint, payload,{
+        headers: { "Content-Type": "application/json"},
+        withCredentials: true,
+      })
+      :await axios.post(endpoint, payload, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
       });
@@ -277,9 +289,9 @@ export default function Admin() {
       console.log("Challenge saved:", response.data);
 
       // Success notification
-      alert(
-        `Challenge created! Successfully created "${formData.title}" on ${formData.createdAt.toLocaleDateString()} from ${formData.platform}`
-      );
+      // alert(
+      //   `Challenge created! Successfully created "${formData.title}" on ${formData.createdAt.toLocaleDateString()} from ${formData.platform}`
+      // );
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message || "An error occurred while creating the challenge.");
