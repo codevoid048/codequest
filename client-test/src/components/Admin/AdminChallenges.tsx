@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Toast } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import {
   Calendar,
   ChevronDown,
@@ -22,7 +22,6 @@ import React, {
 } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAdminStore } from "@/context/AdminContext";
-import { solvedChallenges } from "@/lib/potdchallenge";
 
 // Interfaces
 interface Challenge {
@@ -248,7 +247,6 @@ SkeletonLoader.displayName = "SkeletonLoader";
 const ProblemCard = memo(
   ({ challenge, isToday = false }: { challenge: Challenge; isToday?: boolean }) => {
     const [isLoading, setIsLoading] = useState(false);
-    const { fetchChallenges } = useAdminStore();
     const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges: 0 });
 
     useEffect(() => {
@@ -269,7 +267,9 @@ const ProblemCard = memo(
     const handleUpdatePOTD = useCallback(() => {
       // Navigate to AddChallenge page and just send a flag
       setIsLoading(true);
-      setTimeout(50000)
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
       navigate("/codingclubadmin/addchallenge", {
         state: { fromAdmin: true },
       });
@@ -296,14 +296,18 @@ const ProblemCard = memo(
       });
     };
 
+    const solvedPercentage = challenge.solvedUsersCount && stats.usersCount > 0
+      ? (challenge.solvedUsersCount / stats.usersCount) * 100
+      : 0;
+
     return (
       <>
         <div className="overflow-hidden px-1">
           <div className="h-1 rounded-full overflow-hidden">
             <div
-              style={{ width: `${challenge.solvedPercentage / stats.usersCount}%` }}
+              style={{ width: `${solvedPercentage}%` }}
               className="h-2 bg-blue-600 dark:bg-blue-500"
-              aria-label={`${challenge.solvedPercentage / stats.usersCount}% solved`}
+              aria-label={`${solvedPercentage}% solved`}
             />
           </div>
         </div>
@@ -381,7 +385,7 @@ const ProblemCard = memo(
                       </span>
                     </div>
                     <span className="text-sm font-medium text-blue-400 dark:text-blue-600">
-                      {challenge.solvedUsersCount / stats.usersCount || 0}%
+                      { solvedPercentage.toFixed(2) }%
                     </span>
                   </div>
                 </div>
@@ -472,7 +476,7 @@ const AdminChallenges: React.FC = () => {
     fetchStats();
   }, []);
 
-  const [statistics, setStatistics] = useState<Statistics>({
+  const [statistics] = useState<Statistics>({
     totalProblems: 0,
     averageSolveRate: 0,
     topPerformer: "",
