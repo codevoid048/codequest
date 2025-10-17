@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
     Calendar,
     Trophy,
@@ -41,40 +41,10 @@ const LoadingSkeleton = () => (
     </div>
 )
 
-// Throttle function
-const throttle = (func: Function, delay: number) => {
-    let timeoutId: NodeJS.Timeout | null = null;
-    let lastExecTime = 0;
-    return (...args: any[]) => {
-        const currentTime = Date.now();
-
-        if (currentTime - lastExecTime > delay) {
-            func(...args);
-            lastExecTime = currentTime;
-        } else {
-            if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                func(...args);
-                lastExecTime = Date.now();
-            }, delay - (currentTime - lastExecTime));
-        }
-    };
-};
-
 export default function AboutPage() {
-    const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("club")
     const [activeFaq, setActiveFaq] = useState<number | null>(null)
-    const [isVisible, setIsVisible] = useState<Record<string, boolean>>({
-        hero: true,
-        codequest: false,
-        about: false,
-        offers: false,
-        events: false,
-        team: false,
-        faq: false,
-        cta: false,
-    })
 
     // Memoize team members data to prevent recreating on each render
     const teamMembers = useMemo(() => [
@@ -200,213 +170,142 @@ export default function AboutPage() {
         },
     ], []);
 
-    // Optimized scroll handler with throttling
-    const handleScroll = useCallback(
-        throttle(() => {
-            const sections = ["hero", "codequest", "about", "offers", "events", "team", "faq", "cta"];
-            const updates: Record<string, boolean> = {};
-            let hasChanges = false;
-
-            sections.forEach((section) => {
-                const element = document.getElementById(section);
-                if (element) {
-                    const rect = element.getBoundingClientRect();
-                    const isInView = rect.top < window.innerHeight * 0.75 && rect.bottom > 0;
-                    updates[section] = isInView;
-                    if (updates[section] !== isVisible[section]) {
-                        hasChanges = true;
-                    }
-                }
-            });
-
-            if (hasChanges) {
-                setIsVisible(prev => ({ ...prev, ...updates }));
-            }
-        }, 150), // Throttle to 150ms
-        [isVisible]
-    );
-
-    // Initial loading effect
+    // Simple loading effect
     useEffect(() => {
         const timer = setTimeout(() => {
-            setIsInitialLoading(false);
-        }, 200); // Minimal delay for smooth transition
-
+            setIsLoading(false);
+        }, 500);
         return () => clearTimeout(timer);
     }, []);
 
-    // Scroll event listener
-    useEffect(() => {
-        if (isInitialLoading) return;
-
-        window.addEventListener("scroll", handleScroll, { passive: true });
-        handleScroll(); // Initial call
-
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, [handleScroll, isInitialLoading]);
-
-    // Memoized animation variants
-    const fadeIn = useMemo(() => ({
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
-    }), []);
-
-    const staggerContainer = useMemo(() => ({
+    // Animation variants - consistent and simple
+    const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.1,
-            },
-        },
-    }), []);
+                duration: 0.6,
+                staggerChildren: 0.2,
+                delayChildren: 0.3
+            }
+        }
+    };
 
-    const itemVariant = useMemo(() => ({
+    const itemVariants = {
         hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-    }), []);
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.6 }
+        }
+    };
 
-    // Show loading skeleton initially
-    if (isInitialLoading) {
+    const cardVariants = {
+        hidden: { opacity: 0, y: 30 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.5 }
+        }
+    };
+
+    if (isLoading) {
         return <LoadingSkeleton />;
     }
 
     return (
         <div className="relative w-full min-h-screen">
-            {/* Full-screen Particles Background */}
             <DottedBackground />
-            <div className="relative z-10">
+            <motion.div 
+                className="relative z-10"
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+            >
                 <div className="container mx-auto py-10 px-4 text-gray-800 overflow-hidden">
+                    
                     {/* About CodeQuest Platform */}
                     <motion.section
                         id="codequest"
                         className="mb-20"
-                        initial="hidden"
-                        animate={isVisible.codequest ? "visible" : "hidden"}
-                        variants={fadeIn}
+                        variants={itemVariants}
                     >
-                        <motion.div
-                            className="bg-transparent rounded-3xl p-10"
-                            transition={{ duration: 0.3 }}
-                        >
-                            <motion.h2
-                                className="text-3xl font-bold text-center mb-8"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.2 }}
-                            >
+                        <div className="bg-transparent rounded-3xl p-10">
+                            <h2 className="text-3xl font-bold text-center mb-8">
                                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
                                     CodeQuest Platform
                                 </span>
-                            </motion.h2>
+                            </h2>
 
                             <div className="max-w-4xl mx-auto text-white dark:text-muted-foreground">
-                                <motion.p
-                                    className="text-lg mb-6"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.3 }}
-                                >
+                                <p className="text-lg mb-6">
                                     CodeQuest at SRKRCoding Club offers an immersive programming challenge where participants solve
                                     increasingly complex coding problems within a time limit. It features competitive leaderboards, real-time
                                     feedback, and various difficulty levels to accommodate all skill sets.
-                                </motion.p>
+                                </p>
 
-                                <motion.p
-                                    className="text-lg mb-6"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.4 }}
-                                >
+                                <p className="text-lg mb-6">
                                     Winners receive recognition, prizes, and opportunities to connect with industry professionals for
                                     mentorship and career advancement.
-                                </motion.p>
+                                </p>
 
                                 <motion.div
                                     className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8"
-                                    variants={staggerContainer}
-                                    initial="hidden"
-                                    animate="visible"
+                                    variants={containerVariants}
                                 >
-                                    <motion.div
-                                        className="flex items-start space-x-4 bg-gray-800 dark:bg-muted/100 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
-                                        variants={itemVariant}
-                                        whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
-                                    >
-                                        <div className="bg-primary/10 p-3 rounded-lg">
-                                            <Trophy className="h-8 w-8 text-primary flex-shrink-0" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-xl mb-2 text-primary">Competitive Leaderboards</h3>
-                                            <p className="text-muted-foreground">
-                                                Track your progress and compete with peers across different skill levels.
-                                            </p>
-                                        </div>
-                                    </motion.div>
-
-                                    <motion.div
-                                        className="flex items-start space-x-4 bg-gray-800 dark:bg-muted/100 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
-                                        variants={itemVariant}
-                                        whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
-                                    >
-                                        <div className="bg-primary/10 p-3 rounded-lg">
-                                            <Zap className="h-8 w-8 text-primary flex-shrink-0" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-xl mb-2 text-primary">Real-time Feedback</h3>
-                                            <p className="text-muted-foreground">
-                                                Get immediate results and code analysis to improve your solutions.
-                                            </p>
-                                        </div>
-                                    </motion.div>
-
-                                    <motion.div
-                                        className="flex items-start space-x-4 bg-gray-800 dark:bg-muted/100 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
-                                        variants={itemVariant}
-                                        whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
-                                    >
-                                        <div className="bg-primary/10 p-3 rounded-lg">
-                                            <Code className="h-8 w-8 text-primary flex-shrink-0" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-xl mb-2 text-primary">Multi-language Support</h3>
-                                            <p className="text-muted-foreground">
-                                                Solve problems in your preferred programming language with full support.
-                                            </p>
-                                        </div>
-                                    </motion.div>
-
-                                    <motion.div
-                                        className="flex items-start space-x-4 bg-gray-800 dark:bg-muted/100 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
-                                        variants={itemVariant}
-                                        whileHover={{ y: -5, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
-                                    >
-                                        <div className="bg-primary/10 p-3 rounded-lg ">
-                                            <Users className="h-8 w-8 text-primary flex-shrink-0" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-xl mb-2 text-primary">Industry Connections</h3>
-                                            <p className="text-muted-foreground">Connect with mentors and recruiters from top tech companies.</p>
-                                        </div>
-                                    </motion.div>
+                                    {[
+                                        {
+                                            icon: <Trophy className="h-8 w-8 text-primary flex-shrink-0" />,
+                                            title: "Competitive Leaderboards",
+                                            description: "Track your progress and compete with peers across different skill levels."
+                                        },
+                                        {
+                                            icon: <Zap className="h-8 w-8 text-primary flex-shrink-0" />,
+                                            title: "Real-time Feedback",
+                                            description: "Get immediate results and code analysis to improve your solutions."
+                                        },
+                                        {
+                                            icon: <Code className="h-8 w-8 text-primary flex-shrink-0" />,
+                                            title: "Multi-language Support",
+                                            description: "Solve problems in your preferred programming language with full support."
+                                        },
+                                        {
+                                            icon: <Users className="h-8 w-8 text-primary flex-shrink-0" />,
+                                            title: "Industry Connections",
+                                            description: "Connect with mentors and recruiters from top tech companies."
+                                        }
+                                    ].map((feature, index) => (
+                                        <motion.div
+                                            key={index}
+                                            className="flex items-start space-x-4 bg-gray-800 dark:bg-muted/100 p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
+                                            variants={cardVariants}
+                                            whileHover={{ y: -2 }}
+                                        >
+                                            <div className="bg-primary/10 p-3 rounded-lg">
+                                                {feature.icon}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-xl mb-2 text-primary">{feature.title}</h3>
+                                                <p className="text-muted-foreground">{feature.description}</p>
+                                            </div>
+                                        </motion.div>
+                                    ))}
                                 </motion.div>
                             </div>
-                        </motion.div>
+                        </div>
                     </motion.section>
 
                     {/* About SRKR Coding Club */}
                     <motion.section
                         id="about"
                         className="mb-20 px-5"
-                        initial="hidden"
-                        animate={isVisible.about ? "visible" : "hidden"}
-                        variants={fadeIn}
+                        variants={itemVariants}
                     >
-                        <motion.h2 className="text-3xl font-bold text-center mb-12" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        <h2 className="text-3xl font-bold text-center mb-12">
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
                                 About SRKRCoding Club
                             </span>
-                        </motion.h2>
+                        </h2>
 
                         <Tabs defaultValue="club" value={activeTab} onValueChange={setActiveTab} className="w-full">
                             <div className="flex justify-center mb-8">
@@ -427,54 +326,25 @@ export default function AboutPage() {
                             </div>
 
                             <TabsContent value="club" className="mt-0">
-                                <motion.div
-                                    className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-center"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ duration: 0.5 }}
-                                >
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-center">
                                     <div className="lg:col-span-2">
-                                        <motion.p
-                                            className="text-lg mb-4 text-muted-foreground"
-                                            initial={{ x: -20, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: 0.1 }}
-                                        >
+                                        <p className="text-lg mb-4 text-muted-foreground">
                                             Founded in 2023, SRKRCoding Club is the premier technical community at SRKR Engineering College,
                                             dedicated to fostering coding excellence and innovation among students.
-                                        </motion.p>
-                                        <motion.p
-                                            className="text-lg mb-4 text-muted-foreground"
-                                            initial={{ x: -20, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: 0.2 }}
-                                        >
+                                        </p>
+                                        <p className="text-lg mb-4 text-muted-foreground">
                                             Founded with a vision to empower students through code, the club offers hands-on opportunities to explore technologies, build real-world projects, and grow together as future tech leaders.
-                                        </motion.p>
-                                        <motion.p
-                                            className="text-lg mb-4 text-muted-foreground"
-                                            initial={{ x: -20, opacity: 0 }}
-                                            animate={{ x: 0, opacity: 1 }}
-                                            transition={{ delay: 0.3 }}
-                                        >
+                                        </p>
+                                        <p className="text-lg mb-4 text-muted-foreground">
                                             With over 500 active members, we've become one of the largest and most active coding communities in
                                             the region, with alumni working at leading tech companies worldwide.
-                                        </motion.p>
+                                        </p>
                                     </div>
-                                    <motion.div
-                                        className="relative"
-                                        initial={{ scale: 0.9, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        transition={{ delay: 0.4, duration: 0.5 }}
-                                    >
-                                        <div className="absolute -inset-0.5 bg-gradient-to-r rounded-2xl blur opacity-80"></div>
-                                        <div className="relative bg-gray-900  dark:bg-secondary rounded-2xl p-8 shadow-lg transform transition-transform duration-300 hover:scale-105">
+                                    <div className="relative">
+                                        <div className="relative bg-gray-900 dark:bg-secondary rounded-2xl p-8 shadow-lg hover:scale-105 transition-transform duration-300">
                                             <div className="flex justify-center mb-6">
-                                                <div className="relative">
-                                                    <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-                                                    <div className="relative bg-white/80 dark:bg-primary-foreground rounded-full p-3">
-                                                        <Award className="h-10 w-10 text-primary" />
-                                                    </div>
+                                                <div className="relative bg-white/80 dark:bg-primary-foreground rounded-full p-3">
+                                                    <Award className="h-10 w-10 text-primary" />
                                                 </div>
                                             </div>
                                             <h3 className="text-xl text-muted-foreground font-semibold text-center mb-4">By the Numbers</h3>
@@ -497,75 +367,48 @@ export default function AboutPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                    </motion.div>
-                                </motion.div>
+                                    </div>
+                                </div>
                             </TabsContent>
 
                             <TabsContent value="achievements" className="mt-0">
-                                <motion.div
-                                    className="bg-gradient-to-br p-8 rounded-2xl"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.5 }}
-                                >
+                                <div className="bg-gradient-to-br p-8 rounded-2xl">
                                     <h3 className="text-xl font-semibold mb-6 text-primary text-center">Club Achievements</h3>
-                                    <motion.div
-                                        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                                        variants={staggerContainer}
-                                        initial="hidden"
-                                        animate="visible"
-                                    >
-                                        <motion.div
-                                            className="flex items-start space-x-4 p-4  border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
-                                            variants={itemVariant}
-                                        >
-                                            <div className="bg-primary/10 p-2 rounded-full">
-                                                <Trophy className="h-6 w-6 text-primary" />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {[
+                                            {
+                                                icon: <Trophy className="h-6 w-6 text-primary" />,
+                                                text: "Recognized as the Best Technical Club by SRKR Engineering College for 2 consecutive years"
+                                            },
+                                            {
+                                                icon: <Award className="h-6 w-6 text-primary" />,
+                                                text: "Successfully organized two hackathons and three coding competitions, enhancing engagement and technical skill growth among participants"
+                                            },
+                                            {
+                                                icon: <Users className="h-6 w-6 text-primary" />,
+                                                text: "Collaborated with two tech companies to promote their platforms while offering students useful insights and internship opportunities."
+                                            },
+                                            {
+                                                icon: <Code className="h-6 w-6 text-primary" />,
+                                                text: "Developed multiple open-source projects with real-world applications, including CodeQuest for PODT and a live website for SRKR Coding Club."
+                                            }
+                                        ].map((achievement, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-start space-x-4 p-4 border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
+                                            >
+                                                <div className="bg-primary/10 p-2 rounded-full">
+                                                    {achievement.icon}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-muted-foreground">
+                                                        {achievement.text}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-medium text-muted-foreground">
-                                                    Recognized as the Best Technical Club by SRKR Engineering College for 2 consecutive years
-                                                </p>
-                                            </div>
-                                        </motion.div>
-
-                                        <motion.div
-                                            className="flex items-start space-x-4 p-4  border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
-                                            variants={itemVariant}
-                                        >
-                                            <div className="bg-primary/10 p-2 rounded-full">
-                                                <Award className="h-6 w-6 text-primary" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-muted-foreground">Successfully organized two hackathons and three coding competitions, enhancing engagement and technical skill growth among participants</p>
-                                            </div>
-                                        </motion.div>
-
-                                        <motion.div
-                                            className="flex items-start space-x-4 p-4  border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
-                                            variants={itemVariant}
-                                        >
-                                            <div className="bg-primary/10 p-2 rounded-full">
-                                                <Users className="h-6 w-6 text-primary" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-muted-foreground">Collaborated with two tech companies to promote their platforms while offering students useful insights and internship opportunities.</p>
-                                            </div>
-                                        </motion.div>
-
-                                        <motion.div
-                                            className="flex items-start space-x-4 p-4 border border-primary/30 rounded-xl hover:bg-secondary/100 transition-colors duration-300 bg-card text-card-foreground"
-                                            variants={itemVariant}
-                                        >
-                                            <div className="bg-primary/10 p-2 rounded-full ">
-                                                <Code className="h-6 w-6 text-primary" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-muted-foreground">Developed multiple open-source projects with real-world applications, including CodeQuest for PODT and a live website for SRKR Coding Club.</p>
-                                            </div>
-                                        </motion.div>
-                                    </motion.div>
-                                </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
                             </TabsContent>
                         </Tabs>
                     </motion.section>
@@ -574,183 +417,75 @@ export default function AboutPage() {
                     <motion.section
                         id="offers"
                         className="mb-20 px-5"
-                        initial="hidden"
-                        animate={isVisible.offers ? "visible" : "hidden"}
-                        variants={fadeIn}
+                        variants={itemVariants}
                     >
-                        <motion.h2 className="text-3xl font-bold text-center mb-12" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        <h2 className="text-3xl font-bold text-center mb-12">
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
                                 What We Offer
                             </span>
-                        </motion.h2>
+                        </h2>
 
                         <motion.div
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                            variants={staggerContainer}
-                            initial="hidden"
-                            animate="visible"
+                            variants={containerVariants}
                         >
-                            <motion.div
-                                className="group relative overflow-hidden rounded-2xl"
-                                variants={itemVariant}
-                                whileHover={{ y: -5 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20 "></div>
-                                <div className="relative z-20 p-8 h-full flex flex-col">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-                                            <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
-                                            group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <Code className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 duration-300" />
+                            {[
+                                {
+                                    icon: <Code className="h-8 w-8" />,
+                                    title: "Daily Coding Challenges",
+                                    description: "Sharpen your skills with daily problems (POTD) on the CodeQuest platform, curated for all levels — from beginner to advanced."
+                                },
+                                {
+                                    icon: <BookOpen className="h-8 w-8" />,
+                                    title: "Hackathons",
+                                    description: "Collaborate and innovate at HackOverflow — our club's hackathon where participants team up to build real-world tech solutions."
+                                },
+                                {
+                                    icon: <Trophy className="h-8 w-8" />,
+                                    title: "Competitions",
+                                    description: "Test your coding skills through competitions like IconCoders, organized by our club to solve challenging problems and win exciting prizes."
+                                },
+                                {
+                                    icon: <Users className="h-8 w-8" />,
+                                    title: "Workshops",
+                                    description: "Gain practical knowledge through hands-on workshops organized by our club, focusing on modern technologies and industry practices."
+                                },
+                                {
+                                    icon: <Zap className="h-8 w-8" />,
+                                    title: "Courses",
+                                    description: "Learn through courses conducted by our club, with live sessions covering the latest technologies and industry-relevant skills."
+                                },
+                                {
+                                    icon: <Calendar className="h-8 w-8" />,
+                                    title: "Project Collaboration",
+                                    description: "Developed multiple open-source projects with real-world applications, including the CodeQuest platform and the SRKR Coding Club website."
+                                }
+                            ].map((offer, index) => (
+                                <motion.div
+                                    key={index}
+                                    className="group relative overflow-hidden rounded-2xl"
+                                    variants={cardVariants}
+                                    whileHover={{ y: -3 }}
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20"></div>
+                                    <div className="relative z-20 p-8 h-full flex flex-col">
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
+                                                <div className="text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300">
+                                                    {offer.icon}
+                                                </div>
                                             </div>
+                                            <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300">
+                                                {offer.title}
+                                            </h3>
                                         </div>
-                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300">
-                                            Daily Coding Challenges
-                                        </h3>
+                                        <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2">
+                                            {offer.description}
+                                        </p>
                                     </div>
-                                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
-                                        Sharpen your skills with daily problems (POTD) on the CodeQuest platform, curated for all levels — from beginner to advanced.
-                                    </p>
-                                </div>
-                            </motion.div>
-
-                            <motion.div
-                                className="group relative overflow-hidden rounded-2xl"
-                                variants={itemVariant}
-                                whileHover={{ y: -5 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20"></div>
-                                <div className="relative z-20 p-8 h-full flex flex-col">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-                                            <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
-                                            group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <BookOpen className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
-                                            </div>
-                                        </div>
-                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                            Hackathons
-                                        </h3>
-                                    </div>
-                                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
-                                        Collaborate and innovate at HackOverflow — our club's hackathon where participants team up to build real-world tech solutions.
-                                    </p>
-                                </div>
-                            </motion.div>
-
-                            <motion.div
-                                className="group relative overflow-hidden rounded-2xl"
-                                variants={itemVariant}
-                                whileHover={{ y: -5 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20"></div>
-                                <div className="relative z-20 p-8 h-full flex flex-col">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-                                            <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
-                                            group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <Trophy className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300 " />
-                                            </div>
-                                        </div>
-                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                            Competitions
-                                        </h3>
-                                    </div>
-                                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-2 opacity-100 group-hover:opacity-100">
-                                        Test your coding skills through competitions like IconCoders, organized by our club to solve challenging problems and win exciting prizes.
-                                    </p>
-                                </div>
-                            </motion.div>
-
-                            <motion.div
-                                className="group relative overflow-hidden rounded-2xl"
-                                variants={itemVariant}
-                                whileHover={{ y: -5 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20"></div>
-                                <div className="relative z-20 p-8 h-full flex flex-col">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-                                            <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
-                                            group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <Users className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
-                                            </div>
-                                        </div>
-                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                            Workshops
-                                        </h3>
-                                    </div>
-                                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
-                                        Gain practical knowledge through hands-on workshops organized by our club, focusing on modern technologies and industry practices.
-                                    </p>
-                                </div>
-                            </motion.div>
-
-                            <motion.div
-                                className="group relative overflow-hidden rounded-2xl"
-                                variants={itemVariant}
-                                whileHover={{ y: -5 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20"></div>
-                                <div className="relative z-20 p-8 h-full flex flex-col">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-                                            <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
-                                            group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <Zap className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
-                                            </div>
-                                        </div>
-                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                            Courses
-                                        </h3>
-                                    </div>
-                                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
-                                        Learn through courses conducted by our club, with live sessions covering the latest technologies and industry-relevant skills.
-                                    </p>
-                                </div>
-                            </motion.div>
-
-                            <motion.div
-                                className="group relative overflow-hidden rounded-2xl"
-                                variants={itemVariant}
-                                whileHover={{ y: -5 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary opacity-0 group-hover:opacity-90 transition-opacity duration-300 z-10"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-primary/20"></div>
-                                <div className="relative z-20 p-8 h-full flex flex-col">
-                                    <div className="flex items-center gap-3">
-                                        <div className="relative">
-                                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary rounded-full blur-sm"></div>
-                                            <div className="relative bg-white dark:bg-primary-foreground rounded-full p-3 w-14 h-14 flex items-center justify-center shadow-md 
-                                            group-hover:bg-foreground/30 group-hover:text-white transition-colors duration-300">
-                                                <Calendar className="h-8 w-8 text-primary group-hover:text-white dark:text-primary dark:group-hover:text-gray-800 transition-colors duration-300" />
-                                            </div>
-                                        </div>
-                                        <h3 className="text-xl font-semibold text-primary group-hover:text-white transition-colors duration-300 mb-2">
-                                            Project Collaboration
-                                        </h3>
-                                    </div>
-                                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 mt-auto opacity-100 group-hover:opacity-100">
-                                        Developed multiple open-source projects with real-world applications, including the CodeQuest platform and the SRKR Coding Club website.
-                                    </p>
-                                </div>
-                            </motion.div>
+                                </motion.div>
+                            ))}
                         </motion.div>
                     </motion.section>
 
@@ -758,29 +493,24 @@ export default function AboutPage() {
                     <motion.section
                         id="events"
                         className="mb-20 px-5"
-                        initial="hidden"
-                        animate={isVisible.events ? "visible" : "hidden"}
-                        variants={fadeIn}
+                        variants={itemVariants}
                     >
-                        <motion.h2 className="text-3xl font-bold text-center mb-12" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        <h2 className="text-3xl font-bold text-center mb-12">
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
                                 Major Events
                             </span>
-                        </motion.h2>
+                        </h2>
 
                         <motion.div
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-10"
-                            variants={staggerContainer}
-                            initial="hidden"
-                            animate="visible"
+                            variants={containerVariants}
                         >
                             {majorEvents.map((event, index) => (
                                 <motion.div
                                     key={index}
                                     className="relative overflow-hidden group"
-                                    variants={itemVariant}
-                                    whileHover={{ y: -5 }}
-                                    transition={{ duration: 0.4 }}
+                                    variants={cardVariants}
+                                    whileHover={{ y: -3 }}
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/15 rounded-2xl -z-10"></div>
                                     <Card className="border border-primary/10 hover:border-primary/30 transition-all duration-300 group-hover:shadow-lg mb-5 h-50">
@@ -811,54 +541,45 @@ export default function AboutPage() {
                     <motion.section
                         id="team"
                         className="mb-20 text-center"
-                        initial="hidden"
-                        animate={isVisible.team ? "visible" : "hidden"}
-                        variants={fadeIn}
+                        variants={itemVariants}
                     >
-                        <motion.h2 className="text-3xl font-bold mb-12" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        <h2 className="text-3xl font-bold mb-12">
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
                                 Meet Our Team
                             </span>
-                        </motion.h2>
+                        </h2>
 
                         <motion.div
                             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-7xl mx-auto px-4 justify-items-center items-center"
-                            variants={staggerContainer}
-                            initial="hidden"
-                            animate="visible"
+                            variants={containerVariants}
                         >
                             {teamMembers.map((member) => (
                                 <motion.div
                                     key={member.id}
                                     className="group w-full max-w-[240px]"
-                                    variants={itemVariant}
-                                    whileHover={{ y: -10 }}
-                                    transition={{ duration: 0.3 }}
+                                    variants={cardVariants}
+                                    whileHover={{ y: -5 }}
                                 >
                                     <div className="relative">
-                                        <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-primary/60 rounded-2xl blur opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
                                         <Card className="relative bg-card shadow-lg rounded-2xl p-6 text-center w-60 border-primary/10 group-hover:border-transparent transition-all duration-300">
                                             <div className="flex justify-center">
-                                                <div className="relative">
-                                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-primary/60 rounded-full blur opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
-                                                    <Avatar className="h-40 w-42 border-2 border-primary/20 group-hover:border-primary/50 transition-all duration-300">
-                                                        <AvatarImage
-                                                            src={member.image}
-                                                            alt={member.name}
-                                                            loading="lazy"
-                                                        />
-                                                        <AvatarFallback className="bg-primary/10 text-primary">
-                                                            {member.name
-                                                                .split(" ")
-                                                                .map((n) => n[0])
-                                                                .join("")}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                </div>
+                                                <Avatar className="h-40 w-42 border-2 border-primary/20 group-hover:border-primary/50 transition-all duration-300">
+                                                    <AvatarImage
+                                                        src={member.image}
+                                                        alt={member.name}
+                                                        loading="lazy"
+                                                    />
+                                                    <AvatarFallback className="bg-primary/10 text-primary">
+                                                        {member.name
+                                                            .split(" ")
+                                                            .map((n) => n[0])
+                                                            .join("")}
+                                                    </AvatarFallback>
+                                                </Avatar>
                                             </div>
                                             <h3 className="text-xl font-semibold text-primary">{member.name}</h3>
                                             <p className="text-muted-foreground text-sm">{member.role}</p>
-                                            <div className="pt-2 border-t border-primary/10 flex justify-center space-x-3 opacity-100 transition-opacity duration-300">
+                                            <div className="pt-2 border-t border-primary/10 flex justify-center space-x-3">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
@@ -895,19 +616,17 @@ export default function AboutPage() {
                     <motion.section
                         id="faq"
                         className="mb-20"
-                        initial="hidden"
-                        animate={isVisible.faq ? "visible" : "hidden"}
-                        variants={fadeIn}
+                        variants={itemVariants}
                     >
-                        <motion.h2 className="text-3xl font-bold text-center mb-12" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        <h2 className="text-3xl font-bold text-center mb-12">
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/90">
                                 Frequently Asked Questions
                             </span>
-                        </motion.h2>
+                        </h2>
 
-                        <motion.div className="max-w-3xl mx-auto" variants={staggerContainer} initial="hidden" animate="visible">
+                        <div className="max-w-3xl mx-auto">
                             {faqItems.map((item, index) => (
-                                <motion.div key={index} className="mb-4" variants={itemVariant}>
+                                <div key={index} className="mb-4">
                                     <div
                                         className={`border border-primary/10 rounded-lg shadow-sm p-4 cursor-pointer bg-card transition-all duration-300 ${activeFaq === index ? "bg-card" : "hover:bg-0"
                                             }`}
@@ -934,12 +653,12 @@ export default function AboutPage() {
                                             <p className="text-muted-foreground mt-4">{item.answer}</p>
                                         </motion.div>
                                     </div>
-                                </motion.div>
+                                </div>
                             ))}
-                        </motion.div>
+                        </div>
                     </motion.section>
                 </div>
-            </div>
+            </motion.div>
             <ScrollToTopButton />
         </div>
     )
