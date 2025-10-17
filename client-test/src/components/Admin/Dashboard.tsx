@@ -135,7 +135,7 @@ export default function Dashboard() {
     }
   }, [users]);
 
-  // Updated college data processing function
+  // Updated college data processing
   useEffect(() => {
     if (users.length > 0) {
       // Create college distribution data
