@@ -248,14 +248,30 @@ const ProblemCard = memo(
   ({ challenge, isToday = false }: { challenge: Challenge; isToday?: boolean }) => {
     const [isLoading, setIsLoading] = useState(false);
     const { fetchChallenges } = useAdminStore();
+    const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
+        const data = await res.json();
+        setStats(data);
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
     const handleUpdatePOTD = useCallback(async () => {
       setIsLoading(true);
       try {
         // In a real implementation, make an API call here
         // Simulation for the demo
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 200));
         await fetchChallenges(); // Refresh challenges after update
+        
       } catch (error) {
         console.error("Error updating POTD:", error);
       } finally {
@@ -266,11 +282,11 @@ const ProblemCard = memo(
     const getDifficultyColor = useCallback((difficulty: string): string => {
       switch (difficulty.toLowerCase()) {
         case "easy":
-          return "bg-emerald-500/30 text-emerald-500 border-emerald-500/60 dark:bg-emerald-500/20 dark:border-emerald-500/50";
+          return "bg-emerald-900/50 text-emerald-500 border-emerald-500/60 dark:bg-emerald-500/20 dark:border-emerald-500/50";
         case "medium":
-          return "bg-amber-500/30 text-amber-500 border-amber-500/60 dark:bg-amber-500/20 dark:border-amber-500/50";
+          return "bg-amber-900/50 text-amber-500 border-amber-500/60 dark:bg-amber-500/20 dark:border-amber-500/50";
         case "hard":
-          return "bg-rose-500/30 text-rose-500 border-rose-500/60 dark:bg-rose-500/20 dark:border-rose-500/50";
+          return "bg-rose-900/50 text-rose-500 border-rose-500/60 dark:bg-rose-500/20 dark:border-rose-500/50";
         default:
           return "bg-gray-500/30 text-gray-500 border-gray-500/60 dark:bg-gray-500/20 dark:border-gray-500/50";
       }
@@ -285,12 +301,12 @@ const ProblemCard = memo(
 
     return (
       <>
-        <div className="overflow-hidden">
-          <div className="h-1 rounded-lg overflow-hidden">
+        <div className="overflow-hidden px-1">
+          <div className="h-1 rounded-full overflow-hidden">
             <div
-              style={{ width: `${challenge.solvedPercentage}%` }}
-              className="h-1 bg-blue-600 dark:bg-blue-500"
-              aria-label={`${challenge.solvedPercentage}% solved`}
+              style={{ width: `${challenge.solvedPercentage/stats.usersCount}%` }}
+              className="h-2 bg-blue-600 dark:bg-blue-500"
+              aria-label={`${challenge.solvedPercentage/stats.usersCount}% solved`}
             />
           </div>
         </div>
@@ -344,14 +360,14 @@ const ProblemCard = memo(
                         challenge.category.map((tag, index) => (
                           <Badge
                             key={`${tag}-${index}`}
-                            className="bg-blue-900/30 dark:bg-blue-100/50 text-blue-400 dark:text-blue-600 border-blue-500/30"
+                            className="bg-black text-md dark:bg-blue-100/50 text-white dark:text-blue-600 border-blue-500/30"
                           >
                             {tag}
                           </Badge>
                         ))
                       ) : (
                         <Badge
-                          className="bg-blue-900/30 dark:bg-blue-100/50 text-blue-400 dark:text-blue-600 border-blue-500/30"
+                          className="bg-blue-900/80 dark:bg-blue-100/50 text-blue-400 dark:text-blue-600 border-blue-500/30"
                         >
                           {challenge.category}
                         </Badge>
@@ -364,19 +380,21 @@ const ProblemCard = memo(
                     <div className="bg-gray-700 dark:bg-gray-100 px-3 py-1 rounded-full">
                       <span className="text-sm font-medium text-white dark:text-gray-900">
                         <AnimatedCounter value={challenge.solvedUsersCount || 0} /> /{" "}
-                        {challenge.totalUsers || 0} solved
+                        {stats.usersCount || 0} solved
                       </span>
                     </div>
-                    <span className="text-sm font-medium text-blue-400 dark:text-blue-600 mt-1">
-                      {challenge.solvedPercentage || 0}%
+                    <span className="text-sm font-medium text-blue-400 dark:text-blue-600">
+                      {challenge.solvedUsersCount / stats.usersCount || 0}%
                     </span>
                   </div>
                 </div>
 
                 {/* Platform info */}
                 <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
-                  <Code className="h-4 w-4" />
-                  {challenge.platform}
+                  <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-2 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
+                    <Code className="h-5 w-4 text-primary" />
+                    {challenge.platform}
+                  </span>
                 </div>
               </div>
             )}
@@ -441,21 +459,21 @@ const AdminChallenges: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date");
-  const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges:0 });
+  const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges: 0 });
 
-   useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
-                const data = await res.json();
-                setStats(data);
-            } catch (error) {
-                console.error("Failed to fetch stats:", error);
-            }
-        };
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
+        const data = await res.json();
+        setStats(data);
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+      }
+    };
 
-        fetchStats();
-    }, []);
+    fetchStats();
+  }, []);
 
   const [statistics, setStatistics] = useState<Statistics>({
     totalProblems: 0,
@@ -463,7 +481,7 @@ const AdminChallenges: React.FC = () => {
     topPerformer: "",
     lowestPerformer: "",
   });
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   // Fetch challenge and user data from the store
   useEffect(() => {
@@ -527,7 +545,7 @@ const AdminChallenges: React.FC = () => {
     }
   }, [storeRawChallenges, storeLoading, totalUsersCount]);
 
-  
+
 
   // // Calculate statistics based on challenge data
   // const calculateStatistics = useCallback((challengesData: Challenge[]) => {
@@ -671,7 +689,7 @@ const AdminChallenges: React.FC = () => {
         />
         <StatCard
           title="Average Solve Rate"
-          value={stats.solvedChallenges/stats.challengesCount}
+          value={stats.solvedChallenges / stats.challengesCount}
           icon={<SlidersHorizontal className="h-6 w-6 text-blue-500" />}
         />
         <StatCard
@@ -749,9 +767,6 @@ const AdminChallenges: React.FC = () => {
         <h2 className="text-xl font-semibold text-white dark:text-gray-900 mb-4 flex items-center">
           <Calendar className="mr-2 h-5 w-5" />
           Previous Problems
-          <Badge className="ml-3 bg-blue-600 dark:bg-blue-500 text-white">
-            {filteredChallenges.length}
-          </Badge>
         </h2>
 
         <AnimatePresence>

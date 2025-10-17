@@ -155,3 +155,113 @@ export const addChallenge = async (req, res) => {
         });
     }
 };
+
+export const updateChallenge = async (req, res) => {
+    try {
+        const {
+            challengeId,
+            title,
+            description,
+            category,
+            difficulty,
+            points,
+            problemLink,
+            platform,
+            solution,
+        } = req.body;
+        if (!challengeId) {
+            return res.status(400).json({ success: false, message: "Challenge ID is required" });
+        }
+        const challenge = await Challenge.findById(challengeId);
+        if (!challenge) {
+            return res.status(404).json({ success: false, message: "Challenge not found" });
+        }
+        // Update challenge fields if provided
+        if (title) challenge.title = title;
+        if (description) challenge.description = description;   
+        if (category) challenge.category = category;
+        if (difficulty) challenge.difficulty = difficulty;
+        if (points) challenge.points = points;
+        if (problemLink) challenge.problemLink = problemLink;
+        if (platform) challenge.platform = platform;
+        const updatedChallenge = await challenge.save();
+
+        let updatedSolution = null;
+        if (solution) {
+            let existingSolution = await Solution.findOne({ challenge: challengeId });
+            if (existingSolution) {
+                // Update existing solution fields if provided
+                if (solution.explanation) existingSolution.explanation = solution.explanation;
+                if (solution.cpp) existingSolution.cpp = solution.cpp;
+                if (solution.python) existingSolution.python = solution.python;
+                if (solution.java) existingSolution.java = solution.java;
+                if (solution.timeComplexity) existingSolution.timeComplexity = solution.timeComplexity;
+                if (solution.spaceComplexity) existingSolution.spaceComplexity = solution.spaceComplexity;
+                updatedSolution = await existingSolution.save();
+            } else {
+                // Create new solution if none exists
+                const newSolution = new Solution({
+                    explanation: solution.explanation || "No explanation provided",
+                    cpp: solution.cpp || "",
+                    python: solution.python || "",
+                    java: solution.java || "",
+                    timeComplexity: solution.timeComplexity || "",
+                    spaceComplexity: solution.spaceComplexity || "",
+                    challenge: challengeId
+                });
+                updatedSolution = await newSolution.save();
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Challenge and solution updated successfully",
+            challenge: updatedChallenge,
+            solution: updatedSolution
+        });
+    } catch (error) {
+        console.error("Error in updateChallenge:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error",
+            error: error.message 
+        });
+    }
+};
+
+// Example: GET /admin/getchallenge
+export const getTodayChallenge = async (req, res) => {
+  try {
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+
+    // Find today's challenge
+    const challenge = await Challenge.findOne({
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    if (!challenge) {
+      return res.status(404).json({
+        success: false,
+        message: "No challenge found for today",
+      });
+    }
+
+    // Manually fetch related solution (since challenge schema has no `solution` field)
+    const solution = await Solution.findOne({ challenge: challenge._id });
+
+    return res.status(200).json({
+      success: true,
+      challenge,
+      solution: solution || null,
+    });
+  } catch (error) {
+    console.error("Error in getTodayChallenge:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
