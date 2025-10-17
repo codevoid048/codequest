@@ -1,6 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import {
   ChevronDown,
   Plus,
@@ -58,6 +59,8 @@ const platformOptions = ["LeetCode", "GeeksforGeeks", "CodeChef", "Codeforces"];
 
 export default function Admin() {
   const currentDate = new Date();
+  const location = useLocation();
+  const isFromAdmin = location.state?.fromAdmin || false;
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -82,6 +85,49 @@ export default function Admin() {
   const [showCategories, setShowCategories] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
   const [formProgress, setFormProgress] = useState(0);
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isFromAdmin) {
+      // If opened from Admin, fetch today’s challenge from backend
+    const fetchTodayChallenge = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/admin/get-todaychallenge`,
+          { withCredentials: true }
+        );
+        const challenge = res.data.challenge;
+        if (!challenge) return;
+
+        setFormData({
+          title: challenge.title,
+          description: challenge.description,
+          category: challenge.category,
+          difficulty: challenge.difficulty,
+          points: challenge.points,
+          problemLink: challenge.problemLink,
+          platform: challenge.platform,
+          createdAt: new Date(challenge.createdAt),
+          solutions: {
+            explanation: challenge.solution?.explanation || "",
+            cpp: challenge.solution?.cpp || "",
+            java: challenge.solution?.java || "",
+            python: challenge.solution?.python || "",
+            timeComplexity: challenge.solution?.timeComplexity || "",
+            spaceComplexity: challenge.solution?.spaceComplexity || "",
+          },
+        });
+
+        setChallengeId(challenge._id);
+      } catch (error) {
+        console.log("No challenge for today — creating new one.");
+      }
+    };
+
+    fetchTodayChallenge();
+  }
+  }, [isFromAdmin]);
+
 
   // Calculate form completion progress
   useEffect(() => {
@@ -177,42 +223,75 @@ export default function Admin() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const payload = {
+      challengeId,
+      title: formData.title,
+      description: formData.description,
+      category: formData.category,
+      difficulty: formData.difficulty,
+      points: formData.points,
+      problemLink: formData.problemLink,
+      platform: formData.platform,
+      createdAt: formData.createdAt.toISOString(),
+      solution: formData.solutions,
+    };
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const endpoint = challengeId
+        ? `${import.meta.env.VITE_API_BASE_URL}/admin/update-challenge`
+        : `${import.meta.env.VITE_API_BASE_URL}/admin/add-challenges`;
 
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/admin/add-challenges`,
-        {
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          difficulty: formData.difficulty,
-          points: formData.points,
-          problemLink: formData.problemLink,
-          createdAt: formData.createdAt.toISOString(),
-          platform: formData.platform,
-          solution: {
-            explanation: formData.solutions.explanation,
-            cpp: formData.solutions.cpp,
-            java: formData.solutions.java,
-            python: formData.solutions.python,
-            timeComplexity: formData.solutions.timeComplexity,
-            spaceComplexity: formData.solutions.spaceComplexity,
-          },
+      // const response = await axios.post(
+      //   `${import.meta.env.VITE_API_BASE_URL}/admin/add-challenges`,
+      //   {
+      //     title: formData.title,
+      //     description: formData.description,
+      //     category: formData.category,
+      //     difficulty: formData.difficulty,
+      //     points: formData.points,
+      //     problemLink: formData.problemLink,
+      //     createdAt: formData.createdAt.toISOString(),
+      //     platform: formData.platform,
+      //     solution: {
+      //       explanation: formData.solutions.explanation,
+      //       cpp: formData.solutions.cpp,
+      //       java: formData.solutions.java,
+      //       python: formData.solutions.python,
+      //       timeComplexity: formData.solutions.timeComplexity,
+      //       spaceComplexity: formData.solutions.spaceComplexity,
+      //     },
 
 
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true
-        },
+      //   },
+      //   {
+      //     headers: { "Content-Type": "application/json" },
+      //     withCredentials: true
+      //   },
+      // );
+      // console.log("Registration successful:", response.data);
+
+      const response = challengeId ?
+      await axios.put(endpoint, payload,{
+        headers: { "Content-Type": "application/json"},
+        withCredentials: true,
+      })
+      :await axios.post(endpoint, payload, {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      });
+
+      toast.success(
+        challengeId
+          ? `Challenge "${formData.title}" updated successfully!`
+          : `Challenge "${formData.title}" created successfully!`
       );
-      console.log("Registration successful:", response.data);
+
+      console.log("Challenge saved:", response.data);
 
       // Success notification
-      alert(
-        `Challenge created! Successfully created "${formData.title}" on ${formData.createdAt.toLocaleDateString()} from ${formData.platform}`
-      );
+      // alert(
+      //   `Challenge created! Successfully created "${formData.title}" on ${formData.createdAt.toLocaleDateString()} from ${formData.platform}`
+      // );
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message || "An error occurred while creating the challenge.");
@@ -488,8 +567,8 @@ export default function Admin() {
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               className={`flex cursor-pointer items-center gap-2 rounded-full border-2 px-4 py-2 transition-all ${formData.difficulty === difficulty
-                                  ? getDifficultyColor(difficulty) + " bg-secondary/20"
-                                  : "border-gray-600 hover:border-gray-500"
+                                ? getDifficultyColor(difficulty) + " bg-secondary/20"
+                                : "border-gray-600 hover:border-gray-500"
                                 }`}
                             >
                               <RadioGroupItem
@@ -500,8 +579,8 @@ export default function Admin() {
                               <Label
                                 htmlFor={`difficulty-${difficulty.toLowerCase()}`}
                                 className={`cursor-pointer font-medium ${formData.difficulty === difficulty
-                                    ? getDifficultyColor(difficulty)
-                                    : "text-foreground"
+                                  ? getDifficultyColor(difficulty)
+                                  : "text-foreground"
                                   }`}
                               >
                                 {difficulty}
@@ -805,10 +884,10 @@ export default function Admin() {
                         {isSubmitting ? (
                           <div className="flex items-center gap-2">
                             <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"></div>
-                            <span>Creating...</span>
+                            <span>{challengeId ? "Updating..." : "Creating..."}</span>  
                           </div>
                         ) : (
-                          "Publish"
+                          <span>{challengeId ? "Update" : "Publish"}</span>
                         )}
                       </Button>
                     </div>

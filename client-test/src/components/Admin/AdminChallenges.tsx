@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { Toast } from "react-hot-toast";
 import {
   Calendar,
   ChevronDown,
@@ -21,6 +22,7 @@ import React, {
 } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAdminStore } from "@/context/AdminContext";
+import { solvedChallenges } from "@/lib/potdchallenge";
 
 // Interfaces
 interface Challenge {
@@ -247,29 +249,41 @@ const ProblemCard = memo(
   ({ challenge, isToday = false }: { challenge: Challenge; isToday?: boolean }) => {
     const [isLoading, setIsLoading] = useState(false);
     const { fetchChallenges } = useAdminStore();
+    const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges: 0 });
 
-    const handleUpdatePOTD = useCallback(async () => {
+    useEffect(() => {
+      const fetchStats = async () => {
+        try {
+          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
+          const data = await res.json();
+          setStats(data);
+        } catch (error) {
+          console.error("Failed to fetch stats:", error);
+        }
+      };
+
+      fetchStats();
+    }, []);
+
+    const navigate = useNavigate();
+    const handleUpdatePOTD = useCallback(() => {
+      // Navigate to AddChallenge page and just send a flag
       setIsLoading(true);
-      try {
-        // In a real implementation, make an API call here
-        // Simulation for the demo
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        await fetchChallenges(); // Refresh challenges after update
-      } catch (error) {
-        console.error("Error updating POTD:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }, [fetchChallenges]);
+      setTimeout(50000)
+      navigate("/codingclubadmin/addchallenge", {
+        state: { fromAdmin: true },
+      });
+      toast.success("Redirected to AddChallenge page to view/update POTD!");
+    }, [navigate]);
 
     const getDifficultyColor = useCallback((difficulty: string): string => {
       switch (difficulty.toLowerCase()) {
         case "easy":
-          return "bg-emerald-500/30 text-emerald-500 border-emerald-500/60 dark:bg-emerald-500/20 dark:border-emerald-500/50";
+          return "bg-emerald-900/50 text-emerald-500 border-emerald-500/60 dark:bg-emerald-500/20 dark:border-emerald-500/50";
         case "medium":
-          return "bg-amber-500/30 text-amber-500 border-amber-500/60 dark:bg-amber-500/20 dark:border-amber-500/50";
+          return "bg-amber-900/50 text-amber-500 border-amber-500/60 dark:bg-amber-500/20 dark:border-amber-500/50";
         case "hard":
-          return "bg-rose-500/30 text-rose-500 border-rose-500/60 dark:bg-rose-500/20 dark:border-rose-500/50";
+          return "bg-rose-900/50 text-rose-500 border-rose-500/60 dark:bg-rose-500/20 dark:border-rose-500/50";
         default:
           return "bg-gray-500/30 text-gray-500 border-gray-500/60 dark:bg-gray-500/20 dark:border-gray-500/50";
       }
@@ -284,12 +298,12 @@ const ProblemCard = memo(
 
     return (
       <>
-        <div className="overflow-hidden">
-          <div className="h-1 rounded-lg overflow-hidden">
+        <div className="overflow-hidden px-1">
+          <div className="h-1 rounded-full overflow-hidden">
             <div
-              style={{ width: `${challenge.solvedPercentage}%` }}
-              className="h-1 bg-blue-600 dark:bg-blue-500"
-              aria-label={`${challenge.solvedPercentage}% solved`}
+              style={{ width: `${challenge.solvedPercentage / stats.usersCount}%` }}
+              className="h-2 bg-blue-600 dark:bg-blue-500"
+              aria-label={`${challenge.solvedPercentage / stats.usersCount}% solved`}
             />
           </div>
         </div>
@@ -343,14 +357,14 @@ const ProblemCard = memo(
                         challenge.category.map((tag, index) => (
                           <Badge
                             key={`${tag}-${index}`}
-                            className="bg-blue-900/30 dark:bg-blue-100/50 text-blue-400 dark:text-blue-600 border-blue-500/30"
+                            className="bg-black text-md dark:bg-blue-100/50 text-white dark:text-blue-600 border-blue-500/30"
                           >
                             {tag}
                           </Badge>
                         ))
                       ) : (
                         <Badge
-                          className="bg-blue-900/30 dark:bg-blue-100/50 text-blue-400 dark:text-blue-600 border-blue-500/30"
+                          className="bg-blue-900/80 dark:bg-blue-100/50 text-blue-400 dark:text-blue-600 border-blue-500/30"
                         >
                           {challenge.category}
                         </Badge>
@@ -363,19 +377,21 @@ const ProblemCard = memo(
                     <div className="bg-gray-700 dark:bg-gray-100 px-3 py-1 rounded-full">
                       <span className="text-sm font-medium text-white dark:text-gray-900">
                         <AnimatedCounter value={challenge.solvedUsersCount || 0} /> /{" "}
-                        {challenge.totalUsers || 0} solved
+                        {stats.usersCount || 0} solved
                       </span>
                     </div>
-                    <span className="text-sm font-medium text-blue-400 dark:text-blue-600 mt-1">
-                      {challenge.solvedPercentage || 0}%
+                    <span className="text-sm font-medium text-blue-400 dark:text-blue-600">
+                      {challenge.solvedUsersCount / stats.usersCount || 0}%
                     </span>
                   </div>
                 </div>
 
                 {/* Platform info */}
                 <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
-                  <Code className="h-4 w-4" />
-                  {challenge.platform}
+                  <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-2 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
+                    <Code className="h-5 w-4 text-primary" />
+                    {challenge.platform}
+                  </span>
                 </div>
               </div>
             )}
@@ -440,13 +456,29 @@ const AdminChallenges: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date");
+  const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
+        const data = await res.json();
+        setStats(data);
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const [statistics, setStatistics] = useState<Statistics>({
     totalProblems: 0,
     averageSolveRate: 0,
     topPerformer: "",
     lowestPerformer: "",
   });
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   // Fetch challenge and user data from the store
   useEffect(() => {
@@ -503,7 +535,6 @@ const AdminChallenges: React.FC = () => {
 
       setProcessedChallenges(processedData);
       setFilteredChallenges(processedData);
-      calculateStatistics(processedData);
       setIsLoading(false);
     } else if (!storeLoading) {
       // If we're not loading and have no challenges, ensure we're not showing loading state
@@ -511,63 +542,65 @@ const AdminChallenges: React.FC = () => {
     }
   }, [storeRawChallenges, storeLoading, totalUsersCount]);
 
-  // Calculate statistics based on challenge data
-  const calculateStatistics = useCallback((challengesData: Challenge[]) => {
-    if (challengesData.length === 0) return;
 
-    const totalProblems = challengesData.length;
 
-    // Calculate average solve rate
-    const totalSolveRate = challengesData.reduce((sum, challenge) => {
-      return sum + (challenge.solvedPercentage || 0);
-    }, 0);
-    const averageSolveRate = totalProblems > 0 ? Math.round(totalSolveRate / totalProblems) : 0;
+  // // Calculate statistics based on challenge data
+  // const calculateStatistics = useCallback((challengesData: Challenge[]) => {
+  //   if (challengesData.length === 0) return;
 
-    // Find category performance
-    const categoryPerformance: Record<string, { count: number; totalRate: number }> = {};
+  //   const totalProblems = challengesData.length;
 
-    challengesData.forEach((challenge) => {
-      const categories = Array.isArray(challenge.category)
-        ? challenge.category
-        : [challenge.category];
+  //   // Calculate average solve rate
+  //   const totalSolveRate = challengesData.reduce((sum, challenge) => {
+  //     return sum + (challenge.solvedPercentage || 0);
+  //   }, 0);
+  //   const averageSolveRate = totalProblems > 0 ? Math.round(totalSolveRate / totalProblems) : 0;
 
-      categories.forEach((cat) => {
-        if (!cat) return; // Skip empty categories
+  //   // Find category performance
+  //   const categoryPerformance: Record<string, { count: number; totalRate: number }> = {};
 
-        if (!categoryPerformance[cat]) {
-          categoryPerformance[cat] = { count: 0, totalRate: 0 };
-        }
-        categoryPerformance[cat].count += 1;
-        categoryPerformance[cat].totalRate += challenge.solvedPercentage || 0;
-      });
-    });
+  //   challengesData.forEach((challenge) => {
+  //     const categories = Array.isArray(challenge.category)
+  //       ? challenge.category
+  //       : [challenge.category];
 
-    let topPerformer = "";
-    let topPerformanceRate = 0;
-    let lowestPerformer = "";
-    let lowestPerformanceRate = 100;
+  //     categories.forEach((cat) => {
+  //       if (!cat) return; // Skip empty categories
 
-    Object.entries(categoryPerformance).forEach(([category, data]) => {
-      if (data.count === 0) return; // Skip if no challenges in this category
+  //       if (!categoryPerformance[cat]) {
+  //         categoryPerformance[cat] = { count: 0, totalRate: 0 };
+  //       }
+  //       categoryPerformance[cat].count += 1;
+  //       categoryPerformance[cat].totalRate += challenge.solvedPercentage || 0;
+  //     });
+  //   });
 
-      const avgRate = data.totalRate / data.count;
-      if (avgRate > topPerformanceRate) {
-        topPerformanceRate = avgRate;
-        topPerformer = category;
-      }
-      if (avgRate < lowestPerformanceRate && data.count > 1) {
-        lowestPerformanceRate = avgRate;
-        lowestPerformer = category;
-      }
-    });
+  //   let topPerformer = "";
+  //   let topPerformanceRate = 0;
+  //   let lowestPerformer = "";
+  //   let lowestPerformanceRate = 100;
 
-    setStatistics({
-      totalProblems,
-      averageSolveRate,
-      topPerformer,
-      lowestPerformer,
-    });
-  }, []);
+  //   Object.entries(categoryPerformance).forEach(([category, data]) => {
+  //     if (data.count === 0) return; // Skip if no challenges in this category
+
+  //     const avgRate = data.totalRate / data.count;
+  //     if (avgRate > topPerformanceRate) {
+  //       topPerformanceRate = avgRate;
+  //       topPerformer = category;
+  //     }
+  //     if (avgRate < lowestPerformanceRate && data.count > 1) {
+  //       lowestPerformanceRate = avgRate;
+  //       lowestPerformer = category;
+  //     }
+  //   });
+
+  //   setStatistics({
+  //     totalProblems,
+  //     averageSolveRate,
+  //     topPerformer,
+  //     lowestPerformer,
+  //   });
+  // }, []);
 
   // Get today's challenge
   const todayChallenge = useMemo(() => {
@@ -648,12 +681,12 @@ const AdminChallenges: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           title="Total Problems"
-          value={statistics.totalProblems}
+          value={stats.challengesCount}
           icon={<Calendar className="h-6 w-6 text-blue-500" />}
         />
         <StatCard
           title="Average Solve Rate"
-          value={statistics.averageSolveRate}
+          value={stats.solvedChallenges / stats.challengesCount}
           icon={<SlidersHorizontal className="h-6 w-6 text-blue-500" />}
         />
         <StatCard
@@ -731,9 +764,6 @@ const AdminChallenges: React.FC = () => {
         <h2 className="text-xl font-semibold text-white dark:text-gray-900 mb-4 flex items-center">
           <Calendar className="mr-2 h-5 w-5" />
           Previous Problems
-          <Badge className="ml-3 bg-blue-600 dark:bg-blue-500 text-white">
-            {filteredChallenges.length}
-          </Badge>
         </h2>
 
         <AnimatePresence>
