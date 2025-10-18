@@ -20,8 +20,7 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({ origin: "https://codequest.srkrcodingclub.in", credentials: true }));
-
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 
 // Increased payload size limit
 app.use(express.json({ limit: '5mb' }));

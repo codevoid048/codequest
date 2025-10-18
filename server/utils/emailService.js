@@ -13,6 +13,9 @@ const EMAIL_CONFIG = {
     pass: process.env.EMAIL_PASS,
   },
   connectionTimeout: 5000,
+  tls: {
+    rejectUnauthorized: false
+  },
 };
 
 const RATE_LIMIT = {

@@ -14,7 +14,7 @@ dotenv.config();
 
 // Generate JWT token function
 const generateToken = (user) => {
-  rewt.sign({ id: user._id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "1d",
   });
 };
