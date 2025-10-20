@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import SEO from "@/components/SEO/SEO"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DottedBackground } from "../dotted-background"
 import ScrollToTopButton from "../scrolltotop"
@@ -214,8 +215,14 @@ export default function AboutPage() {
     }
 
     return (
-        <div className="relative w-full min-h-screen">
-            <DottedBackground />
+        <>
+            <SEO 
+                title="About SRKR Coding Club"
+                description="Learn about SRKR Coding Club, our mission, team members, and achievements. Founded in 2023, we're the premier technical community at SRKR Engineering College."
+                keywords="SRKR Coding Club, about us, team members, coding community, SRKR Engineering College, Bhimavaram, programming club"
+            />
+            <div className="relative w-full min-h-screen">
+                <DottedBackground />
             <motion.div 
                 className="relative z-10"
                 initial="hidden"
@@ -661,5 +668,6 @@ export default function AboutPage() {
             </motion.div>
             <ScrollToTopButton />
         </div>
+        </>
     )
 }

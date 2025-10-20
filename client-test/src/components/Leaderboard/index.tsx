@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Award, ChevronLeft, ChevronRight, ChevronUp, Crown, Medal, Search, Trophy, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { Link } from "react-router-dom"
+import SEO from "../SEO/SEO"
 
 const USERS_PER_PAGE = 10
 
@@ -148,13 +149,19 @@ export default function Leaderboard() {
   }
 
   return (
-    <div
-      className={cn(
-        "min-h-screen transition-all duration-500 px-4 sm:px-6 md:px-12 lg:px-20 bg-background text-foreground",
-        isDarkMode ? "dark" : "",
-        "bg-grid-pattern"
-      )}
-    >
+    <>
+      <SEO 
+        title="Leaderboard | CodeQuest - Top Coders Rankings"
+        description="Check out the CodeQuest leaderboard to see top performers, rankings, and coding achievements. Track your progress and compete with fellow coders."
+        keywords="coding leaderboard, programming rankings, competitive programming, coding achievements, top coders"
+      />
+      <div
+        className={cn(
+          "min-h-screen transition-all duration-500 px-4 sm:px-6 md:px-12 lg:px-20 bg-background text-foreground",
+          isDarkMode ? "dark" : "",
+          "bg-grid-pattern"
+        )}
+      >
       <div className="container mx-auto p-1 px-2 sm:px-4 relative mt-6">
         {/* Header and search UI */}
         <div className="relative z-10 sm:mb-12">
@@ -481,5 +488,6 @@ export default function Leaderboard() {
         </Card>
       </motion.div>
     </div>
+    </>
   )
 }

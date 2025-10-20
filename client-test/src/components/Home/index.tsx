@@ -8,6 +8,7 @@ import { HeroSection } from "@/components/hero-section"
 import { FeatureCard } from "@/components/feature-card"
 import { useAuth } from "@/context/AuthContext"
 import ScrollToTopButton from "../scrolltotop"
+import SEO from "../SEO/SEO"
 
 const Home = () => {
     const { user } = useAuth();
@@ -28,6 +29,12 @@ const Home = () => {
     }, []);
 
     return (
+        <>
+        <SEO 
+            title="CodeQuest - Daily Coding Challenges for Students"
+            description="Join CodeQuest for daily coding challenges, competitive programming, and skill building. Learn algorithms, data structures, and problem-solving with our community of coders."
+            keywords="coding challenges, programming contests, algorithms, data structures, competitive programming, coding practice"
+        />
         <div className="px-1">
             <HeroSection stats={stats} />
 
@@ -136,6 +143,7 @@ const Home = () => {
 
             <ScrollToTopButton />
         </div>
+        </>
     )
 }
 

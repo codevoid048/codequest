@@ -23,10 +23,12 @@ import AdminLogin from './components/Admin/index';
 import Dashboard from './components/Admin/Dashboard.tsx';
 import { useAdminStore } from './context/AdminContext.tsx';
 import AdminChallenges from './components/Admin/AdminChallenges.tsx';
+import RouteSEO from './components/RouteSEO';
 
 function UserApp() {
   return (
     <div className="flex flex-col min-h-screen">
+      <RouteSEO />
       <Navbar />
       <Toaster position="bottom-right" toastOptions={{ duration: 2000 }} />
       <Routes>

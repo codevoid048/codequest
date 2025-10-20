@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 
 import ChallengePopup from "./ChallengePopup";
+import SEO from "../SEO/SEO";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -357,7 +358,13 @@ const Challenges: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
+    <>
+      <SEO 
+        title="Daily Coding Challenges | CodeQuest"
+        description="Solve daily coding challenges from LeetCode, GeeksforGeeks, CodeChef, and Codeforces. Practice algorithms, data structures, and competitive programming problems."
+        keywords="daily coding challenges, leetcode problems, competitive programming, algorithms practice, data structures, coding contests"
+      />
+      <div className="w-full max-w-[1040px] mx-auto px-4 py-5 space-y-8 min-h-screen">
       {/* Daily Challenge Section */}
       <Card className="rounded-xl overflow-hidden shadow-lg border-1">
         <CardContent className="p-4 sm:p-6">
@@ -787,6 +794,7 @@ const Challenges: React.FC = () => {
         />
       )}
     </div>
+    </>
   );
 };
 

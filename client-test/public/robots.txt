@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://codequest.srkrcodingclub.com/sitemap.xml
+
+# Disallow admin routes (if any)
+Disallow: /codingclubadmin/
+Disallow: /admin/
+Disallow: /api/
+
+# Allow main pages
+Allow: /
+Allow: /about
+Allow: /challenges
+Allow: /leaderboard
+Allow: /register
+Allow: /login
+Allow: /privacy-policy
+Allow: /terms-conditions
+
+# Crawl delay (optional)
+Crawl-delay: 1
