@@ -32,6 +32,7 @@ export default function RegisterPage() {
     const [error, setError] = useState<string>("");
     const [showPassword, setShowPassword] = useState(false); // State for password visibility
     const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State for confirm password visibility
+    const [acceptedTerms, setAcceptedTerms] = useState(false); // State for terms acceptance
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);

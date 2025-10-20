@@ -1,5 +1,6 @@
 import { Linkedin, Instagram, User, Mail } from 'lucide-react';
 import { FaXTwitter, FaYoutube, FaWhatsapp } from 'react-icons/fa6';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
 
@@ -62,37 +63,62 @@ const Footer = () => {
                         </div>
                     </div>
 
-                    {/* Column 2: Contact Us */}
-                    <div className="md:col-span-2">
+                    {/* Column 2: Legal Links */}
+                    <div className="md:col-span-1">
+                        <h3 className="text-xl font-semibold text-muted-900 mb-6 border-b border-blue-500 pb-2 inline-block mt-2">
+                            Legal
+                        </h3>
+                        <ul className="space-y-3">
+                            <li>
+                                <Link 
+                                    to="/privacy-policy" 
+                                    className="text-muted-500 hover:text-primary transition-colors duration-300"
+                                >
+                                    Privacy Policy
+                                </Link>
+                            </li>
+                            <li>
+                                <Link 
+                                    to="/terms-conditions" 
+                                    className="text-muted-500 hover:text-primary transition-colors duration-300"
+                                >
+                                    Terms & Conditions
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Column 3: Contact Us */}
+                    <div className="md:col-span-1">
                         <h3 className="text-xl font-semibold text-muted-900 mb-6 border-b border-blue-500 pb-2 inline-block mt-2">
                             Contact Us
                         </h3>
-                        <ul className="grid grid-cols-1 md:grid-cols-2 sm:grid-cols-1 lg:grid-cols-3">
+                        <ul className="space-y-4">
                             <li className="flex items-center group">
                                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg text-white mr-3 group-hover:scale-110 transition-transform duration-300">
-                                    <User className="w-5 h-5" />
+                                    <User className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <h4 className='font-medium'>David Kuppala</h4>
-                                    <p className="text-muted-500 text-sm">+91 81217 02286</p>
+                                    <h4 className='font-medium text-sm'>David Kuppala</h4>
+                                    <p className="text-muted-500 text-xs">+91 81217 02286</p>
                                 </div>
                             </li>
                             <li className="flex items-center group">
                                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg text-white mr-3 group-hover:scale-110 transition-transform duration-300">
-                                    <User className="w-5 h-5" />
+                                    <User className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <h4 className="font-medium">Ankith Pissay</h4>
-                                    <p className="text-muted-500 text-sm">+91 91005 79797</p>
+                                    <h4 className="font-medium text-sm">Ankith Pissay</h4>
+                                    <p className="text-muted-500 text-xs">+91 91005 79797</p>
                                 </div>
                             </li>
                             <li className="flex items-center group">
                                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg text-white mr-3 group-hover:scale-110 transition-transform duration-300">
-                                    <User className="w-5 h-5" />
+                                    <User className="w-4 h-4" />
                                 </div>
                                 <div className="mt-0">
-                                    <h4 className="font-medium">William Keri</h4>
-                                    <p className="text-muted-500 text-sm">+91 99665 42463</p>
+                                    <h4 className="font-medium text-sm">William Keri</h4>
+                                    <p className="text-muted-500 text-xs">+91 99665 42463</p>
                                 </div>
                             </li>
                         </ul>

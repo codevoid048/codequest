@@ -5,6 +5,8 @@ import LoginPage from './components/Login';
 import RegisterPage from './components/SignUp';
 import Leaderboard from './components/Leaderboard';
 import AboutPage from './components/About';
+import PrivacyPolicyPage from './components/PrivacyPolicy';
+import TermsConditionsPage from './components/TermsConditions';
 import ProfilePage from './components/ProfilePage';
 import ResetPassword from './components/ResetPassword.tsx';
 import ForgotPassword from './components/ForgotPassword';
@@ -32,6 +34,8 @@ function UserApp() {
         <Route path="/challenges" element={<Challenges />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms-conditions" element={<TermsConditionsPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/profile/edit-profile" element={<EditProfile />} />
