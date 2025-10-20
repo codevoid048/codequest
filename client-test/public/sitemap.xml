@@ -25,6 +25,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://codequest.srkrcodingclub.com/problemset</loc>
+    <lastmod>2025-10-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codequest.srkrcodingclub.com/register</loc>
     <lastmod>2025-10-20</lastmod>
     <changefreq>monthly</changefreq>

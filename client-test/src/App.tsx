@@ -24,6 +24,8 @@ import Dashboard from './components/Admin/Dashboard.tsx';
 import { useAdminStore } from './context/AdminContext.tsx';
 import AdminChallenges from './components/Admin/AdminChallenges.tsx';
 import RouteSEO from './components/RouteSEO';
+import ProblemSet from './components/ProblemSet';
+import CategoryProblems from './components/ProblemSet/CategoryProblems';
 
 function UserApp() {
   return (
@@ -45,6 +47,8 @@ function UserApp() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/challenges/solution/:slug" element={<SolutionPage />} />
+        <Route path="/problemset" element={<ProblemSet />} />
+        <Route path="/problemset/category/:categoryName" element={<CategoryProblems />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <Footer />
