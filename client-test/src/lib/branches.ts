@@ -1,0 +1,33 @@
+const branches = [
+    "CSE",
+    "IT",
+    "ECE",
+    "EEE",
+    "ME",
+    "CE",
+    "CHE",
+    "AE",
+    "BME",
+    "BT",
+    "IE",
+    "PE",
+    "AUTO",
+    "AIML",
+    "DS",
+    "CSE-AIDS",
+    "CSE-IoT",
+    "CSBS",
+    "CSD",
+    "ECM",
+    "EIE",
+    "ICE",
+    "MPAE",
+    "MATHEMATICS",
+    "PHYSICS",
+    "CHEMISTRY",
+    "COMMERCE",
+    "ARTS",
+    "OTHER"
+];
+
+export default branches;

@@ -26,6 +26,7 @@ import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
 import { toast } from "react-hot-toast"
 import institutions from "@/lib/colleges"
+import branches from "@/lib/branches"
 
 export default function ProfileEditForm() {
     const { user, token, fetchUser } = useAuth()
@@ -63,6 +64,9 @@ export default function ProfileEditForm() {
 
     const [image, setImage] = useState<string | null>(null)
     const [collegePopoverOpen, setCollegePopoverOpen] = useState(false)
+    const [branchPopoverOpen, setBranchPopoverOpen] = useState(false)
+    const [collegeSearchValue, setCollegeSearchValue] = useState("")
+    const [branchSearchValue, setBranchSearchValue] = useState("")
 
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isLoading, setIsLoading] = useState(false)
@@ -356,24 +360,72 @@ export default function ProfileEditForm() {
                                         />
                                     </div>
 
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 overflow-hidden">
                                         <Label htmlFor="branch" className="flex items-center gap-2">
                                             <BookOpen className="w-4 h-4" /> Branch
                                         </Label>
-                                        <Input
-                                            id="branch"
-                                            placeholder="Enter your branch"
-                                            className="bg-background/50 border-input focus:border-primary transition-colors duration-300"
-                                            value={formData.branch}
-                                            onChange={handleChange}
-                                        />
+                                        <Popover open={branchPopoverOpen} onOpenChange={(open) => {
+                                            setBranchPopoverOpen(open)
+                                            if (!open) setBranchSearchValue("")
+                                        }}>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    role="combobox"
+                                                    aria-expanded={branchPopoverOpen}
+                                                    className="w-full justify-between bg-background/50 border-input focus:border-primary transition-colors duration-300 h-10"
+                                                >
+                                                    {formData.branch ? formData.branch : "Select branch..."}
+                                                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-full p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
+                                                <Command shouldFilter={false}>
+                                                    <CommandInput 
+                                                        placeholder="Search branch..." 
+                                                        className="h-9" 
+                                                        value={branchSearchValue}
+                                                        onValueChange={setBranchSearchValue}
+                                                    />
+                                                    <CommandList className="max-h-[200px] overflow-y-auto">
+                                                        <CommandEmpty>No branch found.</CommandEmpty>
+                                                        <CommandGroup>
+                                                            {branches
+                                                                .filter((branch) => 
+                                                                    branch.toLowerCase().includes(branchSearchValue.toLowerCase())
+                                                                )
+                                                                .map((branch) => (
+                                                                    <CommandItem
+                                                                        key={branch}
+                                                                        value={branch}
+                                                                        onSelect={() => {
+                                                                            setFormData((prev) => ({ ...prev, branch: branch }))
+                                                                            setBranchPopoverOpen(false)
+                                                                            setBranchSearchValue("")
+                                                                        }}
+                                                                        className="flex items-center"
+                                                                    >
+                                                                        {branch}
+                                                                        {formData.branch === branch && (
+                                                                            <Check className="ml-auto h-4 w-4" />
+                                                                        )}
+                                                                    </CommandItem>
+                                                                ))}
+                                                        </CommandGroup>
+                                                    </CommandList>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
                                     </div>
 
                                     <div className="space-y-2 overflow-hidden">
                                         <Label htmlFor="college" className="flex items-center gap-2">
                                             <Building className="w-4 h-4" /> College
                                         </Label>
-                                        <Popover open={collegePopoverOpen} onOpenChange={setCollegePopoverOpen}>
+                                        <Popover open={collegePopoverOpen} onOpenChange={(open) => {
+                                            setCollegePopoverOpen(open)
+                                            if (!open) setCollegeSearchValue("")
+                                        }}>
                                             <PopoverTrigger asChild>
                                                 <Button
                                                     variant="outline"
@@ -386,27 +438,37 @@ export default function ProfileEditForm() {
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-full p-0" style={{ width: "var(--radix-popover-trigger-width)" }}>
-                                                <Command>
-                                                    <CommandInput placeholder="Search college..." className="h-9" />
-                                                    <CommandList>
+                                                <Command shouldFilter={false}>
+                                                    <CommandInput 
+                                                        placeholder="Search college..." 
+                                                        className="h-9" 
+                                                        value={collegeSearchValue}
+                                                        onValueChange={setCollegeSearchValue}
+                                                    />
+                                                    <CommandList className="max-h-[200px] overflow-y-auto">
                                                         <CommandEmpty>No college found.</CommandEmpty>
-                                                        <CommandGroup className="max-h-[200px] overflow-y-auto">
-                                                            {institutions.map((college, index) => (
-                                                                <CommandItem
-                                                                    key={index}
-                                                                    value={college.name}
-                                                                    onSelect={() => {
-                                                                        setFormData((prev) => ({ ...prev, college: college.name }))
-                                                                        setCollegePopoverOpen(false)
-                                                                    }}
-                                                                    className="flex items-center"
-                                                                >
-                                                                    {college.name}
-                                                                    {formData.college === college.name && (
-                                                                        <Check className="ml-auto h-4 w-4" />
-                                                                    )}
-                                                                </CommandItem>
-                                                            ))}
+                                                        <CommandGroup>
+                                                            {institutions
+                                                                .filter((college) => 
+                                                                    college.toLowerCase().includes(collegeSearchValue.toLowerCase())
+                                                                )
+                                                                .map((college) => (
+                                                                    <CommandItem
+                                                                        key={college}
+                                                                        value={college}
+                                                                        onSelect={() => {
+                                                                            setFormData((prev) => ({ ...prev, college: college }))
+                                                                            setCollegePopoverOpen(false)
+                                                                            setCollegeSearchValue("")
+                                                                        }}
+                                                                        className="flex items-center"
+                                                                    >
+                                                                        {college}
+                                                                        {formData.college === college && (
+                                                                            <Check className="ml-auto h-4 w-4" />
+                                                                        )}
+                                                                    </CommandItem>
+                                                                ))}
                                                         </CommandGroup>
                                                     </CommandList>
                                                 </Command>
@@ -423,7 +485,7 @@ export default function ProfileEditForm() {
                                             htmlFor="affiliate"
                                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                                         >
-                                            Are you an SRKR CODING CLUB Affiliate?
+                                            Are you an Affiliate of SRKR CODING CLUB?
                                         </Label>
                                     </div>
 
