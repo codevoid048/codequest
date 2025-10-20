@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FileText, User, Shield, AlertTriangle, Scale, Gavel, Calendar, Mail } from "lucide-react"
+import { FileText, User, Shield, AlertTriangle, Scale, Gavel, Mail } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { DottedBackground } from "../dotted-background"

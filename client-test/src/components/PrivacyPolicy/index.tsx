@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Shield, Eye, Cookie, Database, Mail, Users, Calendar } from "lucide-react"
+import { Shield, Eye, Cookie, Database, Mail, Users } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { DottedBackground } from "../dotted-background"
