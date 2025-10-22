@@ -7,6 +7,10 @@ on:
       - 'client-test/**'
       - '.github/workflows/deploy-frontend.yml'
 
+permissions:
+  contents: read
+  deployments: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
