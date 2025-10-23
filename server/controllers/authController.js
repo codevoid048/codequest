@@ -40,26 +40,46 @@ const setAuthCookies = (res, user, token) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { email, name, password, username } = req.body;
+    const { email, name, password, username, registrationNumber, branch, collegeName, isAffiliate } = req.body;
 
-    if (!name || !email || !password || !username) {
+    if (!name || !email || !password || !username || !registrationNumber || !branch || !collegeName) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    const result = await isEmailValid(email);
+    // Trim and validate input fields
+    const trimmedName = name.trim();
+    const trimmedUsername = username.trim().toLowerCase();
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedRegNo = registrationNumber.trim().toUpperCase();
+    const trimmedBranch = branch.trim();
+    const trimmedCollege = collegeName.trim();
+
+    // Basic validation for registration number (alphanumeric, 6-20 characters)
+    const regNoRegex = /^[A-Z0-9]{6,20}$/;
+    if (!regNoRegex.test(trimmedRegNo)) {
+      return res.status(400).json({ error: "Registration number must be 6-20 alphanumeric characters" });
+    }
+
+    const result = await isEmailValid(trimmedEmail);
 
     if (!result.valid) return res.status(400).json({ message: `Please provide a valid email address, ${result.reason}` });
 
     const usernameRegex = /^[a-z][a-z0-9_]*$/;
-    if (!usernameRegex.test(username)) {
+    if (!usernameRegex.test(trimmedUsername)) {
       return res.status(400).json({ error: "Username must start with letters and contain only lowercase letters, numbers, and underscores" });
     }
 
-    const user = await User.findOne({ email });
-    if (user && user.isVerified) return res.status(400).json({ error: "Email already exists" });
+    const user = await User.findOne({ email: trimmedEmail });
+    if (user && user.isVerified) return res.status(400).json({ error: "Account already exists, please login" });
 
-    const exist = await User.findOne({ username });
-    if (exist && user.isVerified) return res.status(400).json({ error: "Username already exists, please choose another" });
+    const existingUsername = await User.findOne({ username: trimmedUsername });
+    if (existingUsername && existingUsername.isVerified) return res.status(400).json({ error: "Username already exists, please choose another" });
+
+    // Check for duplicate registration number
+    const existingRegNo = await User.findOne({ RegistrationNumber: trimmedRegNo });
+    if (existingRegNo && existingRegNo.isVerified) {
+      return res.status(400).json({ error: "Registration number already exists" });
+    }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -71,23 +91,34 @@ export const registerUser = async (req, res) => {
 
     if (!user) {
       await User.create({
-        email,
-        name,
-        username,
+        email: trimmedEmail,
+        name: trimmedName,
+        username: trimmedUsername,
         password: hashedPassword,
+        RegistrationNumber: trimmedRegNo,
+        branch: trimmedBranch,
+        collegeName: trimmedCollege,
+        isAffiliate: isAffiliate || false,
         otp,
         otpExpires,
         isVerified: false,
       });
     }
     else {
+      user.name = trimmedName;
+      user.username = trimmedUsername;
+      user.password = hashedPassword;
+      user.RegistrationNumber = trimmedRegNo;
+      user.branch = trimmedBranch;
+      user.collegeName = trimmedCollege;
+      user.isAffiliate = isAffiliate || false;
       user.otp = otp;
       user.otpExpires = otpExpires;
       await user.save();
     }
 
     // Send OTP to user's email
-    await sendOTPEmail(email, otp);
+    await sendOTPEmail(trimmedEmail, otp);
 
     res.status(201).json({ message: "OTP sent to email. Verify to complete registration." });
   } catch (error) {
@@ -161,7 +192,8 @@ export const loginUser = async (req, res) => {
 
 export const googleAuthCallback = (req, res) => {
   if (!req.user) {
-    return res.status(401).json({ message: "Authentication failed" });
+    // Redirect to register page with error message
+    return res.redirect(`${process.env.CLIENT_URL}/register?error=no_account&message=No account found with this Google email. Please register first.`);
   }
 
   const { user, token } = req.user;
@@ -171,7 +203,8 @@ export const googleAuthCallback = (req, res) => {
 
 export const githubAuthCallback = (req, res) => {
   if (!req.user) {
-    return res.status(401).json({ message: "Authentication failed" });
+    // Redirect to register page with error message
+    return res.redirect(`${process.env.CLIENT_URL}/register?error=no_account&message=No account found with this GitHub email. Please register first.`);
   }
 
   const { user, token } = req.user;

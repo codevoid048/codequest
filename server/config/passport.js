@@ -47,18 +47,8 @@ passport.use(
           return done(null, { user, token });
         }
         else{
-          const dummyPassword = Math.random().toString(36).slice(-8);
-          const hashedPassword = await bcrypt.hash(dummyPassword, 10);
-          const newUser = await User.create({
-            name: profile.displayName,
-            email,
-            password: hashedPassword,
-            googleId: profile.id,
-            isVerified: true,
-            username,
-          });
-          const token = generateToken(newUser);
-        return done(null, { user:newUser, token });
+          // User doesn't exist - redirect to register page
+          return done(null, false, { message: "No account found with this Google email. Please register first." });
         }
       } catch (error) {
         //console.error("Google Auth Error:", error);
@@ -107,22 +97,14 @@ passport.use(
             user.resetPasswordExpires = null;
             if (!user.username) user.username = username;
             await user.save();
+            
+            const token = generateToken(user);
+            return done(null, { user, token });
         }
         else {
-          const dummyPassword = Math.random().toString(36).slice(-8);
-          const hashedPassword = await bcrypt.hash(dummyPassword, 10);
-          user = await User.create({
-            name: profile.displayName || profile.username || username,
-            email: email,
-            password: hashedPassword,
-            githubId: profile.id,
-            isVerified: true,
-            username,
-          });
+          // User doesn't exist - redirect to register page
+          return done(null, false, { message: "No account found with this GitHub email. Please register first." });
         }
-
-        const token = generateToken(user);
-        return done(null, { user, token });
       } catch (error) {
         // console.error("GitHub Strategy error:", error);
         return done(error, null);
