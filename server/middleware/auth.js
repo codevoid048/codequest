@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
+import passport from "../config/passport.js";
 
 export const protect = async (req, res, next) => {
     let token;
@@ -36,4 +37,39 @@ export const protect = async (req, res, next) => {
         // console.error("JWT Verification Error:", error);
         return res.status(401).json({ message: 'Not authorized, invalid token' });
     }
+};
+
+// OAuth callback middlewares
+export const handleGoogleCallback = (req, res, next) => {
+  passport.authenticate("google", { session: false }, (err, user, info) => {
+    if (err) {
+      console.error("Google auth error:", err);
+      return res.redirect(`${process.env.CLIENT_URL}/register?error=auth_error&message=Authentication error. Please try again.`);
+    }
+    
+    if (!user) {
+      const message = info?.message || "No account found with this Google email. Please register first.";
+      return res.redirect(`${process.env.CLIENT_URL}/register?error=no_account&message=${encodeURIComponent(message)}`);
+    }
+    
+    req.user = user;
+    next();
+  })(req, res, next);
+};
+
+export const handleGithubCallback = (req, res, next) => {
+  passport.authenticate("github", { session: false }, (err, user, info) => {
+    if (err) {
+      console.error("GitHub auth error:", err);
+      return res.redirect(`${process.env.CLIENT_URL}/register?error=auth_error&message=Authentication error. Please try again.`);
+    }
+    
+    if (!user) {
+      const message = info?.message || "No account found with this GitHub email. Please register first.";
+      return res.redirect(`${process.env.CLIENT_URL}/register?error=no_account&message=${encodeURIComponent(message)}`);
+    }
+    
+    req.user = user;
+    next();
+  })(req, res, next);
 };

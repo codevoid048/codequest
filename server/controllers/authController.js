@@ -191,22 +191,12 @@ export const loginUser = async (req, res) => {
 };
 
 export const googleAuthCallback = (req, res) => {
-  if (!req.user) {
-    // Redirect to register page with error message
-    return res.redirect(`${process.env.CLIENT_URL}/register?error=no_account&message=No account found with this Google email. Please register first.`);
-  }
-
   const { user, token } = req.user;
   setAuthCookies(res, user, token);
   res.redirect(`${process.env.CLIENT_URL}/challenges`);
 };
 
 export const githubAuthCallback = (req, res) => {
-  if (!req.user) {
-    // Redirect to register page with error message
-    return res.redirect(`${process.env.CLIENT_URL}/register?error=no_account&message=No account found with this GitHub email. Please register first.`);
-  }
-
   const { user, token } = req.user;
   setAuthCookies(res, user, token);
   res.redirect(`${process.env.CLIENT_URL}/challenges`);
