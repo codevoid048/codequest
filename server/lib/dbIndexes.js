@@ -35,6 +35,7 @@ export const createOptimalIndexes = async () => {
         // Create essential user indexes with explicit names
         await usersCollection.createIndex({ email: 1 }, { unique: true, sparse: true, name: 'email_unique_idx' });
         await usersCollection.createIndex({ username: 1 }, { unique: true, sparse: true, name: 'username_unique_idx' });
+        await usersCollection.createIndex({ registrationNumber: 1 }, { unique: true, sparse: true, name: 'regno_unique_idx' });
         // Skip RegistrationNumber for now - has duplicates
         
         // Performance indexes for leaderboard

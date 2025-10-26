@@ -19,7 +19,7 @@ const setAuthCookies = (res, user, token) => {
   res.cookie("jwt", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    sameSite: process.env.NODE_ENV === "production" ? "sameSite" : "Lax",
     maxAge: 24 * 60 * 60 * 1000, // 1 day
   });
 
@@ -27,7 +27,7 @@ const setAuthCookies = (res, user, token) => {
   res.cookie("user", JSON.stringify({ id: user._id, email: user.email }), {
     httpOnly: true, // Prevent JavaScript access
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    sameSite: process.env.NODE_ENV === "production" ? "sameSite" : "Lax",
     maxAge: 24 * 60 * 60 * 1000, // 1 day
   });
 };
