@@ -163,31 +163,6 @@ We welcome contributions from the community! Here's how you can help:
 4. **Testing**: Ensure your changes work correctly
 5. **Pull Request**: Submit with clear description
 
-## Deployment
-
-The project uses automated CI/CD pipelines:
-
-### Frontend Deployment
-- **Platform**: Cloudflare Pages
-- **Trigger**: Push to `main` branch
-- **Build Command**: `npm run build`
-- **Output Directory**: `dist`
-
-### Backend Deployment
-- **Platform**: Custom server deployment
-- **Trigger**: Push to `main` branch
-- **Environment**: Production environment variables
-
-### CI/CD Pipeline
-- Automatic testing and linting
-- Build verification
-- Deployment to production
-- Environment-specific configurations
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Acknowledgments
 
 - **SRKR Coding Club** - For the initiative and support

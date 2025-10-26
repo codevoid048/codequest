@@ -72,6 +72,17 @@ export const getChallenges = async (req, res) => {
         const sortObj = {};
         sortObj[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
+        const now = new Date();
+        const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+        const istNow = new Date(now.getTime() + istOffset);
+        
+        const today = new Date(istNow);
+        today.setHours(0, 0, 0, 0);
+        
+        const todayUTC = new Date(today.getTime() - istOffset);
+        filter.createdAt = { $lt: todayUTC };
+
+
         const challenges = await Challenge.find(filter)
             .limit(limit)
             .skip(startIndex)
