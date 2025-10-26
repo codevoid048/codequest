@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 // Drop and recreate all performance indexes
 export const createOptimalIndexes = async () => {
     try {
-        console.log('Setting up database indexes...');
+        // console.log('Setting up database indexes...');
         
         const usersCollection = mongoose.connection.db.collection('users');
         const challengesCollection = mongoose.connection.db.collection('challenges');
@@ -37,7 +37,7 @@ export const createOptimalIndexes = async () => {
         await challengesCollection.createIndex({ title: 'text', category: 'text' }, { name: 'challenge_search_idx' });
         await challengesCollection.createIndex({ solvedUsers: 1 }, { sparse: true, name: 'solved_users_idx' });
         
-        console.log('Database indexes created successfully');
+        // console.log('Database indexes created successfully');
         
     } catch (error) {
         console.error('Error setting up database indexes:', error);
