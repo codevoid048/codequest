@@ -3,56 +3,8 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Rocket } from "lucide-react";
 import { Link } from "react-router-dom"
 import React, { useEffect } from "react";
-
-// Error Boundary Component
-class ErrorBoundary extends React.Component<
-    { children: React.ReactNode },
-    { hasError: boolean }
-> {
-    state = { hasError: false };
-
-    static getDerivedStateFromError() {
-        return { hasError: true };
-    }
-
-    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-        console.error("Error in NotFoundPage:", error, errorInfo);
-    }
-
-    render() {
-        if (this.state.hasError) {
-            return (
-                <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-                    <h1>Something went wrong. Please try again later.</h1>
-                </div>
-            );
-        }
-        return this.props.children;
-    }
-}
-
-// Button Component
-const Button = ({
-    children,
-    href,
-    className = "",
-}: {
-    children: React.ReactNode;
-    href: string;
-    className?: string;
-}) => {
-    return (
-        <Link to={href}>
-            <motion.button
-                className={`px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold flex items-center gap-2 hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-            >
-                {children}
-            </motion.button>
-        </Link>
-    );
-};
+import { ErrorBoundary } from "./ErrorBoundary";
+import { Button } from "./ui/button";
 
 // 404 Page Component
 const NotFoundPage: React.FC = () => {
@@ -150,10 +102,12 @@ const NotFoundPage: React.FC = () => {
                     </motion.div>
 
                     {/* Back to Home Button */}
-                    <Button href="/" className="mt-6 mx-auto">
-                        <ArrowLeft className="w-5 h-5" />
-                        Back to Home
-                    </Button>
+                    <Link to="/" className="mt-6 mx-auto inline-block">
+                        <Button className="flex items-center gap-2">
+                            <ArrowLeft className="w-5 h-5" />
+                            Back to Home
+                        </Button>
+                    </Link>
                 </div>
             </div>
         </ErrorBoundary>

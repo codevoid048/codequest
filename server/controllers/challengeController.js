@@ -52,43 +52,78 @@ export const getChallenges = async (req, res) => {
             ];
         }
 
-        if (targetUser && status) {
-            const solvedChallengeIds = [
-                ...(targetUser.solveChallenges?.easy || []).map(item => item.challenge),
-                ...(targetUser.solveChallenges?.medium || []).map(item => item.challenge),
-                ...(targetUser.solveChallenges?.hard || []).map(item => item.challenge)
-            ];
-
-            if (status === 'solved') {
-                filter._id = { $in: solvedChallengeIds };
-            } else if (status === 'unsolved') {
-                filter._id = { $nin: solvedChallengeIds };
-            }
-        }
-
-        const startIndex = (page - 1) * limit;
-
-        // Build sort object
-        const sortObj = {};
-        sortObj[sortBy] = sortOrder === 'desc' ? -1 : 1;
-
+        // Date filter for challenges (exclude today's POTD)
         const now = new Date();
         const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
         const istNow = new Date(now.getTime() + istOffset);
-        
         const today = new Date(istNow);
         today.setHours(0, 0, 0, 0);
-        
         const todayUTC = new Date(today.getTime() - istOffset);
         filter.createdAt = { $lt: todayUTC };
 
+        // Build aggregation pipeline for better performance
+        const pipeline = [
+            { $match: filter }
+        ];
 
-        const challenges = await Challenge.find(filter)
-            .limit(limit)
-            .skip(startIndex)
-            .sort(sortObj);
+        // Add user-specific solved status if needed
+        if (targetUser && status) {
+            const mongoose = await import('mongoose');
+            pipeline.push(
+                {
+                    $addFields: {
+                        isSolved: {
+                            $or: [
+                                { $in: ["$_id", targetUser.solveChallenges?.easy?.map(item => item.challenge) || []] },
+                                { $in: ["$_id", targetUser.solveChallenges?.medium?.map(item => item.challenge) || []] },
+                                { $in: ["$_id", targetUser.solveChallenges?.hard?.map(item => item.challenge) || []] }
+                            ]
+                        }
+                    }
+                }
+            );
 
-        const total = await Challenge.countDocuments(filter);
+            // Filter by solved status
+            if (status === 'solved') {
+                pipeline.push({ $match: { isSolved: true } });
+            } else if (status === 'unsolved') {
+                pipeline.push({ $match: { isSolved: false } });
+            }
+        }
+
+        // Add sorting
+        const sortObj = {};
+        sortObj[sortBy] = sortOrder === 'desc' ? -1 : 1;
+        pipeline.push({ $sort: sortObj });
+
+        // Execute aggregation for both data and count
+        const [challenges, countResult] = await Promise.all([
+            Challenge.aggregate([
+                ...pipeline,
+                { $skip: (page - 1) * limit },
+                { $limit: limit },
+                {
+                    $project: {
+                        _id: 1,
+                        title: 1,
+                        description: 1,
+                        category: 1,
+                        difficulty: 1,
+                        problemLink: 1,
+                        points: 1,
+                        platform: 1,
+                        createdAt: 1,
+                        categories: 1
+                    }
+                }
+            ]),
+            Challenge.aggregate([
+                ...pipeline,
+                { $count: "total" }
+            ])
+        ]);
+
+        const total = countResult[0]?.total || 0;
 
         return res.status(200).json({
             challenges,

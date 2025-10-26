@@ -1,5 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/auth.js';
+import { challengeUpdateRateLimit } from '../middleware/rateLimiter.js';
 import { 
     getChallenges, 
     getChallengeById, 
@@ -15,6 +16,6 @@ router.get('/daily', getDailyChallenge);
 router.get('/filter-options', getFilterOptions);
 router.get('/:id', getChallengeById);
 router.get('/solution/:id', protect, getSolutionByChallengeId);
-router.post('/check-potd-status', protect, checkPOTDStatus);
+router.post('/check-potd-status', protect, challengeUpdateRateLimit, checkPOTDStatus);
 
 export default router;

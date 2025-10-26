@@ -26,6 +26,8 @@ import AdminChallenges from './components/Admin/AdminChallenges.tsx';
 import RouteSEO from './components/RouteSEO';
 import ProblemSet from './components/ProblemSet';
 import CategoryProblems from './components/ProblemSet/CategoryProblems';
+import { ServerErrorRoute, NetworkErrorRoute, UnauthorizedRoute } from './components/ErrorRoutes';
+import { ForbiddenPage } from './components/EnhancedErrorPages';
 
 function UserApp() {
   return (
@@ -49,6 +51,12 @@ function UserApp() {
         <Route path="/challenges/solution/:slug" element={<SolutionPage />} />
         <Route path="/problemset" element={<ProblemSet />} />
         <Route path="/problemset/category/:categoryName" element={<CategoryProblems />} />
+        {/* Enhanced Error Pages */}
+        <Route path="/server-error" element={<ServerErrorRoute />} />
+        <Route path="/network-error" element={<NetworkErrorRoute />} />
+        <Route path="/unauthorized" element={<UnauthorizedRoute />} />
+        <Route path="/forbidden" element={<ForbiddenPage />} />
+        <Route path="/404" element={<NotFoundPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <Footer />
@@ -85,6 +93,11 @@ function AdminApp() {
           <Route path="/codingclubadmin/users/profile/:username" element={<ProfilePage />} />
           <Route path="/codingclubadmin/addchallenge" element={<AddChallenge />} />
           <Route path="/codingclubadmin/leaderboard" element={<Leaderboard />} />
+          {/* Enhanced Error Pages for Admin */}
+          <Route path="/codingclubadmin/server-error" element={<ServerErrorRoute />} />
+          <Route path="/codingclubadmin/network-error" element={<NetworkErrorRoute />} />
+          <Route path="/codingclubadmin/unauthorized" element={<UnauthorizedRoute />} />
+          <Route path="/codingclubadmin/forbidden" element={<ForbiddenPage />} />
           <Route path="/codingclubadmin/*" element={<NotFoundPage />} />
         </Routes>
       </div>

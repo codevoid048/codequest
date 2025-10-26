@@ -4,8 +4,9 @@ const router = express.Router();
 import passport from "../config/passport.js";
 import { verifyProfiles } from "../controllers/verifyProfiles.js";
 import { protect, handleGoogleCallback, handleGithubCallback } from "../middleware/auth.js";
+import { registrationRateLimit } from "../middleware/rateLimiter.js";
 
-router.post('/register', registerUser);
+router.post('/register', registrationRateLimit, registerUser);
 router.post('/verify', verifyEmail);
 router.post('/login', loginUser);
 

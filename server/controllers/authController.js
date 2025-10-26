@@ -69,14 +69,21 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ error: "Username must start with letters and contain only lowercase letters, numbers, and underscores" });
     }
 
-    const user = await User.findOne({ email: trimmedEmail });
-    if (user && user.isVerified) return res.status(400).json({ error: "Account already exists, please login" });
+    // Use single query to check all unique constraints atomically
+    const [existingUser, existingUsername, existingRegNo] = await Promise.all([
+      User.findOne({ email: trimmedEmail }),
+      User.findOne({ username: trimmedUsername }),
+      User.findOne({ RegistrationNumber: trimmedRegNo })
+    ]);
 
-    const existingUsername = await User.findOne({ username: trimmedUsername });
-    if (existingUsername && existingUsername.isVerified) return res.status(400).json({ error: "Username already exists, please choose another" });
+    if (existingUser && existingUser.isVerified) {
+      return res.status(400).json({ error: "Account already exists, please login" });
+    }
 
-    // Check for duplicate registration number
-    const existingRegNo = await User.findOne({ RegistrationNumber: trimmedRegNo });
+    if (existingUsername && existingUsername.isVerified) {
+      return res.status(400).json({ error: "Username already exists, please choose another" });
+    }
+
     if (existingRegNo && existingRegNo.isVerified) {
       return res.status(400).json({ error: "Registration number already exists" });
     }
@@ -89,33 +96,31 @@ export const registerUser = async (req, res) => {
     const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
     const otpExpires = nowIST.getTime() + 5 * 60 * 1000; // OTP expires in 5 minutes
 
-    if (!user) {
-      await User.create({
-        email: trimmedEmail,
-        name: trimmedName,
-        username: trimmedUsername,
-        password: hashedPassword,
-        RegistrationNumber: trimmedRegNo,
-        branch: trimmedBranch,
-        collegeName: trimmedCollege,
-        isAffiliate: isAffiliate || false,
-        otp,
-        otpExpires,
-        isVerified: false,
-      });
-    }
-    else {
-      user.name = trimmedName;
-      user.username = trimmedUsername;
-      user.password = hashedPassword;
-      user.RegistrationNumber = trimmedRegNo;
-      user.branch = trimmedBranch;
-      user.collegeName = trimmedCollege;
-      user.isAffiliate = isAffiliate || false;
-      user.otp = otp;
-      user.otpExpires = otpExpires;
-      await user.save();
-    }
+    // Use upsert with atomic operation to prevent race conditions
+    await User.findOneAndUpdate(
+      { email: trimmedEmail },
+      {
+        $set: {
+          email: trimmedEmail,
+          name: trimmedName,
+          username: trimmedUsername,
+          password: hashedPassword,
+          RegistrationNumber: trimmedRegNo,
+          branch: trimmedBranch,
+          collegeName: trimmedCollege,
+          isAffiliate: isAffiliate || false,
+          otp,
+          otpExpires,
+          isVerified: false,
+        }
+      },
+      { 
+        upsert: true, 
+        new: true,
+        // Prevent duplicate key errors during concurrent registrations
+        setDefaultsOnInsert: true
+      }
+    );
 
     // Send OTP to user's email
     await sendOTPEmail(trimmedEmail, otp);

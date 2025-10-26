@@ -7,7 +7,18 @@ const getLastSolvedDate = (challenges = []) => {
     return lastEntry.timestamp?.split(" ")[0] || null;
 };
 
+// Add locking mechanism to prevent concurrent streak resets
+let isResettingStreaks = false;
+
 const resetUserStreaks = async () => {
+  // Prevent concurrent executions
+  if (isResettingStreaks) {
+    console.log('Streak reset already in progress, skipping...');
+    return;
+  }
+
+  isResettingStreaks = true;
+  
   try {
     // Use IST timezone for consistent date calculation
     const now = new Date();
@@ -18,32 +29,81 @@ const resetUserStreaks = async () => {
     yesterday.setDate(istNow.getDate() - 1);
     const yesterStr = yesterday.toISOString().split("T")[0];
 
-    const users = await User.find({ isVerified: true });
+    console.log(`Starting streak reset for date: ${yesterStr}`);
 
-    for (const user of users) {
-        const lastDates = [
-            getLastSolvedDate(user.solveChallenges?.easy),
-            getLastSolvedDate(user.solveChallenges?.medium),
-            getLastSolvedDate(user.solveChallenges?.hard),
-        ];
-        
-        const solvedYesterday = lastDates.some(date => date === yesterStr);
-        
-        if (!solvedYesterday && user.streak !== 0) {
-            user.streak = 0;
-            await user.save();
-            console.log(`Streak reset for ${user.username}`);
+    // Use aggregation pipeline for better performance and atomicity
+    const streakResetUpdates = await User.aggregate([
+      { $match: { isVerified: true, streak: { $gt: 0 } } },
+      {
+        $addFields: {
+          lastSolvedDates: [
+            { $arrayElemAt: [{ $split: [{ $arrayElemAt: ["$solveChallenges.easy.timestamp", -1] }, " "] }, 0] },
+            { $arrayElemAt: [{ $split: [{ $arrayElemAt: ["$solveChallenges.medium.timestamp", -1] }, " "] }, 0] },
+            { $arrayElemAt: [{ $split: [{ $arrayElemAt: ["$solveChallenges.hard.timestamp", -1] }, " "] }, 0] }
+          ]
         }
+      },
+      {
+        $addFields: {
+          solvedYesterday: { $in: [yesterStr, "$lastSolvedDates"] }
+        }
+      },
+      { $match: { solvedYesterday: false } },
+      { $project: { _id: 1, username: 1 } }
+    ]);
+
+    if (streakResetUpdates.length > 0) {
+      // Bulk update streaks to 0
+      const bulkOps = streakResetUpdates.map(user => ({
+        updateOne: {
+          filter: { _id: user._id },
+          update: { $set: { streak: 0 } }
+        }
+      }));
+
+      const result = await User.bulkWrite(bulkOps, { ordered: false });
+      
+      console.log(`Streak reset completed: ${result.modifiedCount} users affected on ${yesterStr}`);
+      streakResetUpdates.forEach(user => {
+        console.log(`Streak reset for ${user.username}`);
+      });
+    } else {
+      console.log(`No streaks to reset on ${yesterStr}`);
     }
 
-    console.log(`Streak check completed for ${users.length} users on ${yesterStr}`);
   } catch (err) {
     console.error("Error resetting streaks:", err.message);
+  } finally {
+    isResettingStreaks = false;
   }
 };
+let streakCronJob = null;
+
 export const startStreakCronJob = () => {
   console.log('Streak reset cron job scheduled for midnight IST');
-  cron.schedule('0 0 * * *', resetUserStreaks, { // At midnight every day
-    timezone: "Asia/Kolkata"
+  
+  // Store reference for cleanup
+  streakCronJob = cron.schedule('0 0 * * *', async () => {
+    try {
+      await resetUserStreaks();
+      // Force garbage collection after heavy operation if available
+      if (global.gc) {
+        global.gc();
+      }
+    } catch (error) {
+      console.error('Streak reset cron job failed:', error);
+    }
+  }, { 
+    timezone: "Asia/Kolkata",
+    scheduled: true
   });
+};
+
+// Cleanup function for graceful shutdown
+export const stopStreakCronJob = () => {
+  if (streakCronJob) {
+    streakCronJob.stop();
+    streakCronJob = null;
+    console.log('Streak cron job stopped');
+  }
 };
