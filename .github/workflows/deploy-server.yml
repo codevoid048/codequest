@@ -37,6 +37,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: ap-south-1
         MONGO_URI: ${{ secrets.MONGO_URI }}
+        REDIS_URL: ${{ secrets.REDIS_URL }}
         BASE_URL: ${{ secrets.BASE_URL }}
         CLIENT_URL: ${{ secrets.CLIENT_URL }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}

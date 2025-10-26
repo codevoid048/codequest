@@ -8,27 +8,6 @@ export const createOptimalIndexes = async () => {
         const usersCollection = mongoose.connection.db.collection('users');
         const challengesCollection = mongoose.connection.db.collection('challenges');
         
-        // Drop problematic indexes individually
-        try {
-            // Drop known problematic indexes
-            const problematicIndexes = [
-                'username_1', 'email_1', 'UserTextIndex', 'ChallengeTextIndex',
-                'email_unique_idx', 'username_unique_idx', 'regno_unique_idx',
-                'challenge_search_idx', 'leaderboard_sort_idx'
-            ];
-            
-            for (const indexName of problematicIndexes) {
-                try {
-                    await usersCollection.dropIndex(indexName);
-                } catch (e) { /* Index doesn't exist */ }
-                try {
-                    await challengesCollection.dropIndex(indexName);
-                } catch (e) { /* Index doesn't exist */ }
-            }
-        } catch (error) {
-            // Continue anyway
-        }
-        
         // Wait for drops to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
         
