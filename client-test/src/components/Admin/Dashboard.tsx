@@ -58,7 +58,7 @@ interface TodayChallenge {
 }
 
 export default function Dashboard() {
-  const { users, challenges, fetchUsers, fetchChallenges } = useAdminStore();
+  const { users, challenges, fetchUsers, fetchChallenges, fetchStats, fetchPOTD } = useAdminStore();
   const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0,collegesCount:0 ,affiliatesCount:0 });
   const [collegeData, setCollegeData] = useState<CollegeData[]>([]);
   const [problemDifficultyData, setProblemDifficultyData] = useState<ProblemDifficultyData[]>([]);
@@ -78,24 +78,36 @@ export default function Dashboard() {
 
   // Fetch data when component mounts
   useEffect(() => {
-    fetchUsers();
-    fetchChallenges();
-  }, [fetchUsers, fetchChallenges]);
+    const loadData = async () => {
+      await fetchUsers();
+      await fetchChallenges();
+      const statsData = await fetchStats();
+      if (statsData) {
+        setStats(statsData);
+        setProblemDifficultyData(statsData.difficultyDistribution || []);
+      }
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
-                const data = await res.json();
-                setStats(data);
-                setProblemDifficultyData(data.difficultyDistribution);
-            } catch (error) {
-                console.error("Failed to fetch stats:", error);
-            }
-        };
+      // Fetch today's POTD
+      const potdData = await fetchPOTD();
+      if (potdData && potdData.challenge) {
+        const challenge = potdData.challenge;
+        const solvedCount = challenge.solvedUsers?.length || 0;
 
-        fetchStats();
-    }, []);
+        setTodayChallenge({
+          title: challenge.title || "No title available",
+          solved: solvedCount,
+          attempted: solvedCount > 0 ? solvedCount + Math.round(solvedCount * 0.3) : 0,
+          category: Array.isArray(challenge.category)
+            ? challenge.category.join(' ')
+            : challenge.category || "Not specified",
+          difficulty: challenge.difficulty || "Medium",
+          description: challenge.description || "No description available for this problem."
+        });
+      }
+    };
+
+    loadData();
+  }, [fetchUsers, fetchChallenges, fetchStats, fetchPOTD]);
 
   // Calculate weekly user registration data from actual database
   useEffect(() => {
@@ -169,29 +181,6 @@ export default function Dashboard() {
       setCollegeData(collegeChartData);
     }
   }, [users]);
-
-  // Calculate challenge difficulty distribution from actual database
-  useEffect(() => {
-    if (challenges.length > 0) {
-
-      // Set today's challenge data
-      const latestChallenge = challenges[0];
-      if (latestChallenge) {
-        const solvedCount = latestChallenge.solvedUsers?.length || 0;
-
-        setTodayChallenge({
-          title: latestChallenge.title || "No title available",
-          solved: solvedCount,
-          attempted: solvedCount > 0 ? solvedCount + Math.round(solvedCount * 0.3) : 0,
-          category: Array.isArray(latestChallenge.category)
-            ? latestChallenge.category.join(' ')
-            : latestChallenge.category || "Not specified",
-          difficulty: latestChallenge.difficulty || "Medium",
-          description: latestChallenge.description || "No description available for this problem."
-        });
-      }
-    }
-  }, [challenges]);
 
   // Calculate number of unique colleges
   // const uniqueCollegesCount = collegeData.length;

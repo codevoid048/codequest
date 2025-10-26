@@ -61,6 +61,8 @@ interface AdminState {
   filterOptions: FilterOptions | null;
   fetchUsers: (params?: FetchUsersParams) => Promise<void>;
   fetchChallenges: () => Promise<void>;
+  fetchStats: () => Promise<any>;
+  fetchPOTD: () => Promise<any>;
   login: (token: string) => void;
   logout: () => void;
 }
@@ -106,7 +108,7 @@ export const useAdminStore = create<AdminState>((set, get) => {
         if (branch.length > 0) queryParams.append('branch', branch.join(','));
 
         const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/admin/users?${queryParams}`,
+          `${import.meta.env.VITE_API_BASE_URL}/api/admin/users?${queryParams}`,
           {
             headers: {
               Authorization: `Bearer ${get().token}`,
@@ -154,6 +156,48 @@ export const useAdminStore = create<AdminState>((set, get) => {
       } catch (err) {
         console.error("Error fetching challenges:", err);
         set({ error: (err as Error).message });
+      } finally {
+        set({ loading: false });
+      }
+    },
+
+    fetchStats: async () => {
+      try {
+        set({ loading: true, error: null });
+
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/stats`, {
+          headers: {
+            Authorization: `Bearer ${get().token}`,
+          },
+          withCredentials: true,
+        });
+
+        return response.data;
+      } catch (err) {
+        console.error("Error fetching stats:", err);
+        set({ error: (err as Error).message });
+        return null;
+      } finally {
+        set({ loading: false });
+      }
+    },
+
+    fetchPOTD: async () => {
+      try {
+        set({ loading: true, error: null });
+
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/getPotd`, {
+          headers: {
+            Authorization: `Bearer ${get().token}`,
+          },
+          withCredentials: true,
+        });
+
+        return response.data;
+      } catch (err) {
+        console.error("Error fetching POTD:", err);
+        set({ error: (err as Error).message });
+        return null;
       } finally {
         set({ loading: false });
       }

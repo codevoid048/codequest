@@ -1,6 +1,8 @@
 import { User } from "../models/User.js";
 import { Challenge } from "../models/Challenge.js";
 import { Solution } from "../models/Solution.js";
+import { Category } from '../models/Category.js';
+import { ensureCategoriesExist } from "../utils/categoryHelper.js";
 import auditService from "../services/auditService.js";
 
 export const getUsers = async (req, res) => {
@@ -62,9 +64,9 @@ export const getUsers = async (req, res) => {
             users,
             pagination: {
                 currentPage: pageNumber,
-                totalPages: Math.ceil(filteredUsers / pageLimit),
-                totalUsers: filteredUsers,
-                hasNextPage: pageNumber * pageLimit < filteredUsers,
+                totalPages: Math.ceil(totalUsers / pageLimit),
+                totalUsers: totalUsers,
+                hasNextPage: pageNumber * pageLimit < totalUsers,
                 hasPrevPage: pageNumber > 1
             },
             filters: {
@@ -106,9 +108,8 @@ export const addChallenge = async (req, res) => {
             return res.status(400).json({ success: false, message: "Category must be an array of strings" });
         }
 
-        // Convert current time to IST and store
-        const utcOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in ms
-        const istDate = new Date(Date.now() + utcOffset);
+        // Ensure categories exist in database (create if they don't)
+        await ensureCategoriesExist(category);
 
         // Create and save Challenge
         const newChallenge = new Challenge({
@@ -118,7 +119,7 @@ export const addChallenge = async (req, res) => {
             difficulty,
             points,
             problemLink,
-            createdAt: createdAt ? new Date(createdAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-') : new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-'),
+            createdAt: createdAt ? new Date(createdAt) : new Date(),
             platform
         });
         
@@ -180,11 +181,20 @@ export const updateChallenge = async (req, res) => {
         // Update challenge fields if provided
         if (title) challenge.title = title;
         if (description) challenge.description = description;   
-        if (category) challenge.category = category;
+        if (category) {
+            // Ensure new categories exist (create if they don't)
+            await ensureCategoriesExist(category);
+            challenge.category = category;
+        }
         if (difficulty) challenge.difficulty = difficulty;
         if (points) challenge.points = points;
         if (problemLink) challenge.problemLink = problemLink;
         if (platform) challenge.platform = platform;
+        
+        if (createdAt) {
+            challenge.createdAt = new Date(createdAt);
+        }
+        
         const updatedChallenge = await challenge.save();
 
         let updatedSolution = null;
@@ -233,14 +243,27 @@ export const updateChallenge = async (req, res) => {
 // Example: GET /admin/getchallenge
 export const getTodayChallenge = async (req, res) => {
   try {
-    const today = new Date();
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+    // Create today's date in IST timezone (same logic as main API)
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+    const istNow = new Date(now.getTime() + istOffset);
+    
+    const today = new Date(istNow);
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Find today's challenge
+    // Convert back to UTC for database query
+    const todayUTC = new Date(today.getTime() - istOffset);
+    const tomorrowUTC = new Date(tomorrow.getTime() - istOffset);
+
+    // Find today's challenge using createdAt
     const challenge = await Challenge.findOne({
-      createdAt: { $gte: startOfDay, $lte: endOfDay },
-    });
+      createdAt: {
+        $gte: todayUTC,
+        $lt: tomorrowUTC
+      }
+    }).sort({ createdAt: -1 });
 
     if (!challenge) {
       return res.status(404).json({
@@ -265,4 +288,20 @@ export const getTodayChallenge = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+export const getCategories = async (req, res) => {
+    try {
+        const categories = await Category.find({}).select('name').sort({ name: 1 });
+        res.status(200).json({
+            success: true,
+            categories: categories.map(cat => cat.name)
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching categories',
+            error: error.message
+        });
+    }
 };

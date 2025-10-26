@@ -40,21 +40,6 @@ import toast from 'react-hot-toast'
 
 
 const difficultyOptions = ["Easy", "Medium", "Hard"];
-const categoryOptions = [
-  "Arrays",
-  "Strings",
-  "Linked Lists",
-  "Trees",
-  "Graphs",
-  "Dynamic Programming",
-  "Sorting",
-  "Searching",
-  "Recursion",
-  "Backtracking",
-  "Greedy",
-  "Math",
-  "Bit Manipulation",
-];
 const platformOptions = ["LeetCode", "GeeksforGeeks", "CodeChef", "Codeforces"];
 
 export default function Admin() {
@@ -86,46 +71,71 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState("details");
   const [formProgress, setFormProgress] = useState(0);
   const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
   useEffect(() => {
-    if (isFromAdmin) {
-      // If opened from Admin, fetch today’s challenge from backend
-    const fetchTodayChallenge = async () => {
+    // Fetch categories on component mount
+    const fetchCategories = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/admin/get-todaychallenge`,
+        setIsLoadingCategories(true);
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/admin/categories`,
           { withCredentials: true }
         );
-        const challenge = res.data.challenge;
-        if (!challenge) return;
-
-        setFormData({
-          title: challenge.title,
-          description: challenge.description,
-          category: challenge.category,
-          difficulty: challenge.difficulty,
-          points: challenge.points,
-          problemLink: challenge.problemLink,
-          platform: challenge.platform,
-          createdAt: new Date(challenge.createdAt),
-          solutions: {
-            explanation: challenge.solution?.explanation || "",
-            cpp: challenge.solution?.cpp || "",
-            java: challenge.solution?.java || "",
-            python: challenge.solution?.python || "",
-            timeComplexity: challenge.solution?.timeComplexity || "",
-            spaceComplexity: challenge.solution?.spaceComplexity || "",
-          },
-        });
-
-        setChallengeId(challenge._id);
+        if (response.data.success) {
+          setCategoryOptions(response.data.categories);
+        }
       } catch (error) {
-        console.log("No challenge for today — creating new one.");
+        console.error('Error fetching categories:', error);
+        toast.error('Failed to load categories');
+      } finally {
+        setIsLoadingCategories(false);
       }
     };
 
-    fetchTodayChallenge();
-  }
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (isFromAdmin) {
+      // If opened from Admin, fetch today's challenge from backend
+      const fetchTodayChallenge = async () => {
+        try {
+          const res = await axios.get(
+            `${import.meta.env.VITE_API_BASE_URL}/api/admin/getPotd`,
+            { withCredentials: true }
+          );
+          const challenge = res.data.challenge;
+          if (!challenge) return;
+
+          setFormData({
+            title: challenge.title,
+            description: challenge.description,
+            category: challenge.category,
+            difficulty: challenge.difficulty,
+            points: challenge.points,
+            problemLink: challenge.problemLink,
+            platform: challenge.platform,
+            createdAt: new Date(challenge.createdAt),
+            solutions: {
+              explanation: challenge.solution?.explanation || "",
+              cpp: challenge.solution?.cpp || "",
+              java: challenge.solution?.java || "",
+              python: challenge.solution?.python || "",
+              timeComplexity: challenge.solution?.timeComplexity || "",
+              spaceComplexity: challenge.solution?.spaceComplexity || "",
+            },
+          });
+
+          setChallengeId(challenge._id);
+        } catch (error) {
+          console.log("No challenge for today — creating new one.");
+        }
+      };
+
+      fetchTodayChallenge();
+    }
   }, [isFromAdmin]);
 
 
@@ -238,11 +248,11 @@ export default function Admin() {
 
     try {
       const endpoint = challengeId
-        ? `${import.meta.env.VITE_API_BASE_URL}/admin/update-challenge`
-        : `${import.meta.env.VITE_API_BASE_URL}/admin/add-challenges`;
+        ? `${import.meta.env.VITE_API_BASE_URL}/api/admin/update-challenge`
+        : `${import.meta.env.VITE_API_BASE_URL}/api/admin/add-challenges`;
 
       // const response = await axios.post(
-      //   `${import.meta.env.VITE_API_BASE_URL}/admin/add-challenges`,
+      //   `${import.meta.env.VITE_API_BASE_URL}/api/admin/add-challenges`,
       //   {
       //     title: formData.title,
       //     description: formData.description,
@@ -512,20 +522,31 @@ export default function Admin() {
                             className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-600 bg-popover p-2 shadow-lg"
                           >
                             <div className="grid grid-cols-2 gap-1">
-                              {categoryOptions.map((category) => (
-                                <Button
-                                  key={category}
-                                  type="button"
-                                  variant="ghost"
-                                  onClick={() => addCategory(category)}
-                                  className={`justify-start text-left text-sm ${formData.category.includes(category)
-                                    ? "bg-primary/20 text-foreground"
-                                    : "text-muted-foreground hover:bg-muted"
-                                    }`}
-                                >
-                                  {category}
-                                </Button>
-                              ))}
+                              {isLoadingCategories ? (
+                                <div className="col-span-2 text-center py-4">
+                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto"></div>
+                                  <p className="text-sm text-muted-foreground mt-2">Loading categories...</p>
+                                </div>
+                              ) : categoryOptions.length > 0 ? (
+                                categoryOptions.map((category) => (
+                                  <Button
+                                    key={category}
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => addCategory(category)}
+                                    className={`justify-start text-left text-sm ${formData.category.includes(category)
+                                      ? "bg-primary/20 text-foreground"
+                                      : "text-muted-foreground hover:bg-muted"
+                                      }`}
+                                  >
+                                    {category}
+                                  </Button>
+                                ))
+                              ) : (
+                                <div className="col-span-2 text-center py-4">
+                                  <p className="text-sm text-muted-foreground">No categories available</p>
+                                </div>
+                              )}
                             </div>
                             <div className="mt-2 flex items-center gap-2">
                               <Input

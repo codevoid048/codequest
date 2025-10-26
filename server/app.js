@@ -35,11 +35,11 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/auth/admin', adminAuthRoutes);
-app.use('/admin', adminRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/platforms', platformRoute);
 app.use('/api', statsRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api', typeSenseRoutes);
+// app.use('/api', typeSenseRoutes);
 
 startStreakCronJob();
 appLifecycle.initialize();

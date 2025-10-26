@@ -245,23 +245,8 @@ SkeletonLoader.displayName = "SkeletonLoader";
 
 // Problem Card Component
 const ProblemCard = memo(
-  ({ challenge, isToday = false }: { challenge: Challenge; isToday?: boolean }) => {
+  ({ challenge, isToday = false, stats }: { challenge: Challenge; isToday?: boolean; stats: { usersCount: number; challengesCount: number; solvedChallenges: number } }) => {
     const [isLoading, setIsLoading] = useState(false);
-    const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges: 0 });
-
-    useEffect(() => {
-      const fetchStats = async () => {
-        try {
-          const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
-          const data = await res.json();
-          setStats(data);
-        } catch (error) {
-          console.error("Failed to fetch stats:", error);
-        }
-      };
-
-      fetchStats();
-    }, []);
 
     const navigate = useNavigate();
     const handleUpdatePOTD = useCallback(() => {
@@ -451,6 +436,8 @@ const AdminChallenges: React.FC = () => {
     users: storeUsers,
     fetchChallenges,
     fetchUsers,
+    fetchStats: storeFetchStats,
+    fetchPOTD,
     loading: storeLoading
   } = useAdminStore();
 
@@ -461,20 +448,31 @@ const AdminChallenges: React.FC = () => {
   const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date");
   const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges: 0 });
+  const [todayChallenge, setTodayChallenge] = useState<Challenge | null>(null);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/stats`);
-        const data = await res.json();
-        setStats(data);
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
+    const loadStats = async () => {
+      const statsData = await storeFetchStats();
+      if (statsData) {
+        // Parse formatted strings back to numbers for calculations
+        const parseFormattedNumber = (str: string) => {
+          if (typeof str === 'number') return str;
+          if (str.includes('M+')) return parseFloat(str.replace('M+', '')) * 1000000;
+          if (str.includes('k+')) return parseFloat(str.replace('k+', '')) * 1000;
+          if (str.includes('+')) return parseInt(str.replace('+', ''));
+          return parseInt(str) || 0;
+        };
+
+        setStats({
+          usersCount: parseFormattedNumber(statsData.usersCount),
+          challengesCount: parseFormattedNumber(statsData.challengesCount),
+          solvedChallenges: parseFormattedNumber(statsData.solvedChallenges)
+        });
       }
     };
 
-    fetchStats();
-  }, []);
+    loadStats();
+  }, [storeFetchStats]);
 
   const [statistics] = useState<Statistics>({
     totalProblems: 0,
@@ -494,13 +492,44 @@ const AdminChallenges: React.FC = () => {
           fetchChallenges(),
           fetchUsers()
         ]);
+
+        // Fetch today's POTD
+        const potdData = await fetchPOTD();
+        if (potdData && potdData.challenge) {
+          const challenge = potdData.challenge;
+          const solvedUsersCount = challenge.solvedUsers?.length || 0;
+
+          // Convert to Challenge interface format
+          const formattedChallenge: Challenge = {
+            _id: challenge._id,
+            title: challenge.title,
+            createdAt: challenge.createdAt,
+            category: Array.isArray(challenge.category)
+              ? challenge.category
+              : challenge.category ? [challenge.category] : [],
+            difficulty: challenge.difficulty as "Easy" | "Medium" | "Hard",
+            platform: challenge.platform || "Unknown",
+            description: challenge.description || "",
+            problemLink: challenge.problemLink || "#",
+            solvedUsers: challenge.solvedUsers || [],
+            solvedUsersCount,
+            totalUsers: storeUsers.length,
+            solvedPercentage: storeUsers.length > 0
+              ? Math.round((solvedUsersCount / storeUsers.length) * 100)
+              : 0,
+          };
+
+          setTodayChallenge(formattedChallenge);
+        }
       } catch (error) {
         console.error("Failed to fetch data:", error);
+      } finally {
+        // Don't set loading to false here - let the challenges processing effect handle it
       }
     };
 
     loadData();
-  }, [fetchChallenges, fetchUsers]);
+  }, [fetchChallenges, fetchUsers, fetchPOTD, storeUsers.length]);
 
   // Get the total number of users
   const totalUsersCount = useMemo(() => {
@@ -606,23 +635,6 @@ const AdminChallenges: React.FC = () => {
   //   });
   // }, []);
 
-  // Get today's challenge
-  const todayChallenge = useMemo(() => {
-    if (processedChallenges.length === 0) return null;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Find challenge created today or the most recent one
-    const todaysChallenge = processedChallenges.find((challenge) => {
-      const challengeDate = new Date(challenge.createdAt);
-      challengeDate.setHours(0, 0, 0, 0);
-      return challengeDate.getTime() === today.getTime();
-    });
-
-    return todaysChallenge || processedChallenges[0]; // Return today's challenge or the most recent one
-  }, [processedChallenges]);
-
   // Filter and sort challenges
   useEffect(() => {
     let filtered = [...processedChallenges];
@@ -710,7 +722,7 @@ const AdminChallenges: React.FC = () => {
           <SkeletonLoader />
         </div>
       ) : (
-        todayChallenge && <ProblemCard challenge={todayChallenge} isToday={true} />
+        todayChallenge && <ProblemCard challenge={todayChallenge} isToday={true} stats={stats} />
       )}
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -797,7 +809,7 @@ const AdminChallenges: React.FC = () => {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <ProblemCard challenge={challenge} />
+                <ProblemCard challenge={challenge} stats={stats} />
               </motion.div>
             ))
           )}

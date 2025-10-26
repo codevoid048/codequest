@@ -4,7 +4,7 @@ import { User } from "../models/User.js";
 import { fetchLeetCodeStatus, fetchCodeforcesStatus } from "./platformsController.js";
 import { postPotdChallenge } from "../utils/postPOTD.js";
 import auditService from "../services/auditService.js";
-import e from "express";
+import { Category } from '../models/Category.js';
 
 export const getChallenges = async (req, res) => {
     try {
@@ -222,12 +222,14 @@ export const getDailyChallenge = async (req, res) => {
 // Get unique categories for filter options
 export const getFilterOptions = async (req, res) => {
     try {
-        const categories = await Challenge.distinct('category');
-        const difficulties = await Challenge.distinct('difficulty');
-        const platforms = await Challenge.distinct('platform');
+        const [categories, difficulties, platforms] = await Promise.all([
+            Category.find({}).select('name -_id').lean(),
+            Challenge.distinct('difficulty'),
+            Challenge.distinct('platform')
+        ]);
 
         return res.status(200).json({
-            categories: categories.flat().filter((cat, index, arr) => arr.indexOf(cat) === index),
+            categories: categories.map(cat => cat.name),
             difficulties,
             platforms
         });
