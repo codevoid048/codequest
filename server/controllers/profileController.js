@@ -3,6 +3,7 @@ import { Activity } from "../models/Activity.js"
 import cloudinary from "../config/cloudinary.js"
 import { v4 as uuidv4 } from "uuid"
 import { Challenge } from "../models/Challenge.js"
+import auditService from "../services/auditService.js"
 
 export const getUserProfile = async (req, res) => {
     try {
@@ -14,7 +15,7 @@ export const getUserProfile = async (req, res) => {
             res.status(404).json({ message: "User not found" })
         }
     } catch (error) {
-        // console.error(error)
+        auditService.error('profile_error', { userId: req.user._id, error: error.message });
         res.status(500).json({ message: "Server error" })
     }
 }
@@ -112,6 +113,8 @@ export const updateUserProfile = async (req, res) => {
         const updatedUser = await user.save()
 
         res.status(200).json({
+            message: "Profile updated successfully",
+            user: {
             _id: updatedUser._id,
             name: updatedUser.name,
             email: updatedUser.email,
@@ -128,9 +131,10 @@ export const updateUserProfile = async (req, res) => {
             otherLinks: updatedUser.otherLinks,
             points: updatedUser.points,
             rank: updatedUser.rank,
+        }
         })
     } catch (error) {
-        // console.error("Profile update error:", error)
+        auditService.error('profile_update_error', { userId: req.user._id, error: error.message });
         res.status(500).json({
             message: "Server error",
             error: error.message,

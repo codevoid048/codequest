@@ -3,6 +3,7 @@ import { Solution } from "../models/Solution.js";
 import { User } from "../models/User.js";
 import { fetchLeetCodeStatus, fetchCodeforcesStatus } from "./platformsController.js";
 import { postPotdChallenge } from "../utils/postPOTD.js";
+import auditService from "../services/auditService.js";
 import e from "express";
 
 export const getChallenges = async (req, res) => {
@@ -134,7 +135,11 @@ export const getChallenges = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Get challenges error:", error);
+        auditService.error("Get challenges failed", error, {
+            requestId: req.auditContext?.requestId,
+            userId: req.user?._id?.toString(),
+            query: req.query
+        });
         res.status(error.statusCode || 500).json({ message: 'Server error' });
     }
 }
@@ -206,7 +211,10 @@ export const getDailyChallenge = async (req, res) => {
         return res.status(200).json(response);
 
     } catch (error) {
-        console.error("Get daily challenge error:", error);
+        auditService.error("Get daily challenge failed", error, {
+            requestId: req.auditContext?.requestId,
+            userId: req.user?._id?.toString()
+        });
         res.status(500).json({ message: 'Server error' });
     }
 }
@@ -225,7 +233,9 @@ export const getFilterOptions = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Get filter options error:", error);
+        auditService.error("Get filter options failed", error, {
+            requestId: req.auditContext?.requestId
+        });
         res.status(500).json({ message: 'Server error' });
     }
 }
@@ -362,7 +372,11 @@ export const checkPOTDStatus = async (req, res) => {
         }
 
     } catch (error) {
-        console.error("Check POTD status error:", error);
+        auditService.error("Check POTD status failed", error, {
+            requestId: req.auditContext?.requestId,
+            userId: req.user?._id?.toString(),
+            challengeId: req.params.id
+        });
         res.status(500).json({ message: 'Server error' });
     }
 };

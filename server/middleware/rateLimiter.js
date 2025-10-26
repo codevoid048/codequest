@@ -1,5 +1,7 @@
 // Rate limiting middleware for preventing race conditions through excessive concurrent requests
 
+import auditService from "../services/auditService.js";
+
 const requestCounts = new Map();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_WINDOW = 10;
@@ -36,7 +38,11 @@ const startCleanup = () => {
         }
         
         if (deletedCount > 0) {
-            console.log(`Rate limiter cleanup: removed ${deletedCount} entries, current size: ${requestCounts.size}`);
+            auditService.cacheEvent('rate_limiter_cleanup', {
+              removedEntries: deletedCount,
+              currentSize: requestCounts.size,
+              memoryOptimization: true
+            });
         }
     }, RATE_LIMIT_WINDOW);
 };
@@ -50,7 +56,9 @@ export const cleanupRateLimiter = () => {
         cleanupInterval = null;
     }
     requestCounts.clear();
-    console.log('Rate limiter cleanup completed');
+    auditService.systemEvent('rate_limiter_shutdown', {
+      action: 'cleanup_completed'
+    });
 };
 
 export const rateLimitMiddleware = (maxRequests = MAX_REQUESTS_PER_WINDOW, windowMs = RATE_LIMIT_WINDOW) => {
@@ -80,6 +88,16 @@ export const rateLimitMiddleware = (maxRequests = MAX_REQUESTS_PER_WINDOW, windo
         
         // Check if limit exceeded
         if (userRequests.count >= maxRequests) {
+            auditService.security('rate_limit_exceeded', {
+              identifier,
+              limit: maxRequests,
+              current: userRequests.count,
+              windowMs,
+              ip: req.ip,
+              url: req.originalUrl,
+              method: req.method
+            });
+            
             return res.status(429).json({
                 error: 'Too many requests',
                 message: `Maximum ${maxRequests} requests per ${windowMs / 1000} seconds`,
@@ -89,6 +107,18 @@ export const rateLimitMiddleware = (maxRequests = MAX_REQUESTS_PER_WINDOW, windo
         
         // Increment counter
         userRequests.count++;
+        
+        // Log rate limiting activity for monitoring
+        if (userRequests.count > maxRequests * 0.8) { // Warn when approaching limit
+            auditService.warn('Rate limit approaching', {
+              identifier,
+              current: userRequests.count,
+              limit: maxRequests,
+              remaining: maxRequests - userRequests.count,
+              url: req.originalUrl
+            });
+        }
+        
         next();
     };
 };

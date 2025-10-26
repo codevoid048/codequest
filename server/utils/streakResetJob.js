@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import { User } from '../models/User.js';
+import auditService from '../services/auditService.js';
 
 const getLastSolvedDate = (challenges = []) => {
     if (!challenges.length) return null;
@@ -13,10 +14,11 @@ let isResettingStreaks = false;
 const resetUserStreaks = async () => {
   // Prevent concurrent executions
   if (isResettingStreaks) {
-    console.log('Streak reset already in progress, skipping...');
+    auditService.warn('Streak reset already in progress, skipping');
     return;
   }
 
+  const audit = auditService.startTrace('streak_reset_job');
   isResettingStreaks = true;
   
   try {
@@ -29,7 +31,10 @@ const resetUserStreaks = async () => {
     yesterday.setDate(istNow.getDate() - 1);
     const yesterStr = yesterday.toISOString().split("T")[0];
 
-    console.log(`Starting streak reset for date: ${yesterStr}`);
+    auditService.systemEvent('streak_reset_started', { 
+      targetDate: yesterStr,
+      timezone: 'Asia/Kolkata'
+    });
 
     // Use aggregation pipeline for better performance and atomicity
     const streakResetUpdates = await User.aggregate([
@@ -63,16 +68,28 @@ const resetUserStreaks = async () => {
 
       const result = await User.bulkWrite(bulkOps, { ordered: false });
       
-      console.log(`Streak reset completed: ${result.modifiedCount} users affected on ${yesterStr}`);
-      streakResetUpdates.forEach(user => {
-        console.log(`Streak reset for ${user.username}`);
+      auditService.systemEvent('streak_reset_completed', {
+        targetDate: yesterStr,
+        usersAffected: result.modifiedCount,
+        usernames: streakResetUpdates.map(u => u.username)
+      });
+
+      audit.complete({ 
+        usersAffected: result.modifiedCount,
+        targetDate: yesterStr 
       });
     } else {
-      console.log(`No streaks to reset on ${yesterStr}`);
+      auditService.systemEvent('streak_reset_no_changes', { 
+        targetDate: yesterStr 
+      });
+      audit.complete({ usersAffected: 0, targetDate: yesterStr });
     }
 
   } catch (err) {
-    console.error("Error resetting streaks:", err.message);
+    auditService.error('Streak reset job failed', err, { 
+      targetDate: yesterStr 
+    });
+    audit.error(err);
   } finally {
     isResettingStreaks = false;
   }
@@ -80,7 +97,10 @@ const resetUserStreaks = async () => {
 let streakCronJob = null;
 
 export const startStreakCronJob = () => {
-  console.log('Streak reset cron job scheduled for midnight IST');
+  auditService.systemEvent('streak_cron_job_scheduled', {
+    schedule: '0 0 * * *',
+    timezone: 'Asia/Kolkata'
+  });
   
   // Store reference for cleanup
   streakCronJob = cron.schedule('0 0 * * *', async () => {
@@ -91,7 +111,7 @@ export const startStreakCronJob = () => {
         global.gc();
       }
     } catch (error) {
-      console.error('Streak reset cron job failed:', error);
+      auditService.error('Streak reset cron job execution failed', error);
     }
   }, { 
     timezone: "Asia/Kolkata",
@@ -104,6 +124,6 @@ export const stopStreakCronJob = () => {
   if (streakCronJob) {
     streakCronJob.stop();
     streakCronJob = null;
-    console.log('Streak cron job stopped');
+    auditService.systemEvent('streak_cron_job_stopped');
   }
 };

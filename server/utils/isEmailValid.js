@@ -1,5 +1,6 @@
 // import emailValidator from "deep-email-validator";
 import emailValidator from "node-email-verifier";
+import auditService from "../services/auditService.js";
 
 // export const isEmailValid = async (email) => {
 //     try {
@@ -13,11 +14,26 @@ import emailValidator from "node-email-verifier";
 // };
 
 export const isEmailValid = async (email) => {
+  const audit = auditService.startTrace('email_validation', { email });
+  
   try {
     const result = await emailValidator(email, { detailed: true, checkDisposable: true });
+    
+    auditService.systemEvent('email_validated', {
+      email,
+      valid: result.valid,
+      reason: result.reason
+    });
+
+    audit.complete({ valid: result.valid, reason: result.reason });
     return result;
   } catch (error) {
-    console.error('Validation error:', error);
+    auditService.error('Email validation failed', error, {
+      email,
+      service: 'node-email-verifier'
+    });
+    
+    audit.error(error);
     return { valid: false, reason: 'validation_error' };
   }
 };

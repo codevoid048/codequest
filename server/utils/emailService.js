@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import auditService from "../services/auditService.js";
 dotenv.config();
 
 // Rate limiting storage
@@ -37,6 +38,7 @@ const checkRateLimit = (email) => {
     // Check if exceeded max attempts
     if (attempt.count >= RATE_LIMIT.MAX_ATTEMPTS) {
       const timeLeft = Math.ceil((RATE_LIMIT.WINDOW_MS - (now - attempt.firstAttempt)) / 60000);
+      auditService.security('email_rate_limit_exceeded', { email, attempts: attempt.count });
       throw new Error(`Too many verification attempts. Please try again in ${timeLeft} minute(s).`);
     }
   }
@@ -73,7 +75,7 @@ export const sendOTPEmail = async (email, otp) => {
     // Check rate limit before proceeding
     checkRateLimit(email);
 
-    const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+    const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
     await transporter.verify();
 
     const mailOptions = {
@@ -93,25 +95,29 @@ export const sendOTPEmail = async (email, otp) => {
     };
 
     await transporter.sendMail(mailOptions);
-    //console.log(`OTP email sent to ${email}`);
 
     // Update rate limit only after successful send
     updateRateLimit(email);
 
     return true;
   } catch (error) {
-    console.error(error);
+    auditService.error('otp_email_error', { email, error: error.message });
     throw error;
   }
 };
 
 export const deleteConfirmationMail = async (email) => {
+  const traceId = auditService.startTrace('send_deletion_confirmation_email');
+  
   if (!email) {
+    auditService.error('deletion_email_validation_failed', { email, error: 'Missing email' }, traceId);
     throw new Error("Email is required");
   }
 
   try {
-    const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+    auditService.userAction('deletion_confirmation_email_started', { email }, traceId);
+    
+    const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
     await transporter.verify();
 
     const mailOptions = {
@@ -134,11 +140,11 @@ export const deleteConfirmationMail = async (email) => {
     };
 
     await transporter.sendMail(mailOptions);
-    //console.log(`Deletion confirmation email sent to ${email}`);
+    auditService.userAction('deletion_confirmation_email_sent', { email }, traceId);
 
     return true;
   } catch (error) {
-    console.error(error);
+    auditService.error('deletion_confirmation_email_failed', { email, error: error.message }, traceId);
     throw error;
   }
 };
@@ -159,7 +165,8 @@ export const sendResetPassEmail = async (email, resetLink) => {
   }
 
   try {
-    const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+    
+    const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
     await transporter.verify();
 
     const mailOptions = {
@@ -178,9 +185,10 @@ export const sendResetPassEmail = async (email, resetLink) => {
     };
 
     await transporter.sendMail(mailOptions);
+    
     return true;
   } catch (error) {
-    console.error(error);
+    auditService.error('reset_email_error', { email, error: error.message });
     throw error;
   }
 };

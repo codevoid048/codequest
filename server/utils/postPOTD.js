@@ -1,6 +1,7 @@
 import { Challenge } from "../models/Challenge.js";
 import { User } from "../models/User.js";
 import mongoose from "mongoose";
+import auditService from "../services/auditService.js";
 
 export const postPotdChallenge = async (userId, timestamp, challengeId, difficulty) => {
     const session = await mongoose.startSession();
@@ -123,7 +124,7 @@ export const postPotdChallenge = async (userId, timestamp, challengeId, difficul
         });
 
     } catch (error) {
-        console.error('POTD challenge update error:', error);
+        auditService.error('potd_challenge_error', { error: error.message });
         return {
             success: false,
             message: error.message === 'Missing required fields' ? error.message : 'Server error',

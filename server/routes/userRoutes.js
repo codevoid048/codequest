@@ -1,5 +1,6 @@
 import express from "express";
 import { User } from "../models/User.js";
+import auditService from "../services/auditService.js";
 const router = express.Router();
 
 router.get("/:username", async (req, res) => {
@@ -11,8 +12,11 @@ router.get("/:username", async (req, res) => {
     }
     res.json({ user });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    auditService.error("Get user profile failed", error, {
+      requestId: req.auditContext?.requestId,
+      username: req.params.username
+    });
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 

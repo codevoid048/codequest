@@ -1,5 +1,6 @@
 import { User } from "../models/User.js"
 import NodeCache from "node-cache"
+import auditService from "../services/auditService.js"
 
 // Cache with memory limits to prevent unbounded growth
 const leaderBoardCache = new NodeCache({ 
@@ -13,7 +14,12 @@ const leaderBoardCache = new NodeCache({
 leaderBoardCache.on('set', (key, value) => {
   const stats = leaderBoardCache.getStats();
   if (stats.keys > 50) {
-    console.log(`Cache stats - Keys: ${stats.keys}, Hits: ${stats.hits}, Misses: ${stats.misses}`);
+    auditService.cacheEvent('cache_stats', {
+      keys: stats.keys,
+      hits: stats.hits,
+      misses: stats.misses,
+      hitRate: stats.hits / (stats.hits + stats.misses) * 100
+    });
   }
 });
 
@@ -34,7 +40,11 @@ const formatLeaderboardUser = (user) => {
 };
 
 export const updateRanks = async () => {
+    const audit = auditService.startTrace('leaderboard_update');
+    
     try {
+        auditService.cacheEvent('leaderboard_update_started');
+        
         // Use MongoDB aggregation pipeline instead of JavaScript processing
         const leaderboardData = await User.aggregate([
             // Match only verified users
@@ -118,9 +128,23 @@ export const updateRanks = async () => {
         }));
 
         leaderBoardCache.set('leaderboard', formattedLeaderboard);
+
+        auditService.cacheEvent('leaderboard_cache_updated', {
+          userCount: formattedLeaderboard.length,
+          cacheSize: leaderBoardCache.getStats().keys
+        });
+
+        audit.complete({ 
+          userCount: formattedLeaderboard.length,
+          bulkOperations: bulkOps.length 
+        });
+
         return formattedLeaderboard;
     } catch (error) {
-        console.error('Error updating ranks:', error);
+        auditService.error('Leaderboard update failed', error, {
+          operation: 'updateRanks'
+        });
+        audit.error(error);
         throw error;
     }
 };
@@ -157,11 +181,15 @@ let updateQueue = [];
 export const warmupLeaderboardCache = async (maxRetries = 3) => {
     // If already updating, wait for current update to complete
     if (isUpdatingLeaderboard) {
+        auditService.cacheEvent('leaderboard_warmup_queued', {
+          queuedRequests: updateQueue.length
+        });
         return new Promise((resolve, reject) => {
             updateQueue.push({ resolve, reject });
         });
     }
 
+    const audit = auditService.startTrace('leaderboard_warmup', { maxRetries });
     isUpdatingLeaderboard = true;
     let attempts = 0;
     
@@ -169,17 +197,37 @@ export const warmupLeaderboardCache = async (maxRetries = 3) => {
         while (attempts < maxRetries) {
             try {
                 attempts++;
-                console.log(`Leaderboard update attempt ${attempts}/${maxRetries}`);
+                auditService.cacheEvent('leaderboard_warmup_attempt', {
+                  attempt: attempts,
+                  maxRetries
+                });
+                
                 const result = await updateRanks();
-                console.log('Leaderboard cache warmed up successfully');
+                
+                auditService.cacheEvent('leaderboard_warmup_successful', {
+                  attempts,
+                  userCount: result.length,
+                  queuedRequests: updateQueue.length
+                });
                 
                 // Resolve all queued requests
                 updateQueue.forEach(({ resolve }) => resolve(result));
                 updateQueue = [];
                 
+                audit.complete({ 
+                  attempts,
+                  userCount: result.length,
+                  success: true 
+                });
+                
                 return result;
             } catch (error) {
-                console.error(`Attempt ${attempts} failed:`, error);
+                auditService.warn('Leaderboard warmup attempt failed', {
+                  attempt: attempts,
+                  maxRetries,
+                  error: error.message
+                });
+                
                 if (attempts >= maxRetries) {
                     throw error; // Final attempt failed
                 }
@@ -187,9 +235,16 @@ export const warmupLeaderboardCache = async (maxRetries = 3) => {
             }
         }
     } catch (error) {
+        auditService.error('Leaderboard warmup failed completely', error, {
+          attempts,
+          queuedRequests: updateQueue.length
+        });
+        
         // Reject all queued requests
         updateQueue.forEach(({ reject }) => reject(error));
         updateQueue = [];
+        
+        audit.error(error);
         throw error;
     } finally {
         isUpdatingLeaderboard = false;

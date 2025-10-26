@@ -4,6 +4,7 @@ import { User } from "../models/User.js";
 import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "../lib/leetcode.js";
 import { Challenge } from "../models/Challenge.js";
 import { getGFGName } from "../utils/gfgService.js";
+import auditService from "../services/auditService.js";
 export const leetcodeData = async (req, res) => {
   try {
     const username = req.body.username; // Get username from request body
@@ -271,7 +272,11 @@ export const solvedChallenges = async (req, res) => {
             }
           );
         } else {
-          console.log("Challenge already Solved");
+          auditService.challengeEvent('challenge_already_solved', {
+            userId: user._id.toString(),
+            challengeId: challenge._id.toString(),
+            platform: challenge.platform
+          });
         }
       }
     }
@@ -378,7 +383,10 @@ export const fetchCodeforcesStatus = async (username, challengeTitle) => {
     }
 
   } catch (error) {
-    console.error('Error fetching user data from Codeforces:', error);
+    auditService.error('Failed to fetch Codeforces user data', error, {
+      username,
+      platform: 'codeforces'
+    });
     return { success: false, message: "Failed to fetch Codeforces data" };
   }
 }
@@ -391,8 +399,11 @@ export const heatmap = async (req, res) => {
     // console.log(solvedChallenges , "solvedChallenges");
     return res.status(200).json({ message: "Heatmap fetched successfully", heatmap: user.heatmap });
   } catch (error) {
-    console.error('Error fetching heatmap:', error);
-    return res.status(500).json({ error: `Failed to fetch heatmap` });
+    auditService.error('Failed to fetch heatmap', error, {
+      requestId: req.auditContext?.requestId,
+      userId: req.user?._id?.toString()
+    });
+    res.status(500).json({ error: 'Failed to fetch heatmap' });
   }
 }
 

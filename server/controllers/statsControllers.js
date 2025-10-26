@@ -1,5 +1,6 @@
 import { User } from "../models/User.js";
 import { Challenge } from "../models/Challenge.js";
+import auditService from "../services/auditService.js";
 
 const formatCount = (num) => {
     if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M+";
@@ -61,7 +62,9 @@ export const getCounts = async (req, res) => {
       difficultyDistribution: difficultyData
     });
   } catch (error) {
-    console.error("Error in getCounts:", error);
-    res.status(500).json({ message: "Server error" });
+    auditService.error("Get stats counts failed", error, {
+      requestId: req.auditContext?.requestId
+    });
+    res.status(500).json({ message: "Internal server error" });
   }
 };

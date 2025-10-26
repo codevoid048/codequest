@@ -1,5 +1,7 @@
 // Standardized error handling system
 
+import auditService from '../services/auditService.js';
+
 // Custom error classes for different types of errors
 export class AppError extends Error {
     constructor(message, statusCode, errorCode = null, details = null) {
@@ -56,33 +58,36 @@ export const globalErrorHandler = (err, req, res, next) => {
     let error = { ...err };
     error.message = err.message;
 
-    // Log error for debugging (structured logging)
-    const errorLog = {
-        timestamp: new Date().toISOString(),
+    // Create structured audit log
+    const auditMetadata = {
+        requestId: req.auditContext?.requestId,
         method: req.method,
         url: req.originalUrl,
         ip: req.ip,
         userAgent: req.get('User-Agent'),
-        userId: req.user?._id,
-        error: {
-            name: error.name,
-            message: error.message,
-            code: error.errorCode,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        }
+        userId: req.user?._id?.toString(),
+        errorCode: error.errorCode,
+        statusCode: error.statusCode,
+        isOperational: error.isOperational
     };
 
-    // Log different types of errors with appropriate levels
+    // Log different types of errors with audit service
     if (error.statusCode >= 500) {
-        console.error('Server Error:', errorLog);
+        auditService.error('Server error occurred', error, auditMetadata);
     } else if (error.statusCode >= 400) {
-        console.warn('Client Error:', errorLog);
+        auditService.warn('Client error occurred', auditMetadata);
+    } else {
+        auditService.info('Error handled', auditMetadata);
     }
 
     // Mongoose validation error
     if (err.name === 'ValidationError') {
         const message = Object.values(err.errors).map(val => val.message).join(', ');
         error = new ValidationError(message);
+        auditService.dbOperation('validation_error', {
+            ...auditMetadata,
+            validationErrors: Object.keys(err.errors)
+        });
     }
 
     // Mongoose duplicate key error
@@ -90,25 +95,38 @@ export const globalErrorHandler = (err, req, res, next) => {
         const field = Object.keys(err.keyValue)[0];
         const message = `${field} already exists`;
         error = new ConflictError(message);
+        auditService.dbOperation('duplicate_key_error', {
+            ...auditMetadata,
+            field,
+            value: err.keyValue[field]
+        });
     }
 
     // JWT errors
     if (err.name === 'JsonWebTokenError') {
         error = new UnauthorizedError('Invalid token');
+        auditService.security('invalid_jwt_token', auditMetadata);
     }
 
     if (err.name === 'TokenExpiredError') {
         error = new UnauthorizedError('Token expired');
+        auditService.security('expired_jwt_token', auditMetadata);
     }
 
     // Mongoose cast error (invalid ObjectId)
     if (err.name === 'CastError') {
         error = new ValidationError('Invalid ID format');
+        auditService.dbOperation('cast_error', {
+            ...auditMetadata,
+            field: err.path,
+            value: err.value
+        });
     }
 
     // Rate limit error
     if (err.status === 429) {
         error = new AppError('Too many requests, please try again later', 429, 'RATE_LIMIT_EXCEEDED');
+        auditService.security('rate_limit_error_response', auditMetadata);
     }
 
     // Default to server error if not operational

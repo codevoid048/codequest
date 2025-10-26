@@ -1,5 +1,6 @@
 import mongoose from "mongoose"
 import { setupDatabase } from "./dbIndexes.js"
+import auditService from "../services/auditService.js"
 // import { setupMongoChangeStream } from "../typesense/liveSync.js"
 
 const connectDB = async () => {
@@ -14,27 +15,50 @@ const connectDB = async () => {
         };
 
         const conn = await mongoose.connect(process.env.MONGO_URI, connectionOptions);
-        console.log(`MongoDB connected: ${conn.connection.host}`);
+        
+        auditService.systemEvent('database_connected', {
+            host: conn.connection.host,
+            database: conn.connection.name,
+            connectionPoolSize: connectionOptions.maxPoolSize
+        });
         
         // Monitor connection events for memory management
         mongoose.connection.on('connected', () => {
-            console.log('MongoDB connection established');
+            auditService.systemEvent('database_connection_established', {
+                readyState: mongoose.connection.readyState
+            });
         });
         
         mongoose.connection.on('disconnected', () => {
-            console.log('MongoDB connection disconnected');
+            auditService.systemEvent('database_disconnected', {
+                reason: 'connection_lost'
+            });
         });
         
         mongoose.connection.on('error', (error) => {
-            console.error('MongoDB connection error:', error);
+            auditService.error('Database connection error', error, {
+                host: conn.connection.host,
+                readyState: mongoose.connection.readyState
+            });
         });
         
         // Setup indexes for performance and race condition prevention
+        const audit = auditService.startTrace('database_setup');
         await setupDatabase();
+        audit.complete({ indexesSetup: true });
         
         //setupMongoChangeStream();
+        
+        auditService.systemEvent('database_initialization_complete', {
+            environment: process.env.NODE_ENV
+        });
+        
     } catch (error) {
-        console.error(`Database connection error: ${error.message}`);
+        auditService.critical('Database connection failed', {
+            error: error.message,
+            mongoUri: process.env.MONGO_URI ? 'configured' : 'missing',
+            environment: process.env.NODE_ENV
+        });
         process.exit(1);
     }
 }

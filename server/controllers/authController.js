@@ -8,16 +8,11 @@ import { isEmailValid } from "../utils/isEmailValid.js";
 import mongoose from "mongoose";
 // import { client } from "../utils/typesenseClient.js";
 import { warmupLeaderboardCache } from "../utils/leaderBoardCache.js";
+import auditService from "../services/auditService.js";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-// Generate JWT token function
-const generateToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "1d",
-  });
-};
 
 const setAuthCookies = (res, user, token) => {
   // Store JWT in HTTP-only cookie
@@ -39,10 +34,29 @@ const setAuthCookies = (res, user, token) => {
 
 
 export const registerUser = async (req, res) => {
+  const audit = auditService.startTrace('user_registration', {
+    requestId: req.auditContext?.requestId,
+    ip: req.ip,
+    userAgent: req.get('User-Agent')
+  });
+
   try {
     const { email, name, password, username, registrationNumber, branch, collegeName, isAffiliate } = req.body;
 
+    auditService.authEvent('registration_attempt', {
+      requestId: req.auditContext?.requestId,
+      email: email?.trim()?.toLowerCase(),
+      username: username?.trim()?.toLowerCase(),
+      ip: req.ip,
+      collegeName: collegeName?.trim()
+    });
+
     if (!name || !email || !password || !username || !registrationNumber || !branch || !collegeName) {
+      auditService.authEvent('registration_validation_failed', {
+        requestId: req.auditContext?.requestId,
+        reason: 'missing_required_fields',
+        providedFields: Object.keys(req.body)
+      });
       return res.status(400).json({ error: "All fields are required" });
     }
 
@@ -125,72 +139,225 @@ export const registerUser = async (req, res) => {
     // Send OTP to user's email
     await sendOTPEmail(trimmedEmail, otp);
 
+    auditService.authEvent('registration_otp_sent', {
+      requestId: req.auditContext?.requestId,
+      email: trimmedEmail,
+      username: trimmedUsername,
+      collegeName: trimmedCollege,
+      branch: trimmedBranch
+    });
+
+    audit.complete({ 
+      email: trimmedEmail, 
+      username: trimmedUsername,
+      otpSent: true 
+    });
+
     res.status(201).json({ message: "OTP sent to email. Verify to complete registration." });
   } catch (error) {
-    // console.error(error);
+    auditService.error('Registration failed', error, {
+      requestId: req.auditContext?.requestId,
+      email: req.body.email,
+      username: req.body.username,
+      ip: req.ip
+    });
+
+    audit.error(error);
     res.status(500).json({ error: error.message });
   }
 };
 
 export const verifyEmail = async (req, res) => {
+  const audit = auditService.startTrace('email_verification', {
+    requestId: req.auditContext?.requestId,
+    ip: req.ip
+  });
+
   try {
     const { email, otp } = req.body;
+
+    auditService.authEvent('verification_attempt', {
+      requestId: req.auditContext?.requestId,
+      email,
+      ip: req.ip
+    });
 
     const user = await User.findOne({ email });
 
     if (!user) {
+      auditService.authEvent('verification_failed', {
+        requestId: req.auditContext?.requestId,
+        email,
+        reason: 'user_not_found',
+        ip: req.ip
+      });
       return res.status(404).json({ error: "User not found" });
     }
 
     if (user.isVerified) {
+      auditService.authEvent('verification_failed', {
+        requestId: req.auditContext?.requestId,
+        email,
+        userId: user._id.toString(),
+        reason: 'already_verified',
+        ip: req.ip
+      });
       return res.status(400).json({ error: "Email already verified, Please login" });
     }
 
     const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
     if (user.otpExpires < nowIST.getTime()) {
+      auditService.authEvent('verification_failed', {
+        requestId: req.auditContext?.requestId,
+        email,
+        userId: user._id.toString(),
+        reason: 'otp_expired',
+        ip: req.ip
+      });
       await User.findByIdAndDelete(user._id);
       await warmupLeaderboardCache();
       return res.status(400).json({ error: "OTP has expired. Please request a new one." });
     }
-    console.log("OTP:", typeof (user.otp), "Provided OTP:", typeof (parseInt(otp)));
+
+    auditService.debug('OTP verification attempt', {
+      requestId: req.auditContext?.requestId,
+      userId: user._id.toString(),
+      providedOtpType: typeof parseInt(otp),
+      storedOtpType: typeof user.otp
+    });
     if (user.otp === parseInt(otp)) {
         user.isVerified = true;
         user.otp = null;
         user.otpExpires = null;
+        
+        await user.save();
+
+        auditService.userAction('email_verified', {
+          requestId: req.auditContext?.requestId,
+          userId: user._id.toString(),
+          email: user.email,
+          username: user.username,
+          ip: req.ip
+        });
+
+        audit.complete({ 
+          userId: user._id.toString(),
+          email: user.email,
+          verified: true 
+        });
+
+        res.status(200).json({ message: "Email verified and user registered successfully!" });
     } else {
+      auditService.authEvent('verification_failed', {
+        requestId: req.auditContext?.requestId,
+        email,
+        userId: user._id.toString(),
+        reason: 'invalid_otp',
+        ip: req.ip
+      });
       throw new Error("Invalid OTP");
     }
 
-    await user.save();
-
-    res.status(200).json({ message: "Email verified and user registered successfully!" });
   } catch (error) {
-    //console.error("Verification error:", error);
+    auditService.error('Email verification failed', error, {
+      requestId: req.auditContext?.requestId,
+      email: req.body.email,
+      ip: req.ip
+    });
+
+    audit.error(error);
     res.status(500).json({ error: error.message });
   }
 };
 
 export const loginUser = async (req, res) => {
+  const audit = auditService.startTrace('user_login', {
+    requestId: req.auditContext?.requestId,
+    ip: req.ip,
+    userAgent: req.get('User-Agent')
+  });
+
   try {
     const { email, password } = req.body;
 
+    auditService.authEvent('login_attempt', {
+      requestId: req.auditContext?.requestId,
+      email,
+      ip: req.ip
+    });
+
     const { valid } = await isEmailValid(email);
-    if (!valid) return res.status(400).send({ message: "Please provide a valid email address." });
+    if (!valid) {
+      auditService.authEvent('login_failed', {
+        requestId: req.auditContext?.requestId,
+        email,
+        reason: 'invalid_email_format',
+        ip: req.ip
+      });
+      return res.status(400).send({ message: "Please provide a valid email address." });
+    }
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ error: "No user found" });
+    if (!user) {
+      auditService.security('login_attempt_nonexistent_user', {
+        requestId: req.auditContext?.requestId,
+        email,
+        ip: req.ip
+      });
+      return res.status(401).json({ error: "No user found" });
+    }
 
-    if (!user.isVerified) return res.status(400).json({ error: "Email not verified" });
+    if (!user.isVerified) {
+      auditService.authEvent('login_failed', {
+        requestId: req.auditContext?.requestId,
+        email,
+        userId: user._id.toString(),
+        reason: 'email_not_verified',
+        ip: req.ip
+      });
+      return res.status(400).json({ error: "Email not verified" });
+    }
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ error: "Wrong Password" });
+    if (!match) {
+      auditService.security('login_failed_wrong_password', {
+        requestId: req.auditContext?.requestId,
+        email,
+        userId: user._id.toString(),
+        ip: req.ip
+      });
+      return res.status(400).json({ error: "Wrong Password" });
+    }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
-    // console.log("Login successful for user:", user.username);
+    
+    auditService.userAction('login_successful', {
+      requestId: req.auditContext?.requestId,
+      userId: user._id.toString(),
+      email: user.email,
+      username: user.username,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
     setAuthCookies(res, user, token);
+
+    audit.complete({ 
+      userId: user._id.toString(),
+      email: user.email,
+      username: user.username,
+      loginSuccessful: true 
+    });
+
     return res.status(200).json({ message: "Login Successful" });
   } catch (error) {
-    // console.error("Server Error:", error);
+    auditService.error('Login failed', error, {
+      requestId: req.auditContext?.requestId,
+      email: req.body.email,
+      ip: req.ip
+    });
+
+    audit.error(error);
     res.status(500).json({ error: "Server error" });
   }
 };

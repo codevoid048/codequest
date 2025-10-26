@@ -1,6 +1,7 @@
 import { User } from "../models/User.js";
 import { Challenge } from "../models/Challenge.js";
 import { Solution } from "../models/Solution.js";
+import auditService from "../services/auditService.js";
 
 export const getUsers = async (req, res) => {
     try {
@@ -56,14 +57,14 @@ export const getUsers = async (req, res) => {
 
         const totalPages = Math.ceil(totalUsers / pageLimit);
 
-        res.json({
+        return res.status(200).json({
+            success: true,
             users,
             pagination: {
                 currentPage: pageNumber,
-                totalPages,
-                totalUsers,
-                limit: pageLimit,
-                hasNextPage: pageNumber < totalPages,
+                totalPages: Math.ceil(filteredUsers / pageLimit),
+                totalUsers: filteredUsers,
+                hasNextPage: pageNumber * pageLimit < filteredUsers,
                 hasPrevPage: pageNumber > 1
             },
             filters: {
@@ -73,7 +74,7 @@ export const getUsers = async (req, res) => {
         });
 
     } catch (err) {
-        console.error("Error in getUsers:", err);
+        auditService.error('admin_get_users_error', { error: err.message });
         res.status(500).json({ 
             error: "Error in getting users", 
             details: err.message 
@@ -147,7 +148,7 @@ export const addChallenge = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error in addChallenge:", error);
+        auditService.error('admin_add_challenge_error', { error: error.message });
         res.status(500).json({ 
             success: false, 
             message: "Server error",
@@ -220,7 +221,7 @@ export const updateChallenge = async (req, res) => {
             solution: updatedSolution
         });
     } catch (error) {
-        console.error("Error in updateChallenge:", error);
+        auditService.error('admin_update_challenge_error', { error: error.message });
         res.status(500).json({ 
             success: false, 
             message: "Server error",
@@ -257,7 +258,7 @@ export const getTodayChallenge = async (req, res) => {
       solution: solution || null,
     });
   } catch (error) {
-    console.error("Error in getTodayChallenge:", error);
+    auditService.error('admin_get_today_challenge_error', { error: error.message });
     res.status(500).json({
       success: false,
       message: "Server error",
