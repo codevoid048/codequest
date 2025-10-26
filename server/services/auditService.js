@@ -375,22 +375,29 @@ class AuditService {
     };
   }
 
-  // Cleanup method for graceful shutdown
-  async shutdown() {
-    this.info('Audit service shutting down...');
-    
-    // Complete any pending traces
-    for (const [traceId, trace] of this.activeTraces.entries()) {
-      this.warn(`Force completing trace: ${trace.operation}`, {
-        traceId,
-        reason: 'shutdown'
-      });
-    }
-    this.activeTraces.clear();
+  // Graceful shutdown
+  shutdown() {
+    try {
+      this.info('Audit service shutting down...');
+      
+      // Complete any pending traces
+      for (const [traceId, trace] of this.activeTraces.entries()) {
+        this.warn(`Force completing trace: ${trace.operation}`, {
+          traceId,
+          reason: 'shutdown'
+        });
+      }
+      this.activeTraces.clear();
 
-    // Flush any pending logs (AWS-friendly)
-    this.logger.end();
-    console.log('Audit service shutdown complete');
+      // Close logger transports gracefully
+      if (this.logger && this.logger.close) {
+        this.logger.close();
+      }
+      console.log('Audit service shutdown complete');
+    } catch (error) {
+      // Failsafe: just use console.log if logger fails
+      console.log('Audit service shutdown completed with errors:', error.message);
+    }
   }
 
   // Get logger stats (useful for monitoring)

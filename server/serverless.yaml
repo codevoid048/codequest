@@ -8,6 +8,7 @@ provider:
   environment:
     NODE_ENV: production
     MONGO_URI: ${env:MONGO_URI}
+    REDIS_URL: ${env:REDIS_URL}
     BASE_URL: ${env:BASE_URL}
     CLIENT_URL: ${env:CLIENT_URL}
     JWT_SECRET: ${env:JWT_SECRET}

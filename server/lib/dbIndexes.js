@@ -1,46 +1,67 @@
 import mongoose from "mongoose";
 
-// Database indexes to prevent race conditions and improve performance
+// Drop and recreate all performance indexes
 export const createOptimalIndexes = async () => {
     try {
-        console.log('Creating database indexes for race condition prevention...');
+        console.log('Setting up database indexes...');
         
-        // User model indexes
-        await mongoose.connection.db.collection('users').createIndexes([
-            // Unique constraints to prevent duplicate registrations
-            { key: { email: 1 }, unique: true, partialFilterExpression: { isVerified: true } },
-            { key: { username: 1 }, unique: true, partialFilterExpression: { isVerified: true } },
-            { key: { RegistrationNumber: 1 }, unique: true, partialFilterExpression: { isVerified: true } },
+        const usersCollection = mongoose.connection.db.collection('users');
+        const challengesCollection = mongoose.connection.db.collection('challenges');
+        
+        // Drop problematic indexes individually
+        try {
+            // Drop known problematic indexes
+            const problematicIndexes = [
+                'username_1', 'email_1', 'UserTextIndex', 'ChallengeTextIndex',
+                'email_unique_idx', 'username_unique_idx', 'regno_unique_idx',
+                'challenge_search_idx', 'leaderboard_sort_idx'
+            ];
             
-            // Performance indexes
-            { key: { points: -1, rank: 1 }, name: 'leaderboard_sort' },
-            { key: { isVerified: 1, points: -1 }, name: 'leaderboard_filter' },
-            { key: { 'solveChallenges.easy.timestamp': -1 }, name: 'streak_easy' },
-            { key: { 'solveChallenges.medium.timestamp': -1 }, name: 'streak_medium' },
-            { key: { 'solveChallenges.hard.timestamp': -1 }, name: 'streak_hard' },
-            
-            // Platform data indexes
-            { key: { 'leetCode.username': 1 }, sparse: true },
-            { key: { 'gfg.username': 1 }, sparse: true },
-            { key: { 'codeforces.username': 1 }, sparse: true },
-            { key: { 'codechef.username': 1 }, sparse: true }
-        ]);
-
-        // Challenge model indexes
-        await mongoose.connection.db.collection('challenges').createIndexes([
-            // Query performance indexes
-            { key: { category: 1, difficulty: 1, createdAt: -1 }, name: 'challenge_filter' },
-            { key: { createdAt: -1 }, name: 'daily_challenge' },
-            { key: { title: 'text', category: 'text' }, name: 'challenge_search' },
-            
-            // Solved users index
-            { key: { solvedUsers: 1 }, sparse: true }
-        ]);
-
+            for (const indexName of problematicIndexes) {
+                try {
+                    await usersCollection.dropIndex(indexName);
+                } catch (e) { /* Index doesn't exist */ }
+                try {
+                    await challengesCollection.dropIndex(indexName);
+                } catch (e) { /* Index doesn't exist */ }
+            }
+        } catch (error) {
+            // Continue anyway
+        }
+        
+        // Wait for drops to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Create essential user indexes with explicit names
+        await usersCollection.createIndex({ email: 1 }, { unique: true, sparse: true, name: 'email_unique_idx' });
+        await usersCollection.createIndex({ username: 1 }, { unique: true, sparse: true, name: 'username_unique_idx' });
+        // Skip RegistrationNumber for now - has duplicates
+        
+        // Performance indexes for leaderboard
+        await usersCollection.createIndex({ points: -1, rank: 1 }, { name: 'leaderboard_sort_idx' });
+        await usersCollection.createIndex({ isVerified: 1, points: -1 }, { name: 'verified_points_idx' });
+        
+        // Streak tracking indexes
+        await usersCollection.createIndex({ 'solveChallenges.easy.timestamp': -1 }, { name: 'easy_streak_idx' });
+        await usersCollection.createIndex({ 'solveChallenges.medium.timestamp': -1 }, { name: 'medium_streak_idx' });
+        await usersCollection.createIndex({ 'solveChallenges.hard.timestamp': -1 }, { name: 'hard_streak_idx' });
+        
+        // Platform data indexes
+        await usersCollection.createIndex({ 'leetCode.username': 1 }, { sparse: true, name: 'leetcode_username_idx' });
+        await usersCollection.createIndex({ 'gfg.username': 1 }, { sparse: true, name: 'gfg_username_idx' });
+        await usersCollection.createIndex({ 'codeforces.username': 1 }, { sparse: true, name: 'cf_username_idx' });
+        await usersCollection.createIndex({ 'codechef.username': 1 }, { sparse: true, name: 'cc_username_idx' });
+        
+        // Challenge indexes
+        await challengesCollection.createIndex({ category: 1, difficulty: 1, createdAt: -1 }, { name: 'challenge_filter_idx' });
+        await challengesCollection.createIndex({ createdAt: -1 }, { name: 'challenge_date_idx' });
+        await challengesCollection.createIndex({ title: 'text', category: 'text' }, { name: 'challenge_search_idx' });
+        await challengesCollection.createIndex({ solvedUsers: 1 }, { sparse: true, name: 'solved_users_idx' });
+        
         console.log('Database indexes created successfully');
         
     } catch (error) {
-        console.error('Error creating database indexes:', error);
+        console.error('Error setting up database indexes:', error);
     }
 };
 

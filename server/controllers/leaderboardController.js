@@ -57,11 +57,27 @@ export const updateUserPoints = async (req, res) => {
 
 export const getLeaderboardData = async (req, res) => {
   try {
-    const { search = "", page, limit } = req.query;
+    const { search = "", page = 1, limit = 10 } = req.query;
 
-    let leaderboard = getCachedLeaderboard();
+    let leaderboard = await getCachedLeaderboard();
     if (!leaderboard) {
       leaderboard = await updateRanks();
+    }
+
+    // Ensure leaderboard is an array
+    if (!Array.isArray(leaderboard)) {
+      console.error("Leaderboard is not an array:", typeof leaderboard, leaderboard);
+      leaderboard = [];
+    }
+
+    // Handle case where leaderboard is empty
+    if (leaderboard.length === 0) {
+      return res.json({
+        users: [],
+        totalUsers: 0,
+        currentPage: 1,
+        totalPages: 1,
+      });
     }
 
     // Filter based on search query, if any
@@ -69,17 +85,26 @@ export const getLeaderboardData = async (req, res) => {
     if (search.trim() !== "") {
       const searchLower = search.toLowerCase();
       filteredLeaderboard = leaderboard.filter(user =>
-        user.username.toLowerCase().includes(searchLower)
+        user.username && user.username.toLowerCase().includes(searchLower)
       );
     }
 
-    // Pagination logic
-    const totalUsers = filteredLeaderboard.length;
-    const totalPages = Math.ceil(totalUsers / limit);
-    const currentPage = Math.min(Math.max(parseInt(page), 1), totalPages);
+    // Ensure filtered result is also an array
+    if (!Array.isArray(filteredLeaderboard)) {
+      console.error("Filtered leaderboard is not an array:", typeof filteredLeaderboard);
+      filteredLeaderboard = [];
+    }
 
-    const startIndex = (currentPage - 1) * limit;
-    const pagedUsers = filteredLeaderboard.slice(startIndex, startIndex + parseInt(limit));
+    // Pagination logic with proper defaults
+    const pageNum = Math.max(parseInt(page) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit) || 10, 1), 100); // Max 100 per page
+    
+    const totalUsers = filteredLeaderboard.length;
+    const totalPages = Math.max(Math.ceil(totalUsers / limitNum), 1);
+    const currentPage = Math.min(pageNum, totalPages);
+
+    const startIndex = (currentPage - 1) * limitNum;
+    const pagedUsers = filteredLeaderboard.slice(startIndex, startIndex + limitNum);
 
     res.json({
       users: pagedUsers,
@@ -88,7 +113,7 @@ export const getLeaderboardData = async (req, res) => {
       totalPages,
     });
   } catch (error) {
-    // console.error("Error fetching leaderboard:", error);
+    console.error("Error fetching leaderboard:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

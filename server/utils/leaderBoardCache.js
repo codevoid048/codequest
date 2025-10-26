@@ -22,10 +22,7 @@ const formatLeaderboardUser = (user) => {
 };
 
 export const updateRanks = async () => {
-    const audit = auditService.startTrace('leaderboard_update');
-    
     try {
-        auditService.cacheEvent('leaderboard_update_started');
         
         // Use MongoDB aggregation pipeline instead of JavaScript processing
         const leaderboardData = await User.aggregate([
@@ -117,17 +114,9 @@ export const updateRanks = async () => {
           cacheStats: cacheService.getStats()
         });
 
-        audit.complete({ 
-          userCount: formattedLeaderboard.length,
-          bulkOperations: bulkOps.length 
-        });
-
         return formattedLeaderboard;
     } catch (error) {
-        auditService.error('Leaderboard update failed', error, {
-          operation: 'updateRanks'
-        });
-        audit.error(error);
+        console.error('Leaderboard update failed:', error.message);
         throw error;
     }
 };
@@ -186,7 +175,7 @@ export const warmupLeaderboardCache = async (maxRetries = 3) => {
         });
     }
 
-    const audit = auditService.startTrace('leaderboard_warmup', { maxRetries });
+
     isUpdatingLeaderboard = true;
     let attempts = 0;
     
@@ -211,19 +200,9 @@ export const warmupLeaderboardCache = async (maxRetries = 3) => {
                 updateQueue.forEach(({ resolve }) => resolve(result));
                 updateQueue = [];
                 
-                audit.complete({ 
-                  attempts,
-                  userCount: result.length,
-                  success: true 
-                });
-                
                 return result;
             } catch (error) {
-                auditService.warn('Leaderboard warmup attempt failed', {
-                  attempt: attempts,
-                  maxRetries,
-                  error: error.message
-                });
+                console.warn(`Leaderboard warmup attempt ${attempts}/${maxRetries} failed:`, error.message);
                 
                 if (attempts >= maxRetries) {
                     throw error; // Final attempt failed

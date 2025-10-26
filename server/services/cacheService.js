@@ -23,8 +23,16 @@ class CacheService {
     async initializeRedis() {
         try {
             if (process.env.REDIS_URL) {
+                // Parse Upstash Redis URL format: rediss://default_ro:token@host:port
+                const redisUrl = new URL(process.env.REDIS_URL);
+                const token = redisUrl.password;
+                const restUrl = `https://${redisUrl.hostname}`;
+                
+                const isReadOnly = redisUrl.username.includes('_ro');
+                
                 this.redis = new Redis({
-                    url: process.env.REDIS_URL,
+                    url: restUrl,
+                    token: token,
                     retry: {
                         retries: 3,
                         backoff: (retryCount) => Math.min(retryCount * 50, 500)
@@ -33,11 +41,12 @@ class CacheService {
                 
                 // Test Redis connection
                 await this.redis.ping();
-                this.isRedisAvailable = true;
-                auditService.systemEvent('cache_redis_connected');
+                this.isRedisAvailable = !isReadOnly; // Disable for read-only connections
+                
+                console.log(`Redis connected: ${redisUrl.hostname} (${isReadOnly ? 'read-only - using memory cache' : 'read-write'})`);
             }
         } catch (error) {
-            auditService.error('cache_redis_connection_failed', { error: error.message });
+            console.warn('Redis connection failed:', error.message);
             this.isRedisAvailable = false;
         }
     }
@@ -67,7 +76,7 @@ class CacheService {
                 // Reset metrics
                 this.metrics = { hits: 0, misses: 0, errors: 0, operations: 0 };
             }
-        }, 60000); // Every minute
+        }, 5 * 60000); // Every 5 minute
     }
 
     // Generate cache key with namespace
@@ -83,18 +92,19 @@ class CacheService {
         try {
             let value = null;
             
-            // Try Redis first
-            if (this.isRedisAvailable) {
+            // Try Redis first only if available and connected
+            if (this.isRedisAvailable && this.redis) {
                 try {
                     const redisValue = await this.redis.get(cacheKey);
                     if (redisValue !== null) {
                         value = typeof redisValue === 'string' ? JSON.parse(redisValue) : redisValue;
                         this.metrics.hits++;
-                        auditService.cacheEvent('cache_redis_hit', { namespace, key });
                         return value;
                     }
                 } catch (error) {
-                    auditService.error('cache_redis_get_error', { error: error.message, key: cacheKey });
+                    // Redis connection lost, mark as unavailable
+                    this.isRedisAvailable = false;
+                    console.warn('Redis cache get failed:', error.message);
                     this.metrics.errors++;
                 }
             }
@@ -126,24 +136,25 @@ class CacheService {
         try {
             const serializedValue = JSON.stringify(value);
             
-            // Set in Redis
-            if (this.isRedisAvailable) {
+            // Set in Redis only if available and connected
+            if (this.isRedisAvailable && this.redis) {
                 try {
-                    await this.redis.setex(cacheKey, ttl, serializedValue);
-                    auditService.cacheEvent('cache_redis_set', { namespace, key, ttl });
+                    // Quick connection check
+                    await this.redis.set(cacheKey, serializedValue, { ex: ttl });
                 } catch (error) {
-                    auditService.error('cache_redis_set_error', { error: error.message, key: cacheKey });
+                    // Redis connection lost, mark as unavailable
+                    this.isRedisAvailable = false;
+                    console.warn('Redis cache set failed:', error.message);
                     this.metrics.errors++;
                 }
             }
             
-            // Set in memory cache as backup
+            // Always set in memory cache as backup
             this.memoryCache.set(cacheKey, value, ttl);
-            auditService.cacheEvent('cache_memory_set', { namespace, key, ttl });
             
         } catch (error) {
             this.metrics.errors++;
-            auditService.error('cache_set_error', { error: error.message, namespace, key });
+            console.error('Cache set error:', error.message);
         }
     }
 
