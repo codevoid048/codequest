@@ -1,27 +1,9 @@
 import { User } from "../models/User.js"
-import NodeCache from "node-cache"
 import auditService from "../services/auditService.js"
+import cacheService from "../services/cacheService.js"
 
-// Cache with memory limits to prevent unbounded growth
-const leaderBoardCache = new NodeCache({ 
-  stdTTL: 300, // 5 minutes
-  checkperiod: 60, // Check for expired keys every minute
-  maxKeys: 100, // Limit number of cached items
-  useClones: false // Prevent memory duplication
-});
-
-// Monitor cache memory usage
-leaderBoardCache.on('set', (key, value) => {
-  const stats = leaderBoardCache.getStats();
-  if (stats.keys > 50) {
-    auditService.cacheEvent('cache_stats', {
-      keys: stats.keys,
-      hits: stats.hits,
-      misses: stats.misses,
-      hitRate: stats.hits / (stats.hits + stats.misses) * 100
-    });
-  }
-});
+const CACHE_NAMESPACE = 'leaderboard';
+const LEADERBOARD_TTL = 300; // 5 minutes
 
 const formatLeaderboardUser = (user) => {
     const easy = user.solveChallenges?.easy?.length || 0;
@@ -127,11 +109,12 @@ export const updateRanks = async () => {
             rank: index + 1
         }));
 
-        leaderBoardCache.set('leaderboard', formattedLeaderboard);
+        // Store in Redis cache
+        await cacheService.set(CACHE_NAMESPACE, 'full_leaderboard', formattedLeaderboard, LEADERBOARD_TTL);
 
         auditService.cacheEvent('leaderboard_cache_updated', {
           userCount: formattedLeaderboard.length,
-          cacheSize: leaderBoardCache.getStats().keys
+          cacheStats: cacheService.getStats()
         });
 
         audit.complete({ 
@@ -149,29 +132,43 @@ export const updateRanks = async () => {
     }
 };
 
-export const getCachedLeaderboard = () => {
-    return leaderBoardCache.get('leaderboard');
+export const getCachedLeaderboard = async () => {
+    return await cacheService.get(CACHE_NAMESPACE, 'full_leaderboard');
 };
-
 
 // Get cached leaderboard with pagination
 export const getLeaderBoard = async (page = 1, limit = 10) => {
-    const cacheLeaderBoard = leaderBoardCache.get('leaderboard');
-
-    if (cacheLeaderBoard) {
-        const startIndex = (page - 1) * limit;
-        const endIndex = page * limit;
-
-        return {
-            users: cacheLeaderBoard.slice(startIndex, endIndex),
-            totalUsers: cacheLeaderBoard.length,
-            currentPage: page,
-            totalPages: Math.ceil(cacheLeaderBoard.length / limit)
-        };
+    // Try to get from cache first
+    const cacheKey = `paginated_${page}_${limit}`;
+    let paginatedResult = await cacheService.get(CACHE_NAMESPACE, cacheKey);
+    
+    if (paginatedResult) {
+        return paginatedResult;
     }
 
-    await updateRanks();
-    return getLeaderBoard(page, limit);
+    // Get full leaderboard from cache
+    let cacheLeaderBoard = await getCachedLeaderboard();
+    
+    // If no cached data, update ranks
+    if (!cacheLeaderBoard) {
+        cacheLeaderBoard = await updateRanks();
+    }
+
+    // Calculate pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    
+    const result = {
+        users: cacheLeaderBoard.slice(startIndex, endIndex),
+        totalUsers: cacheLeaderBoard.length,
+        currentPage: page,
+        totalPages: Math.ceil(cacheLeaderBoard.length / limit)
+    };
+
+    // Cache paginated result for shorter time
+    await cacheService.set(CACHE_NAMESPACE, cacheKey, result, 120); // 2 minutes
+    
+    return result;
 }
 
 // Add a mutex to prevent concurrent leaderboard updates

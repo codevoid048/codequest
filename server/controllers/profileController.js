@@ -4,10 +4,24 @@ import cloudinary from "../config/cloudinary.js"
 import { v4 as uuidv4 } from "uuid"
 import { Challenge } from "../models/Challenge.js"
 import auditService from "../services/auditService.js"
+import userCacheService from "../services/userCacheService.js"
 
 export const getUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select("-password -gfg -codechef -googleId -githubId -resetPasswordToken -resetPasswordExpires -otp -otpExpires")
+        const userId = req.user._id;
+        
+        // Try to get from cache first
+        let user = await userCacheService.getCachedUserProfile(userId);
+        
+        if (!user) {
+            // If not in cache, fetch from database
+            user = await User.findById(userId).select("-password -gfg -codechef -googleId -githubId -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
+            
+            if (user) {
+                // Cache the user profile
+                await userCacheService.cacheUserProfile(userId, user);
+            }
+        }
 
         if (user) {
             res.status(200).json(user)
@@ -112,6 +126,12 @@ export const updateUserProfile = async (req, res) => {
 
         const updatedUser = await user.save()
 
+        // Invalidate user cache after update
+        await userCacheService.invalidateUserCache(req.user._id);
+        
+        // Cache the updated user profile
+        await userCacheService.cacheUserProfile(req.user._id, updatedUser);
+
         res.status(200).json({
             message: "Profile updated successfully",
             user: {
@@ -177,22 +197,33 @@ export const updateUserProfile = async (req, res) => {
 
 export const getUserActivity = async (req, res) => {
     try {
-        const activities = await Activity.aggregate([
-            { $match: { user: req.user._id } },
-            {
-                $group: {
-                    _id: {
-                        $dateToString: { format: "%Y-%m-%d", date: "$date" },
+        const userId = req.user._id;
+        
+        // Try to get from cache first
+        let activities = await userCacheService.getCachedUserActivity(userId);
+        
+        if (!activities) {
+            // If not in cache, fetch from database
+            activities = await Activity.aggregate([
+                { $match: { user: userId } },
+                {
+                    $group: {
+                        _id: {
+                            $dateToString: { format: "%Y-%m-%d", date: "$date" },
+                        },
+                        count: { $sum: 1 },
                     },
-                    count: { $sum: 1 },
                 },
-            },
-            { $sort: { _id: 1 } },
-        ])
+                { $sort: { _id: 1 } },
+            ]);
+            
+            // Cache the activities
+            await userCacheService.cacheUserActivity(userId, activities);
+        }
 
         res.status(200).json(activities)
     } catch (error) {
-        // console.error(error)
+        auditService.error('user_activity_error', { userId: req.user._id, error: error.message });
         res.status(500).json({ message: "Server error" })
     }
 }
@@ -203,9 +234,20 @@ export const getUserByUsername = async (req, res) => {
     try {
         const { username } = req.params
 
-        const user = await User.findOne({ username }).select(
-            "-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires",
-        )
+        // Try to get from cache first
+        let user = await userCacheService.getCachedUserByUsername(username);
+        
+        if (!user) {
+            // If not in cache, fetch from database
+            user = await User.findOne({ username }).select(
+                "-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires",
+            );
+            
+            if (user) {
+                // Cache the user data
+                await userCacheService.cacheUserByUsername(username, user);
+            }
+        }
 
         if (!user) {
             return res.status(404).json({ message: "User not found" })
@@ -213,7 +255,7 @@ export const getUserByUsername = async (req, res) => {
 
         res.status(200).json({ user })
     } catch (error) {
-        // console.error("Error fetching user by username:", error)
+        auditService.error('get_user_by_username_error', { username: req.params.username, error: error.message });
         res.status(500).json({ message: "Server error" })
     }
 }
