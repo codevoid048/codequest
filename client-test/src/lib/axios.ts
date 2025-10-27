@@ -48,11 +48,6 @@ axiosInstance.interceptors.request.use(
 // Response interceptor for handling global errors
 axiosInstance.interceptors.response.use(
   (response) => {
-    // Log response time
-    if (response.config?.metadata?.startTime) {
-      const duration = Date.now() - response.config.metadata.startTime;
-      console.log(`Request to ${response.config.url} took ${duration}ms`);
-    }
     return response;
   },
   (error: AxiosError<ApiErrorResponse>) => {

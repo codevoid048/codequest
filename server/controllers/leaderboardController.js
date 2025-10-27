@@ -66,7 +66,6 @@ export const getLeaderboardData = async (req, res) => {
 
     // Ensure leaderboard is an array
     if (!Array.isArray(leaderboard)) {
-      console.error("Leaderboard is not an array:", typeof leaderboard, leaderboard);
       leaderboard = [];
     }
 

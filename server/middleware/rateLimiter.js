@@ -126,4 +126,4 @@ export const rateLimitMiddleware = (maxRequests = MAX_REQUESTS_PER_WINDOW, windo
 // Specific rate limiters for different operations
 export const challengeUpdateRateLimit = rateLimitMiddleware(5, 60000); // 5 requests per minute for challenge updates
 export const platformUpdateRateLimit = rateLimitMiddleware(3, 120000); // 3 requests per 2 minutes for platform updates
-export const registrationRateLimit = rateLimitMiddleware(5, 60000); // 5 registrations per minute (per IP/user) - prevents spam but allows legitimate usage
+export const registrationRateLimit = rateLimitMiddleware(3, 60000); // 5 registrations per minute (per IP/user) - prevents spam but allows legitimate usage

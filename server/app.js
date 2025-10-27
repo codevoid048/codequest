@@ -48,9 +48,9 @@ app.use(helmet({
   referrerPolicy: { policy: "strict-origin-when-cross-origin" }
 }));
 
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '5mb' }));
 
-app.use(express.urlencoded({ limit: '2mb', extended: false }));
+app.use(express.urlencoded({ limit: '5mb', extended: false }));
 
 app.use(cookieParser());
 app.use(passport.initialize());

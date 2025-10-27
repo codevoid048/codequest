@@ -1,4 +1,6 @@
 import mongoose from "mongoose"
+const { default: cacheService } = await import("../services/cacheService.js");
+const { warmupLeaderboardCache } = await import("../utils/leaderBoardCache.js");
 
 const connectDB = async () => {
     try {
@@ -16,16 +18,25 @@ const connectDB = async () => {
         mongoose.connection.on('error', (error) => {
             console.error('Database connection error:', error.message);
         });
-        
-        // Warmup leaderboard cache after DB is ready (with delay for Redis connection)
-        setTimeout(async () => {
-            try {
-                const { warmupLeaderboardCache } = await import("../utils/leaderBoardCache.js");
-                warmupLeaderboardCache();
-            } catch (error) {
-                console.error('Failed to warmup leaderboard cache:', error.message);
+                
+        async function waitForRedisAndWarmup(attempt = 1) {
+            const maxAttempts = 5;
+            const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // exponential backoff, max 10s
+            
+            if (cacheService.isRedisConnected()) {
+                try {
+                    await warmupLeaderboardCache();
+                } catch (error) {
+                    console.error('Failed to warmup leaderboard cache:', error.message);
+                }
+            } else if (attempt < maxAttempts) {
+                setTimeout(() => waitForRedisAndWarmup(attempt + 1), delay);
+            } else {
+                console.error('Redis was not ready after maximum attempts. Skipping leaderboard cache warmup.');
             }
-        }, 2000); // 2 second delay
+        }
+        
+        waitForRedisAndWarmup();
         
     } catch (error) {
         console.error('Database connection failed:', error.message);

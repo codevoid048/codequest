@@ -59,17 +59,6 @@ export const NetworkErrorRoute: React.FC = () => {
 
 // Unauthorized Page with context
 export const UnauthorizedRoute: React.FC = () => {
-  const [setErrorContext] = useState<any>(null);
-
-  useEffect(() => {
-    const stored = sessionStorage.getItem('authError');
-    if (stored) {
-      setErrorContext(JSON.parse(stored));
-      // Clear the stored error after reading
-      sessionStorage.removeItem('authError');
-    }
-  }, []);
-
   return (
     <UnauthorizedPage />
   );

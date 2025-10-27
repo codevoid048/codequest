@@ -76,7 +76,7 @@ class CacheService {
                 // Reset metrics
                 this.metrics = { hits: 0, misses: 0, errors: 0, operations: 0 };
             }
-        }, 5 * 60000); // Every 5 minute
+        }, 5 * 60000); // Every 5 minutes
     }
 
     // Generate cache key with namespace
@@ -267,6 +267,11 @@ class CacheService {
             memory: this.memoryCache.getStats(),
             metrics: { ...this.metrics }
         };
+    }
+
+    // Check if Redis is connected (regardless of read-only status)
+    isRedisConnected() {
+        return this.redis !== null;
     }
 }
 

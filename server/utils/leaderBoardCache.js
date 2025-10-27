@@ -220,7 +220,7 @@ export const warmupLeaderboardCache = async (maxRetries = 3) => {
         updateQueue.forEach(({ reject }) => reject(error));
         updateQueue = [];
         
-        audit.error(error);
+        auditService.error(error);
         throw error;
     } finally {
         isUpdatingLeaderboard = false;
