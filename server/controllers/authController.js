@@ -417,23 +417,37 @@ export const githubAuthCallback = (req, res) => {
 
 
 export const logoutUser = async (req, res) => {
-  // console.log("Logout API hit"); // Debugging log
+  try {
+    auditService.userAction('user_logout', {
+      requestId: req.auditContext?.requestId,
+      userId: req.user?._id?.toString(),
+      email: req.user?.email,
+      ip: req.ip
+    });
 
-  // Clear JWT cookie
-  res.clearCookie("jwt", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-  });
+    // Clear JWT cookie
+    res.clearCookie("jwt", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
+    });
 
-  // Clear user cookie
-  res.clearCookie("user", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-  });
+    // Clear user cookie
+    res.clearCookie("user", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
+    });
 
-  res.status(200).json({ message: "Logged out successfully" });
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    auditService.error('User logout error', error, {
+      requestId: req.auditContext?.requestId,
+      userId: req.user?._id?.toString(),
+      ip: req.ip
+    });
+    res.status(500).json({ error: "Server error during logout" });
+  }
 };
 
 

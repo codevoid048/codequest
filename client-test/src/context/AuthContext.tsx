@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { createContext, useState, useEffect, ReactNode } from "react";
 import axios from "axios";
+import { navigateTo } from "../lib/axios";
 // Define the user type
 interface User {
   _id: string;
@@ -85,11 +86,15 @@ const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
       setToken(null);
-      // localStorage.removeItem('auth_token');
 
-      window.location.href = "/";
+      navigateTo("/");
     } catch (error) {
       console.error("Logout failed:", error);
+      // Even if API call fails, clear local state and redirect
+      setUser(null);
+      setIsAuthenticated(false);
+      setToken(null);
+      navigateTo("/");
     }
   };
 

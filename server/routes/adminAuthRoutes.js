@@ -8,6 +8,6 @@ router.get('/',(req,res)=>{
     res.send("Admin Route");
 });
 router.post('/login', adminLogin);
-router.get('/logout', protectAdmin, adminLogout);
+router.post('/logout', protectAdmin, adminLogout);
 
 export default router;

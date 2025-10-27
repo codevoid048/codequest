@@ -18,6 +18,8 @@ const navigateTo = (path: string) => {
   }
 };
 
+export { navigateTo };
+
 // API Error Response interface
 interface ApiErrorResponse {
   message: string;

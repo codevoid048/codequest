@@ -112,7 +112,7 @@ export default function Dashboard() {
   // Calculate weekly user registration data from actual database
   useEffect(() => {
     if (users.length > 0) {
-      console.log("Processing weekly user data...", users);
+      // console.log("Processing weekly user data...", users);
 
       // Get the last 7 days
       const today = new Date();
@@ -142,7 +142,7 @@ export default function Dashboard() {
         });
       }
 
-      console.log("Weekly user data calculated:", weeklyData);
+      // console.log("Weekly user data calculated:", weeklyData);
       setUserWeeklyData(weeklyData);
     }
   }, [users]);
@@ -152,7 +152,7 @@ export default function Dashboard() {
     if (users.length > 0) {
       // Create college distribution data
       const collegeDistribution: Record<string, number> = {};
-      console.log(users, "users data in dashboard")
+      // console.log(users, "users data in dashboard")
 
       users.forEach(user => {
         if (user.collegeName) {

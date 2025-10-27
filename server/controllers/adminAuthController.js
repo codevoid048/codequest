@@ -96,7 +96,11 @@ export const adminLogout = async (req, res) => {
             ip: req.ip
         });
 
-        res.cookie('Admintoken', "").json({ message: "Logged out" });
+        res.clearCookie('Admintoken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
+        }).status(200).json({ message: "Logged out successfully" });
     } catch (err) {
         auditService.error('Admin logout error', err, {
             requestId: req.auditContext?.requestId,

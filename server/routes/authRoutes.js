@@ -16,7 +16,7 @@ router.get("/github", passport.authenticate("github", { scope: ["user:email"], s
 router.get("/google/callback", handleGoogleCallback, googleAuthCallback);
 router.get("/github/callback", handleGithubCallback, githubAuthCallback);
 
-router.post("/logout", logoutUser);
+router.post("/logout", protect, logoutUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 router.get("/me", protect, getCurrentUser);

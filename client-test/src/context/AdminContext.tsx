@@ -209,8 +209,15 @@ export const useAdminStore = create<AdminState>((set, get) => {
       set({ token, isAdminAuthenticated: true });
     },
 
-    // Logout function to remove token from local storage
-    logout: () => {
+    logout: async () => {
+      try {
+        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/admin/logout`, {}, {
+          withCredentials: true,
+        });
+      } catch (error) {
+        console.error('Admin logout API call failed:', error);
+      }
+      
       localStorage.removeItem("Admintoken");
       set({ token: null, isAdminAuthenticated: false, users: [], pagination: null, filterOptions: null });
     },
