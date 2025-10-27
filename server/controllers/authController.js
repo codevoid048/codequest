@@ -83,77 +83,118 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ error: "Username must start with letters and contain only lowercase letters, numbers, and underscores" });
     }
 
-    // Use single query to check all unique constraints atomically
-    const [existingUser, existingUsername, existingRegNo] = await Promise.all([
-      User.findOne({ email: trimmedEmail }),
-      User.findOne({ username: trimmedUsername }),
-      User.findOne({ RegistrationNumber: trimmedRegNo })
-    ]);
+    // Single query to check all unique constraints atomically within transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+      const [existingUser, existingUsername, existingRegNo] = await Promise.all([
+        User.findOne({ email: trimmedEmail }).session(session),
+        User.findOne({ username: trimmedUsername }).session(session),
+        User.findOne({ RegistrationNumber: trimmedRegNo }).session(session)
+      ]);
 
-    if (existingUser && existingUser.isVerified) {
-      return res.status(400).json({ error: "Account already exists, please login" });
-    }
-
-    if (existingUsername && existingUsername.isVerified) {
-      return res.status(400).json({ error: "Username already exists, please choose another" });
-    }
-
-    if (existingRegNo && existingRegNo.isVerified) {
-      return res.status(400).json({ error: "Registration number already exists" });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Generate a 6-digit OTP
-    const otp = crypto.randomInt(100000, 999999).toString();
-    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    const otpExpires = nowIST.getTime() + 5 * 60 * 1000; // OTP expires in 5 minutes
-
-    // Use upsert with atomic operation to prevent race conditions
-    await User.findOneAndUpdate(
-      { email: trimmedEmail },
-      {
-        $set: {
-          email: trimmedEmail,
-          name: trimmedName,
-          username: trimmedUsername,
-          password: hashedPassword,
-          RegistrationNumber: trimmedRegNo,
-          branch: trimmedBranch,
-          collegeName: trimmedCollege,
-          isAffiliate: isAffiliate || false,
-          otp,
-          otpExpires,
-          isVerified: false,
-        }
-      },
-      { 
-        upsert: true, 
-        new: true,
-        // Prevent duplicate key errors during concurrent registrations
-        setDefaultsOnInsert: true
+      if (existingUser && existingUser.isVerified) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: "Account already exists, please login" });
       }
-    );
 
-    // Send OTP to user's email
-    await sendOTPEmail(trimmedEmail, otp);
+      if (existingUsername && existingUsername.isVerified) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: "Username already exists, please choose another" });
+      }
 
-    auditService.authEvent('registration_otp_sent', {
-      requestId: req.auditContext?.requestId,
-      email: trimmedEmail,
-      username: trimmedUsername,
-      collegeName: trimmedCollege,
-      branch: trimmedBranch
-    });
+      if (existingRegNo && existingRegNo.isVerified) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ error: "Registration number already exists" });
+      }
 
-    audit.complete({ 
-      email: trimmedEmail, 
-      username: trimmedUsername,
-      otpSent: true 
-    });
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
 
-    res.status(201).json({ message: "OTP sent to email. Verify to complete registration." });
+      // Generate a 6-digit OTP
+      const otp = crypto.randomInt(100000, 999999).toString();
+      const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+      const otpExpires = nowIST.getTime() + 5 * 60 * 1000; // OTP expires in 5 minutes
+
+      // Use upsert with atomic operation to prevent race conditions
+      await User.findOneAndUpdate(
+        { email: trimmedEmail },
+        {
+          $set: {
+            email: trimmedEmail,
+            name: trimmedName,
+            username: trimmedUsername,
+            password: hashedPassword,
+            RegistrationNumber: trimmedRegNo,
+            branch: trimmedBranch,
+            collegeName: trimmedCollege,
+            isAffiliate: isAffiliate || false,
+            otp,
+            otpExpires,
+            isVerified: false,
+          }
+        },
+        { 
+          upsert: true, 
+          new: true,
+          setDefaultsOnInsert: true,
+          session
+        }
+      );
+
+      await session.commitTransaction();
+      session.endSession();
+
+      // Send OTP to user's email
+      await sendOTPEmail(trimmedEmail, otp);
+
+      auditService.authEvent('registration_otp_sent', {
+        requestId: req.auditContext?.requestId,
+        email: trimmedEmail,
+        username: trimmedUsername,
+        collegeName: trimmedCollege,
+        branch: trimmedBranch
+      });
+
+      audit.complete({ 
+        email: trimmedEmail, 
+        username: trimmedUsername,
+        otpSent: true 
+      });
+
+      res.status(201).json({ message: "OTP sent to email. Verify to complete registration." });
+      
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      
+      if (error.code === 11000) { // MongoDB duplicate key error
+        const field = Object.keys(error.keyPattern || {})[0];
+        const fieldName = field === 'username' ? 'Username' : 
+                         field === 'RegistrationNumber' ? 'Registration number' : 'Email';
+        auditService.authEvent('registration_duplicate_error', {
+          requestId: req.auditContext?.requestId,
+          email: trimmedEmail,
+          duplicateField: field,
+          error: error.message
+        });
+        return res.status(400).json({ error: `${fieldName} already exists` });
+      }
+      
+      auditService.error('Registration failed', error, {
+        requestId: req.auditContext?.requestId,
+        email: req.body.email,
+        username: req.body.username,
+        ip: req.ip
+      });
+
+      audit.error(error);
+      res.status(500).json({ error: error.message });
+    }
   } catch (error) {
     auditService.error('Registration failed', error, {
       requestId: req.auditContext?.requestId,

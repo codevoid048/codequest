@@ -1,4 +1,5 @@
 import mongoose from "mongoose"
+import auditService from "../services/auditService.js";
 const { default: cacheService } = await import("../services/cacheService.js");
 const { warmupLeaderboardCache } = await import("../utils/leaderBoardCache.js");
 
@@ -30,7 +31,8 @@ const connectDB = async () => {
                     console.error('Failed to warmup leaderboard cache:', error.message);
                 }
             } else if (attempt < maxAttempts) {
-                setTimeout(() => waitForRedisAndWarmup(attempt + 1), delay);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return waitForRedisAndWarmup(attempt + 1);
             } else {
                 console.error('Redis was not ready after maximum attempts. Skipping leaderboard cache warmup.');
             }

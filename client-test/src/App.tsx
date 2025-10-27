@@ -1,5 +1,7 @@
-import { Navigate, BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { Navigate, BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { useEffect } from 'react';
+import { setNavigateFunction } from './lib/axios';
 import Home from './components/Home';
 import LoginPage from './components/Login';
 import RegisterPage from './components/SignUp';
@@ -107,6 +109,12 @@ function AdminApp() {
 
 function App() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Set up navigation function for axios interceptors
+  useEffect(() => {
+    setNavigateFunction(navigate);
+  }, [navigate]);
 
   // Render AdminApp or UserApp based on path
   return location.pathname.startsWith("/codingclubadmin") ? (

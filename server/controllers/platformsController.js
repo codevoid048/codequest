@@ -49,24 +49,29 @@ export const leetcodeData = async (req, res) => {
     const rank = responseData?.matchedUser?.profile?.ranking || user.leetCode.rank || 0;
     const stats = responseData?.matchedUser?.submitStats?.acSubmissionNum || [];
     const totalSolved = stats.find(s => s.difficulty === "All")?.count || user.leetCode.solved || 0;
+    // Check if data actually changed before updating
+    const hasChanged = 
+      user.leetCode.rating !== rating || 
+      user.leetCode.rank !== rank || 
+      user.leetCode.solved !== totalSolved;
+
+    if (!hasChanged) {
+      return res.json({ 
+        success: true, 
+        message: "LeetCode data is already up to date",
+        modified: false
+      });
+    }
+
     // Use atomic update with user ID instead of username lookup to prevent race conditions
     const updateResult = await User.updateOne(
-      { 
-        _id: user._id,
-        // Only update if the data has actually changed to prevent unnecessary writes
-        $or: [
-          { 'leetCode.rating': { $ne: rating } },
-          { 'leetCode.rank': { $ne: rank } },
-          { 'leetCode.solved': { $ne: totalSolved } }
-        ]
-      }, 
+      { _id: user._id }, 
       { 
         $set: { 
           'leetCode.username': username, 
           'leetCode.rating': rating, 
           'leetCode.rank': rank, 
           'leetCode.solved': totalSolved,
-          'leetCode.lastUpdated': new Date()
         } 
       }
     );
@@ -99,23 +104,29 @@ export const geeksforgeeksData = async (req, res) => {
     const instituteRank = response.institute_rank || 0;
     const rating = response.rating || 0;
 
+    // Check if data actually changed before updating
+    const hasChanged = 
+      user.gfg.solved !== totalSolved || 
+      user.gfg.rank !== instituteRank || 
+      user.gfg.rating !== rating;
+
+    if (!hasChanged) {
+      return res.json({ 
+        success: true, 
+        message: "GFG data is already up to date",
+        modified: false
+      });
+    }
+
     // Use atomic update with change detection
     const updateResult = await User.updateOne(
-      { 
-        _id: user._id,
-        $or: [
-          { 'gfg.solved': { $ne: totalSolved } },
-          { 'gfg.rank': { $ne: instituteRank } },
-          { 'gfg.rating': { $ne: rating } }
-        ]
-      },
+      { _id: user._id },
       {
         $set: {
           'gfg.username': username,
           'gfg.solved': totalSolved,
           'gfg.rank': instituteRank,
           'gfg.rating': rating,
-          'gfg.lastUpdated': new Date()
         }
       }
     );

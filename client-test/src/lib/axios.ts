@@ -1,5 +1,22 @@
 import axios, { AxiosError } from 'axios';
 import toast from 'react-hot-toast';
+import { NavigateFunction } from 'react-router-dom';
+
+// Navigation utility for use in interceptors
+let navigateFunction: NavigateFunction | null = null;
+
+export const setNavigateFunction = (navigate: NavigateFunction) => {
+  navigateFunction = navigate;
+};
+
+const navigateTo = (path: string) => {
+  if (navigateFunction) {
+    navigateFunction(path);
+  } else {
+    // Fallback to window.location if navigate function not set
+    window.location.href = path;
+  }
+};
 
 // API Error Response interface
 interface ApiErrorResponse {
@@ -72,7 +89,7 @@ axiosInstance.interceptors.response.use(
             redirectUrl: window.location.pathname
           }));
           if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-            window.location.href = '/unauthorized';
+            navigateTo('/unauthorized');
           }
           break;
         case 403:
@@ -82,7 +99,7 @@ axiosInstance.interceptors.response.use(
         case 404:
           // For API 404s, show toast unless it's a navigation request
           if (!config?.url?.includes('/api/')) {
-            window.location.href = '/404';
+            navigateTo('/404');
           } else {
             toast.error('The requested resource was not found');
           }
@@ -102,7 +119,7 @@ axiosInstance.interceptors.response.use(
           }));
           toast.error('Server error. Redirecting to error page...');
           setTimeout(() => {
-            window.location.href = '/server-error';
+            navigateTo('/server-error');
           }, 1500);
           break;
         default:
@@ -116,7 +133,7 @@ axiosInstance.interceptors.response.use(
       }));
       toast.error('Network error. Redirecting to error page...');
       setTimeout(() => {
-        window.location.href = '/network-error';
+        navigateTo('/network-error');
       }, 1500);
     } else {
       toast.error('An unexpected error occurred');
