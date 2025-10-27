@@ -17,6 +17,7 @@ import typeSenseRoutes from "./routes/typeSenseRoutes.js";
 import { startStreakCronJob } from './utils/streakResetJob.js';
 import { appLifecycle } from './utils/appLifecycle.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
+import { ensureDbConnection } from './lib/db.js';
 dotenv.config();
 
 const app = express();
@@ -54,6 +55,9 @@ app.use(express.urlencoded({ limit: '5mb', extended: false }));
 
 app.use(cookieParser());
 app.use(passport.initialize());
+
+// Global database connection middleware for all routes
+app.use(ensureDbConnection);
 
 
 app.use('/api/auth', authRoutes);

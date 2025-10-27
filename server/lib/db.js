@@ -9,7 +9,7 @@ const connectDB = async () => {
             maxPoolSize: 10,
             serverSelectionTimeoutMS: 30000,
             socketTimeoutMS: 45000,
-            bufferCommands: false,
+            bufferCommands: true,
         };
 
         const conn = await mongoose.connect(process.env.MONGO_URI, connectionOptions);
@@ -47,3 +47,20 @@ const connectDB = async () => {
 }
 
 export default connectDB;
+
+// Middleware to ensure database connection for serverless environments
+export const ensureDbConnection = async (req, res, next) => {
+    try {
+        if (mongoose.connection.readyState !== 1) {
+            console.log('Database not connected, attempting to reconnect...');
+            await connectDB();
+        }
+        next();
+    } catch (error) {
+        console.error('Database connection middleware error:', error);
+        res.status(500).json({ 
+            error: 'Database connection error', 
+            message: 'Service temporarily unavailable' 
+        });
+    }
+};
