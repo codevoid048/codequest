@@ -36,9 +36,9 @@ export default defineConfig({
             './src/components/Admin/shared/types.ts'
           ],
           // Separate vendor libraries
-          vendor: ['react', 'react-dom', 'react-router-dom'],
+          vendor: ['react', 'react-dom', 'react-router-dom', 'react-hot-toast'],
           // UI libraries
-          ui: ['react-hot-toast', 'lucide-react', 'react-icons']
+          ui: ['lucide-react', 'react-icons']
         }
       }
     },
