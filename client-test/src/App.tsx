@@ -5,7 +5,6 @@ import { setNavigateFunction } from './lib/axios';
 import Home from './components/Home';
 import LoginPage from './components/Login';
 import RegisterPage from './components/SignUp';
-import Leaderboard from './components/Leaderboard';
 import AboutPage from './components/About';
 import PrivacyPolicyPage from './components/PrivacyPolicy';
 import TermsConditionsPage from './components/TermsConditions';
@@ -19,12 +18,15 @@ import { Navbar } from './components/Navbar';
 import SolutionPage from './components/Challenges/solutionPage';
 import NotFoundPage from './components/Error404';
 import RouteSEO from './components/RouteSEO';
-import ProblemSet from './components/ProblemSet';
-import CategoryProblems from './components/ProblemSet/CategoryProblems';
 import { ServerErrorRoute, NetworkErrorRoute, UnauthorizedRoute } from './components/ErrorRoutes';
 import { ForbiddenPage } from './components/EnhancedErrorPages';
 import { useAdminStore } from './context/AdminContext.tsx';
 import LoadingSpinner from './components/LoadingSpinner';
+
+// Lazy load heavier user components
+const Leaderboard = lazy(() => import('./components/Leaderboard'));
+const ProblemSet = lazy(() => import('./components/ProblemSet'));
+const CategoryProblems = lazy(() => import('./components/ProblemSet/CategoryProblems'));
 
 // Lazy load Admin components
 const AddChallenge = lazy(() => import('./components/Admin/addChallenges'));
@@ -41,30 +43,32 @@ function UserApp() {
       <RouteSEO />
       <Navbar />
       <Toaster position="bottom-right" toastOptions={{ duration: 2000 }} />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/challenges" element={<Challenges />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-        <Route path="/terms-conditions" element={<TermsConditionsPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/profile/edit-profile" element={<EditProfile />} />
-        <Route path="/profile/:username" element={<ProfilePage />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/challenges/solution/:slug" element={<SolutionPage />} />
-        <Route path="/problemset" element={<ProblemSet />} />
-        <Route path="/problemset/category/:categoryName" element={<CategoryProblems />} />
-        {/* Enhanced Error Pages */}
-        <Route path="/server-error" element={<ServerErrorRoute />} />
-        <Route path="/network-error" element={<NetworkErrorRoute />} />
-        <Route path="/unauthorized" element={<UnauthorizedRoute />} />
-        <Route path="/forbidden" element={<ForbiddenPage />} />
-        <Route path="/404" element={<NotFoundPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/challenges" element={<Challenges />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms-conditions" element={<TermsConditionsPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/profile/edit-profile" element={<EditProfile />} />
+          <Route path="/profile/:username" element={<ProfilePage />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/challenges/solution/:slug" element={<SolutionPage />} />
+          <Route path="/problemset" element={<ProblemSet />} />
+          <Route path="/problemset/category/:categoryName" element={<CategoryProblems />} />
+          {/* Enhanced Error Pages */}
+          <Route path="/server-error" element={<ServerErrorRoute />} />
+          <Route path="/network-error" element={<NetworkErrorRoute />} />
+          <Route path="/unauthorized" element={<UnauthorizedRoute />} />
+          <Route path="/forbidden" element={<ForbiddenPage />} />
+          <Route path="/404" element={<NotFoundPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
       <Footer />
     </div>
   );
