@@ -1,5 +1,5 @@
 import { Linkedin, Instagram, User, Mail } from 'lucide-react';
-import { FaXTwitter, FaYoutube, FaWhatsapp } from 'react-icons/fa6';
+import { FaYoutube, FaWhatsapp } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -31,13 +31,6 @@ const Footer = () => {
                                 aria-label="LinkedIn"
                             >
                                 <Linkedin className="w-6 h-6" />
-                            </a>
-                            <a
-                                className="text-muted-500 hover:text-blue-600 transition-transform hover:scale-110 duration-300"
-                                href="https://twitter.com/srkr_coding_club"
-                                aria-label="Twitter"
-                            >
-                                <FaXTwitter className="w-6 h-6" />
                             </a>
                             <a
                                 className="text-muted-500 hover:text-pink-500 transition-transform hover:scale-110 duration-300"
@@ -84,6 +77,16 @@ const Footer = () => {
                                 >
                                     Terms & Conditions
                                 </Link>
+                            </li>
+                            <li>
+                                <a 
+                                    href="https://github.com/codevoid048/codequest" 
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-muted-500 hover:text-primary transition-colors duration-300"
+                                >
+                                    Contribute
+                                </a>
                             </li>
                         </ul>
                     </div>

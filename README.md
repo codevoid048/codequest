@@ -167,7 +167,6 @@ We welcome contributions from the community! Here's how you can help:
 
 - **SRKR Coding Club** - For the initiative and support
 - **Open Source Community** - For the amazing tools and libraries
-- **Contributors** - For making this project better
 
 ## Support
 
