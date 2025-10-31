@@ -1,14 +1,32 @@
-import express from 'express';
-import {addChallenge, getUsers, updateChallenge, getTodayChallenge, getCategories} from '../controllers/adminControllers.js';
-import { protectAdmin } from '../middleware/adminAuth.js';
-import { getCounts } from "../controllers/statsControllers.js";
-const router = express.Router();
+import express from "express"
+import {
+  addChallenge,
+  getUsers,
+  updateChallenge,
+  getTodayChallenge,
+  getCategories,
+  deleteChallenge,
+  getChallenges,
+  getChallengeById,
+} from "../controllers/adminControllers.js"
+import { protectAdmin } from "../middleware/adminAuth.js"
+import { getCounts } from "../controllers/statsControllers.js"
 
-router.post('/add-challenges', protectAdmin, addChallenge);
-router.put('/update-challenge', protectAdmin, updateChallenge);
-router.get('/getPotd',protectAdmin, getTodayChallenge);
-router.get('/users', protectAdmin, getUsers);
-router.get('/categories', protectAdmin, getCategories);
-router.get('/stats', protectAdmin, getCounts);
+const router = express.Router()
 
-export default router;
+// Challenge Management Routes
+router.post("/add-challenges", protectAdmin, addChallenge)
+router.get("/challenges", protectAdmin, getChallenges)
+router.get("/challenges/:id", protectAdmin, getChallengeById)
+router.put("/update-challenge", protectAdmin, updateChallenge)
+router.delete("/challenges/:id", protectAdmin, deleteChallenge)
+router.get("/getPotd", protectAdmin, getTodayChallenge)
+
+// User Management Routes
+router.get("/users", protectAdmin, getUsers)
+
+// Category & Stats Routes
+router.get("/categories", protectAdmin, getCategories)
+router.get("/stats", protectAdmin, getCounts)
+
+export default router

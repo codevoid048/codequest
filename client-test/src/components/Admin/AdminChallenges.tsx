@@ -11,6 +11,10 @@ import {
   Search,
   SlidersHorizontal,
   Zap,
+  Edit2,
+  Trash2,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import React, {
   memo,
@@ -243,47 +247,65 @@ const SkeletonLoader = memo(() => (
 ));
 SkeletonLoader.displayName = "SkeletonLoader";
 
-// Problem Card Component
 const ProblemCard = memo(
-  ({ challenge, isToday = false, stats }: { challenge: Challenge; isToday?: boolean; stats: { usersCount: number; challengesCount: number; solvedChallenges: number } }) => {
-    const [isLoading, setIsLoading] = useState(false);
+  ({
+    challenge,
+    isToday = false,
+    stats,
+    onEdit,
+    onDelete,
+  }: {
+    challenge: Challenge
+    isToday?: boolean
+    stats: { usersCount: number; challengesCount: number; solvedChallenges: number }
+    onEdit: (challenge: Challenge) => void
+    onDelete: (id: string) => void
+  }) => {
+    const [isLoading, setIsLoading] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
+    const navigate = useNavigate()
 
-    const navigate = useNavigate();
     const handleUpdatePOTD = useCallback(() => {
-      // Navigate to AddChallenge page and just send a flag
-      setIsLoading(true);
+      setIsLoading(true)
       setTimeout(() => {
-        setIsLoading(false);
-      }, 1000);
+        setIsLoading(false)
+      }, 1000)
       navigate("/codingclubadmin/addchallenge", {
         state: { fromAdmin: true },
-      });
-      toast.success("Redirected to AddChallenge page to view/update POTD!");
-    }, [navigate]);
+      })
+      toast.success("Redirected to AddChallenge page to view/update POTD!")
+    }, [navigate])
+
+    const handleDelete = async () => {
+      if (window.confirm("Are you sure you want to delete this challenge?")) {
+        setIsDeleting(true)
+        await onDelete(challenge._id)
+        setIsDeleting(false)
+      }
+    }
 
     const getDifficultyColor = useCallback((difficulty: string): string => {
       switch (difficulty.toLowerCase()) {
         case "easy":
-          return "bg-emerald-900/50 text-emerald-500 border-emerald-500/60 dark:bg-emerald-500/20 dark:border-emerald-500/50";
+          return "bg-emerald-900/50 text-emerald-500 border-emerald-500/60 dark:bg-emerald-500/20 dark:border-emerald-500/50"
         case "medium":
-          return "bg-amber-900/50 text-amber-500 border-amber-500/60 dark:bg-amber-500/20 dark:border-amber-500/50";
+          return "bg-amber-900/50 text-amber-500 border-amber-500/60 dark:bg-amber-500/20 dark:border-amber-500/50"
         case "hard":
-          return "bg-rose-900/50 text-rose-500 border-rose-500/60 dark:bg-rose-500/20 dark:border-rose-500/50";
+          return "bg-rose-900/50 text-rose-500 border-rose-500/60 dark:bg-rose-500/20 dark:border-rose-500/50"
         default:
-          return "bg-gray-500/30 text-gray-500 border-gray-500/60 dark:bg-gray-500/20 dark:border-gray-500/50";
+          return "bg-gray-500/30 text-gray-500 border-gray-500/60 dark:bg-gray-500/20 dark:border-gray-500/50"
       }
-    }, []);
+    }, [])
 
     const formatDate = (dateString: string) => {
       return new Date(dateString).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
-      });
-    };
+      })
+    }
 
-    const solvedPercentage = challenge.solvedUsersCount && stats.usersCount > 0
-      ? (challenge.solvedUsersCount / stats.usersCount) * 100
-      : 0;
+    const solvedPercentage =
+      challenge.solvedUsersCount && stats.usersCount > 0 ? (challenge.solvedUsersCount / stats.usersCount) * 100 : 0
 
     return (
       <>
@@ -300,12 +322,10 @@ const ProblemCard = memo(
         <div className="mb-5 bg-gray-800 dark:bg-white shadow-lg overflow-hidden border border-gray-700 dark:border-gray-200 rounded-lg">
           <div className="p-6 mx-[0.5px] bg-gray-800 dark:bg-white rounded-b-lg">
             {isToday && (
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
                 <div className="flex items-center">
                   <Zap className="w-5 h-5 text-yellow-500 mr-2" />
-                  <h2 className="text-xl font-bold text-white dark:text-gray-900">
-                    Problem of the Day
-                  </h2>
+                  <h2 className="text-xl font-bold text-white dark:text-gray-900">Problem of the Day</h2>
                 </div>
                 <Button onClick={handleUpdatePOTD} disabled={isLoading}>
                   {isLoading ? (
@@ -326,17 +346,33 @@ const ProblemCard = memo(
               <SkeletonLoader />
             ) : (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white dark:text-gray-900 group-hover:text-blue-500 transition-colors">
-                  {challenge.title}
-                </h3>
+                <div className="flex justify-between items-start gap-4">
+                  <h3 className="text-lg font-semibold text-white dark:text-gray-900 flex-1">{challenge.title}</h3>
+                  {!isToday && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onEdit(challenge)}
+                        className="p-2 hover:bg-gray-700 dark:hover:bg-gray-200 rounded-md transition-colors"
+                        aria-label="Edit challenge"
+                      >
+                        <Edit2 className="w-4 h-4 text-blue-500" />
+                      </button>
+                      <button
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="p-2 hover:bg-gray-700 dark:hover:bg-gray-200 rounded-md transition-colors disabled:opacity-50"
+                        aria-label="Delete challenge"
+                      >
+                        <Trash2 className={`w-4 h-4 ${isDeleting ? "text-gray-500" : "text-red-500"}`} />
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                  {/* Left Side: Difficulty, Date, and Tags */}
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge className={`${getDifficultyColor(challenge.difficulty)}`}>
-                        {challenge.difficulty}
-                      </Badge>
+                      <Badge className={`${getDifficultyColor(challenge.difficulty)}`}>{challenge.difficulty}</Badge>
                       <span className="text-sm text-gray-400 dark:text-gray-500">
                         {formatDate(challenge.createdAt)}
                       </span>
@@ -352,30 +388,25 @@ const ProblemCard = memo(
                           </Badge>
                         ))
                       ) : (
-                        <Badge
-                          className="bg-blue-900/80 dark:bg-blue-100/50 text-blue-400 dark:text-blue-600 border-blue-500/30"
-                        >
+                        <Badge className="bg-blue-900/80 dark:bg-blue-100/50 text-blue-400 dark:text-blue-600 border-blue-500/30">
                           {challenge.category}
                         </Badge>
                       )}
                     </div>
                   </div>
 
-                  {/* Right Side: Solved Statistics */}
                   <div className="flex flex-col items-end">
                     <div className="bg-gray-700 dark:bg-gray-100 px-3 py-1 rounded-full">
                       <span className="text-sm font-medium text-white dark:text-gray-900">
-                        <AnimatedCounter value={challenge.solvedUsersCount || 0} /> /{" "}
-                        {stats.usersCount || 0} solved
+                        <AnimatedCounter value={challenge.solvedUsersCount || 0} /> / {stats.usersCount || 0} solved
                       </span>
                     </div>
                     <span className="text-sm font-medium text-blue-400 dark:text-blue-600">
-                      { solvedPercentage.toFixed(2) }%
+                      {solvedPercentage.toFixed(2)}%
                     </span>
                   </div>
                 </div>
 
-                {/* Platform info */}
                 <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
                   <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-2 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
                     <Code className="h-5 w-4 text-primary" />
@@ -387,10 +418,80 @@ const ProblemCard = memo(
           </div>
         </div>
       </>
-    );
-  }
-);
-ProblemCard.displayName = "ProblemCard";
+    )
+  },
+)
+ProblemCard.displayName = "ProblemCard"
+
+// Pagination Component
+const Pagination = memo(
+  ({
+    currentPage,
+    totalPages,
+    onPageChange,
+    hasNextPage,
+    hasPrevPage,
+  }: {
+    currentPage: number
+    totalPages: number
+    onPageChange: (page: number) => void
+    hasNextPage: boolean
+    hasPrevPage: boolean
+  }) => (
+    <div className="flex items-center justify-center gap-2 mt-8">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={!hasPrevPage}
+        className="p-2 rounded-md bg-gray-800 dark:bg-white border border-gray-700 dark:border-gray-200 hover:bg-gray-700 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        aria-label="Previous page"
+      >
+        <ChevronLeft className="w-4 h-4 text-white dark:text-gray-900" />
+      </button>
+
+      <div className="flex items-center gap-2">
+        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+          let pageNum = i + 1
+          if (totalPages > 5) {
+            if (currentPage <= 3) {
+              pageNum = i + 1
+            } else if (currentPage >= totalPages - 2) {
+              pageNum = totalPages - 4 + i
+            } else {
+              pageNum = currentPage - 2 + i
+            }
+          }
+          return pageNum
+        }).map((pageNum) => (
+          <button
+            key={pageNum}
+            onClick={() => onPageChange(pageNum)}
+            className={`px-3 py-1 rounded-md transition-colors ${
+              currentPage === pageNum
+                ? "bg-blue-600 dark:bg-blue-500 text-white"
+                : "bg-gray-800 dark:bg-white border border-gray-700 dark:border-gray-200 text-gray-200 dark:text-gray-700 hover:bg-gray-700 dark:hover:bg-gray-100"
+            }`}
+          >
+            {pageNum}
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={!hasNextPage}
+        className="p-2 rounded-md bg-gray-800 dark:bg-white border border-gray-700 dark:border-gray-200 hover:bg-gray-700 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        aria-label="Next page"
+      >
+        <ChevronRight className="w-4 h-4 text-white dark:text-gray-900" />
+      </button>
+
+      <span className="ml-4 text-sm text-gray-400 dark:text-gray-500">
+        Page {currentPage} of {totalPages}
+      </span>
+    </div>
+  ),
+)
+Pagination.displayName = "Pagination"
 
 // Stat Card Component
 const StatCard = memo(
@@ -434,79 +535,79 @@ const AdminChallenges: React.FC = () => {
   const {
     challenges: storeRawChallenges,
     users: storeUsers,
+    challengePagination,
     fetchChallenges,
     fetchUsers,
     fetchStats: storeFetchStats,
     fetchPOTD,
-    loading: storeLoading
-  } = useAdminStore();
+    deleteChallenge,
+    loading: storeLoading,
+  } = useAdminStore()
 
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [processedChallenges, setProcessedChallenges] = useState<Challenge[]>([]);
-  const [filteredChallenges, setFilteredChallenges] = useState<Challenge[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("date");
-  const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges: 0 });
-  const [todayChallenge, setTodayChallenge] = useState<Challenge | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [processedChallenges, setProcessedChallenges] = useState<Challenge[]>([])
+  const [searchQuery, setSearchQuery] = useState<string>("")
+  const [filterDifficulty, setFilterDifficulty] = useState<string>("all")
+  const [sortBy, setSortBy] = useState<string>("date")
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [stats, setStats] = useState({ usersCount: 0, challengesCount: 0, solvedChallenges: 0 })
+  const [todayChallenge, setTodayChallenge] = useState<Challenge | null>(null)
+
+  const navigate = useNavigate()
 
   useEffect(() => {
     const loadStats = async () => {
-      const statsData = await storeFetchStats();
+      const statsData = await storeFetchStats()
       if (statsData) {
-        // Parse formatted strings back to numbers for calculations
         const parseFormattedNumber = (str: string) => {
-          if (typeof str === 'number') return str;
-          if (str.includes('M+')) return parseFloat(str.replace('M+', '')) * 1000000;
-          if (str.includes('k+')) return parseFloat(str.replace('k+', '')) * 1000;
-          if (str.includes('+')) return parseInt(str.replace('+', ''));
-          return parseInt(str) || 0;
-        };
+          if (typeof str === "number") return str
+          if (str.includes("M+")) return Number.parseFloat(str.replace("M+", "")) * 1000000
+          if (str.includes("k+")) return Number.parseFloat(str.replace("k+", "")) * 1000
+          if (str.includes("+")) return Number.parseInt(str.replace("+", ""))
+          return Number.parseInt(str) || 0
+        }
 
         setStats({
           usersCount: parseFormattedNumber(statsData.usersCount),
           challengesCount: parseFormattedNumber(statsData.challengesCount),
-          solvedChallenges: parseFormattedNumber(statsData.solvedChallenges)
-        });
+          solvedChallenges: parseFormattedNumber(statsData.solvedChallenges),
+        })
       }
-    };
+    }
 
-    loadStats();
-  }, [storeFetchStats]);
+    loadStats()
+  }, [storeFetchStats])
 
-  const [statistics] = useState<Statistics>({
-    totalProblems: 0,
-    averageSolveRate: 0,
-    topPerformer: "",
-    lowestPerformer: "",
-  });
-  const navigate = useNavigate();
-
-  // Fetch challenge and user data from the store
+  // Fetch challenges and user data
   useEffect(() => {
     const loadData = async () => {
-      setIsLoading(true);
+      setIsLoading(true)
       try {
-        // Fetch both challenges and users data
         await Promise.all([
-          fetchChallenges(),
-          fetchUsers()
-        ]);
+          fetchChallenges({
+            page: currentPage,
+            limit: 10,
+            search: searchQuery,
+            difficulty: filterDifficulty !== "all" ? filterDifficulty : "",
+            sortBy,
+          }),
+          fetchUsers(),
+        ])
 
-        // Fetch today's POTD
-        const potdData = await fetchPOTD();
+        const potdData = await fetchPOTD()
         if (potdData && potdData.challenge) {
-          const challenge = potdData.challenge;
-          const solvedUsersCount = challenge.solvedUsers?.length || 0;
+          const challenge = potdData.challenge
+          const solvedUsersCount = challenge.solvedUsers?.length || 0
 
-          // Convert to Challenge interface format
           const formattedChallenge: Challenge = {
             _id: challenge._id,
             title: challenge.title,
             createdAt: challenge.createdAt,
             category: Array.isArray(challenge.category)
               ? challenge.category
-              : challenge.category ? [challenge.category] : [],
+              : challenge.category
+                ? [challenge.category]
+                : [],
             difficulty: challenge.difficulty as "Easy" | "Medium" | "Hard",
             platform: challenge.platform || "Unknown",
             description: challenge.description || "",
@@ -514,41 +615,37 @@ const AdminChallenges: React.FC = () => {
             solvedUsers: challenge.solvedUsers || [],
             solvedUsersCount,
             totalUsers: storeUsers.length,
-            solvedPercentage: storeUsers.length > 0
-              ? Math.round((solvedUsersCount / storeUsers.length) * 100)
-              : 0,
-          };
+            solvedPercentage: storeUsers.length > 0 ? Math.round((solvedUsersCount / storeUsers.length) * 100) : 0,
+          }
 
-          setTodayChallenge(formattedChallenge);
+          setTodayChallenge(formattedChallenge)
         }
       } catch (error) {
-        console.error("Failed to fetch data:", error);
+        console.error("Failed to fetch data:", error)
       } finally {
-        // Don't set loading to false here - let the challenges processing effect handle it
+        setIsLoading(false)
       }
-    };
+    }
 
-    loadData();
-  }, [fetchChallenges, fetchUsers, fetchPOTD, storeUsers.length]);
+    loadData()
+  }, [fetchChallenges, fetchUsers, fetchPOTD, storeUsers.length, currentPage, searchQuery, filterDifficulty, sortBy])
 
-  // Get the total number of users
   const totalUsersCount = useMemo(() => {
-    return storeUsers.length;
-  }, [storeUsers]);
+    return storeUsers.length
+  }, [storeUsers])
 
-  // Process challenges when store data changes
+  // Process challenges
   useEffect(() => {
     if (storeRawChallenges.length > 0) {
       const processedData = storeRawChallenges.map((challenge) => {
-        const solvedUsersCount = challenge.solvedUsers?.length || 0;
-        const solvedPercentage = totalUsersCount > 0
-          ? Math.round((solvedUsersCount / totalUsersCount) * 100)
-          : 0;
+        const solvedUsersCount = challenge.solvedUsers?.length || 0
+        const solvedPercentage = totalUsersCount > 0 ? Math.round((solvedUsersCount / totalUsersCount) * 100) : 0
 
-        // Ensure category is always an array for consistency
         const categoryArray = Array.isArray(challenge.category)
           ? challenge.category
-          : challenge.category ? [challenge.category] : [];
+          : challenge.category
+            ? [challenge.category]
+            : []
 
         return {
           _id: challenge._id,
@@ -563,136 +660,40 @@ const AdminChallenges: React.FC = () => {
           solvedUsersCount,
           totalUsers: totalUsersCount,
           solvedPercentage,
-        };
-      });
+        }
+      })
 
-      setProcessedChallenges(processedData);
-      setFilteredChallenges(processedData);
-      setIsLoading(false);
+      setProcessedChallenges(processedData)
     } else if (!storeLoading) {
-      // If we're not loading and have no challenges, ensure we're not showing loading state
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, [storeRawChallenges, storeLoading, totalUsersCount]);
+  }, [storeRawChallenges, storeLoading, totalUsersCount])
 
+  // Handle edit challenge
+  const handleEditChallenge = (challenge: Challenge) => {
+    navigate("/codingclubadmin/addchallenge", {
+      state: { challenge, fromAdmin: true },
+    })
+    toast.success("Redirected to edit challenge!")
+  }
 
-
-  // // Calculate statistics based on challenge data
-  // const calculateStatistics = useCallback((challengesData: Challenge[]) => {
-  //   if (challengesData.length === 0) return;
-
-  //   const totalProblems = challengesData.length;
-
-  //   // Calculate average solve rate
-  //   const totalSolveRate = challengesData.reduce((sum, challenge) => {
-  //     return sum + (challenge.solvedPercentage || 0);
-  //   }, 0);
-  //   const averageSolveRate = totalProblems > 0 ? Math.round(totalSolveRate / totalProblems) : 0;
-
-  //   // Find category performance
-  //   const categoryPerformance: Record<string, { count: number; totalRate: number }> = {};
-
-  //   challengesData.forEach((challenge) => {
-  //     const categories = Array.isArray(challenge.category)
-  //       ? challenge.category
-  //       : [challenge.category];
-
-  //     categories.forEach((cat) => {
-  //       if (!cat) return; // Skip empty categories
-
-  //       if (!categoryPerformance[cat]) {
-  //         categoryPerformance[cat] = { count: 0, totalRate: 0 };
-  //       }
-  //       categoryPerformance[cat].count += 1;
-  //       categoryPerformance[cat].totalRate += challenge.solvedPercentage || 0;
-  //     });
-  //   });
-
-  //   let topPerformer = "";
-  //   let topPerformanceRate = 0;
-  //   let lowestPerformer = "";
-  //   let lowestPerformanceRate = 100;
-
-  //   Object.entries(categoryPerformance).forEach(([category, data]) => {
-  //     if (data.count === 0) return; // Skip if no challenges in this category
-
-  //     const avgRate = data.totalRate / data.count;
-  //     if (avgRate > topPerformanceRate) {
-  //       topPerformanceRate = avgRate;
-  //       topPerformer = category;
-  //     }
-  //     if (avgRate < lowestPerformanceRate && data.count > 1) {
-  //       lowestPerformanceRate = avgRate;
-  //       lowestPerformer = category;
-  //     }
-  //   });
-
-  //   setStatistics({
-  //     totalProblems,
-  //     averageSolveRate,
-  //     topPerformer,
-  //     lowestPerformer,
-  //   });
-  // }, []);
-
-  // Filter and sort challenges
-  useEffect(() => {
-    let filtered = [...processedChallenges];
-
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (challenge) =>
-          challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          challenge.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  // Handle delete challenge
+  const handleDeleteChallenge = async (id: string) => {
+    const success = await deleteChallenge(id)
+    if (success) {
+      toast.success("Challenge deleted successfully!")
+    } else {
+      toast.error("Failed to delete challenge")
     }
+  }
 
-    // Filter by difficulty
-    if (filterDifficulty !== "all") {
-      filtered = filtered.filter(
-        (challenge) =>
-          challenge.difficulty.toLowerCase() === filterDifficulty.toLowerCase()
-      );
-    }
-
-    // Sort challenges
-    filtered = filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "date":
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case "title":
-          return a.title.localeCompare(b.title);
-        case "difficulty":
-          const difficultyOrder = { Easy: 1, Medium: 2, Hard: 3 };
-          return (
-            difficultyOrder[a.difficulty as keyof typeof difficultyOrder] -
-            difficultyOrder[b.difficulty as keyof typeof difficultyOrder]
-          );
-        case "completion":
-          return (b.solvedPercentage || 0) - (a.solvedPercentage || 0);
-        default:
-          return 0;
-      }
-    });
-
-    setFilteredChallenges(filtered);
-  }, [processedChallenges, searchQuery, filterDifficulty, sortBy]);
-
-  // Handle add new problem navigation
   const handleAddNewProblem = () => {
-    // In a real app, you would navigate to a new problem creation page
-    navigate('/codingclubadmin/addchallenge');
-
-    console.log("Navigating to add new problem page");
-    // Example: router.push('/admin/challenges/new');
-  };
+    navigate("/codingclubadmin/addchallenge")
+  }
 
   return (
     <div className="container mx-auto p-4 md:p-6">
-      <h1 className="text-3xl font-bold text-white dark:text-gray-900 mb-8">
-        Challenges Dashboard
-      </h1>
+      <h1 className="text-3xl font-bold text-white dark:text-gray-900 mb-8">Challenges Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
@@ -705,16 +706,8 @@ const AdminChallenges: React.FC = () => {
           value={stats.solvedChallenges / stats.challengesCount}
           icon={<SlidersHorizontal className="h-6 w-6 text-blue-500" />}
         />
-        <StatCard
-          title="Top Performer"
-          value={statistics.topPerformer || "N/A"}
-          icon={<Zap className="h-6 w-6 text-blue-500" />}
-        />
-        <StatCard
-          title="Needs Improvement"
-          value={statistics.lowestPerformer || "N/A"}
-          icon={<ChevronDown className="h-6 w-6 text-blue-500" />}
-        />
+        <StatCard title="Top Performer" value="N/A" icon={<Zap className="h-6 w-6 text-blue-500" />} />
+        <StatCard title="Needs Improvement" value="N/A" icon={<ChevronDown className="h-6 w-6 text-blue-500" />} />
       </div>
 
       {isLoading ? (
@@ -722,7 +715,15 @@ const AdminChallenges: React.FC = () => {
           <SkeletonLoader />
         </div>
       ) : (
-        todayChallenge && <ProblemCard challenge={todayChallenge} isToday={true} stats={stats} />
+        todayChallenge && (
+          <ProblemCard
+            challenge={todayChallenge}
+            isToday={true}
+            stats={stats}
+            onEdit={handleEditChallenge}
+            onDelete={handleDeleteChallenge}
+          />
+        )
       )}
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -732,13 +733,16 @@ const AdminChallenges: React.FC = () => {
             placeholder="Search problems..."
             className="pl-10"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setCurrentPage(1)
+            }}
           />
         </div>
         <div className="flex gap-2">
           <Dropdown
             trigger={
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button variant="outline" className="flex items-center gap-2 bg-transparent">
                 <Filter className="h-4 w-4" />
                 {filterDifficulty === "all"
                   ? "All Difficulties"
@@ -749,28 +753,53 @@ const AdminChallenges: React.FC = () => {
             items={[
               {
                 label: "All Difficulties",
-                onClick: () => setFilterDifficulty("all"),
+                onClick: () => {
+                  setFilterDifficulty("all")
+                  setCurrentPage(1)
+                },
               },
-              { label: "Easy", onClick: () => setFilterDifficulty("easy") },
-              { label: "Medium", onClick: () => setFilterDifficulty("medium") },
-              { label: "Hard", onClick: () => setFilterDifficulty("hard") },
+              {
+                label: "Easy",
+                onClick: () => {
+                  setFilterDifficulty("Easy")
+                  setCurrentPage(1)
+                },
+              },
+              {
+                label: "Medium",
+                onClick: () => {
+                  setFilterDifficulty("Medium")
+                  setCurrentPage(1)
+                },
+              },
+              {
+                label: "Hard",
+                onClick: () => {
+                  setFilterDifficulty("Hard")
+                  setCurrentPage(1)
+                },
+              },
             ]}
           />
           <Dropdown
             trigger={
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button variant="outline" className="flex items-center gap-2 bg-transparent">
                 <SlidersHorizontal className="h-4 w-4" />
-                {sortBy === "date" ? "Date" :
-                  sortBy === "title" ? "Title" :
-                    sortBy === "difficulty" ? "Difficulty" : "Completion"}
+                {sortBy === "date"
+                  ? "Date"
+                  : sortBy === "title"
+                    ? "Title"
+                    : sortBy === "difficulty"
+                      ? "Difficulty"
+                      : "Completion"}
                 <ChevronDown className="h-4 w-4 ml-2" />
               </Button>
             }
             items={[
-              { label: "Date", onClick: () => setSortBy("date") },
+              { label: "Date", onClick: () => setSortBy("createdAt") },
               { label: "Title", onClick: () => setSortBy("title") },
               { label: "Difficulty", onClick: () => setSortBy("difficulty") },
-              { label: "Completion", onClick: () => setSortBy("completion") },
+              { label: "Completion", onClick: () => setSortBy("solvedPercentage") },
             ]}
           />
         </div>
@@ -786,12 +815,15 @@ const AdminChallenges: React.FC = () => {
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="mb-5 bg-gray-800 dark:bg-white shadow-lg overflow-hidden border border-gray-700 dark:border-gray-200 rounded-lg p-6">
+                <div
+                  key={i}
+                  className="mb-5 bg-gray-800 dark:bg-white shadow-lg overflow-hidden border border-gray-700 dark:border-gray-200 rounded-lg p-6"
+                >
                   <SkeletonLoader />
                 </div>
               ))}
             </div>
-          ) : filteredChallenges.length === 0 ? (
+          ) : processedChallenges.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -801,7 +833,7 @@ const AdminChallenges: React.FC = () => {
               No problems match your filters
             </motion.div>
           ) : (
-            filteredChallenges.map((challenge) => (
+            processedChallenges.map((challenge) => (
               <motion.div
                 key={challenge._id}
                 initial={{ opacity: 0, y: 20 }}
@@ -809,18 +841,46 @@ const AdminChallenges: React.FC = () => {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <ProblemCard challenge={challenge} stats={stats} />
+                <div
+                  onClick={() => navigate(`/codingclubadmin/challenges/${challenge._id}`)}
+                  className="cursor-pointer hover:opacity-90 transition-opacity"
+                >
+                  <ProblemCard
+                    challenge={challenge}
+                    stats={stats}
+                    onEdit={handleEditChallenge}
+                    onDelete={handleDeleteChallenge}
+                  />
+                </div>
               </motion.div>
             ))
           )}
         </AnimatePresence>
       </div>
 
+      {/* Pagination Controls */}
+      {challengePagination && challengePagination.totalPages > 1 && (
+        <Pagination
+          currentPage={challengePagination.currentPage}
+          totalPages={challengePagination.totalPages}
+          hasNextPage={challengePagination.hasNextPage}
+          hasPrevPage={challengePagination.hasPrevPage}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
       {/* Add New Problem Button */}
       <div className="fixed bottom-8 right-8">
         <Button className="rounded-full p-4 shadow-lg" onClick={handleAddNewProblem}>
           <div className="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
             Add New Problem
@@ -828,7 +888,7 @@ const AdminChallenges: React.FC = () => {
         </Button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AdminChallenges;
+export default AdminChallenges
