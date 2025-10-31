@@ -29,6 +29,7 @@ interface Challenge {
 interface PaginationInfo {
   currentPage: number
   totalPages: number
+  totalUsers: number
   total: number
   limit: number
   hasNextPage: boolean

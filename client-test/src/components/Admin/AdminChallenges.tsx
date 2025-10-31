@@ -43,12 +43,12 @@ interface Challenge {
   totalUsers?: number;
 }
 
-interface Statistics {
-  totalProblems: number;
-  averageSolveRate: number;
-  topPerformer: string;
-  lowestPerformer: string;
-}
+// interface Statistics {
+//   totalProblems: number;
+//   averageSolveRate: number;
+//   topPerformer: string;
+//   lowestPerformer: string;
+// }
 
 // Button Component
 const Button = memo(
