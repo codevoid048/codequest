@@ -41,10 +41,10 @@ const startServer = async () => {
     try {
         await connectDB();
         
-        const PORT = process.env.PORT || 5000;
-        app.listen(PORT, () => { 
-           console.log(`Server is running at ${PORT}`); 
-        });
+        // const PORT = process.env.PORT || 5000;
+        // app.listen(PORT, () => { 
+        //    console.log(`Server is running at ${PORT}`); 
+        // });
     } catch (error) {
         console.error('Failed to start server:', error.message);
         process.exit(1);
@@ -53,4 +53,4 @@ const startServer = async () => {
 
 startServer();
 
-// export const handler = serverless(app);
+export const handler = serverless(app);
