@@ -65,6 +65,7 @@ interface AdminState {
   fetchPOTD: () => Promise<any>;
   login: (token: string) => void;
   logout: () => void;
+  deleteChallenge: (id: string) => Promise<boolean>;
 }
 
 export const useAdminStore = create<AdminState>((set, get) => {
@@ -72,16 +73,33 @@ export const useAdminStore = create<AdminState>((set, get) => {
   const isAdminAuthenticated = !!token;
 
   return {
-    users: [],
-    challenges: [],
-    loading: false,
-    error: null,
-    token,
-    isAdminAuthenticated,
-    pagination: null,
-    filterOptions: null,
-
-    // Fetch users from the API with pagination and filtering
+  users: [],
+  challenges: [],
+  loading: false,
+  error: null,
+  token,
+  isAdminAuthenticated,
+  pagination: null,
+  filterOptions: null,
+  deleteChallenge: async (id: string) => {
+    try {
+      set({ loading: true, error: null });
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/admin/challenges/${id}`, {
+        withCredentials: true
+      });
+      // Remove the deleted challenge from state
+      set(state => ({
+        challenges: state.challenges.filter(c => c._id !== id)
+      }));
+      return true;
+    } catch (err) {
+      console.error("Error deleting challenge:", err);
+      set({ error: (err as Error).message });
+      return false;
+    } finally {
+      set({ loading: false });
+    }
+  },    // Fetch users from the API with pagination and filtering
     fetchUsers: async (params: FetchUsersParams = {}) => {
       try {
         set({ loading: true, error: null });

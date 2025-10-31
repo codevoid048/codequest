@@ -305,3 +305,80 @@ export const getCategories = async (req, res) => {
         });
     }
 };
+
+export const deleteChallenge = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Challenge ID is required" 
+            });
+        }
+
+        // Find challenge first to make sure it exists
+        const challenge = await Challenge.findById(id);
+        if (!challenge) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Challenge not found" 
+            });
+        }
+
+        // Delete associated solution if exists
+        await Solution.findOneAndDelete({ challenge: id });
+        
+        // Delete the challenge
+        await Challenge.findByIdAndDelete(id);
+
+        auditService.info('challenge_deleted', { challengeId: id, title: challenge.title });
+
+        res.status(200).json({
+            success: true,
+            message: "Challenge and associated solution deleted successfully"
+        });
+    } catch (error) {
+        auditService.error('admin_delete_challenge_error', { error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error",
+            error: error.message 
+        });
+    }
+};
+
+export const getChallengeById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Challenge ID is required" 
+            });
+        }
+
+        const challenge = await Challenge.findById(id);
+        if (!challenge) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Challenge not found" 
+            });
+        }
+
+        // Get associated solution
+        const solution = await Solution.findOne({ challenge: id });
+
+        res.status(200).json({
+            success: true,
+            challenge,
+            solution
+        });
+    } catch (error) {
+        auditService.error('admin_get_challenge_error', { error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error",
+            error: error.message 
+        });
+    }
+};
