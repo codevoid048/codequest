@@ -22,7 +22,7 @@ export const getUsers = async (req, res) => {
         const skip = (pageNumber - 1) * pageLimit;
 
         let searchQuery = {};
-        
+
         if (search) {
             searchQuery.$or = [
                 { username: { $regex: search, $options: 'i' } },
@@ -77,9 +77,9 @@ export const getUsers = async (req, res) => {
 
     } catch (err) {
         auditService.error('admin_get_users_error', { error: err.message });
-        res.status(500).json({ 
-            error: "Error in getting users", 
-            details: err.message 
+        res.status(500).json({
+            error: "Error in getting users",
+            details: err.message
         });
     }
 };
@@ -97,6 +97,22 @@ export const addChallenge = async (req, res) => {
             platform,
             solution,
         } = req.body;
+
+        // Convert createdAt to midnight IST (18:30 UTC of previous day)
+        let scheduleDate;
+        if (createdAt) {
+            const date = new Date(createdAt);
+            // Set to 18:30:00 UTC of the previous day (00:00 IST of selected day)
+            date.setUTCHours(18, 30, 0, 0);
+            scheduleDate = date;
+        } else {
+            // If no date provided, use next day midnight IST
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setUTCHours(18, 30, 0, 0);
+            scheduleDate = tomorrow;
+        }
 
         // Validate required fields
         if (!title || !description || !category || !difficulty || !points || !problemLink || !platform) {
@@ -119,10 +135,10 @@ export const addChallenge = async (req, res) => {
             difficulty,
             points,
             problemLink,
-            createdAt: createdAt ? new Date(createdAt) : new Date(),
+            createdAt: scheduleDate,
             platform
         });
-        
+
         const savedChallenge = await newChallenge.save();
 
         let savedSolution = null;
@@ -140,7 +156,7 @@ export const addChallenge = async (req, res) => {
 
             savedSolution = await newSolution.save();
         }
-        
+
         return res.status(201).json({
             success: true,
             message: "Challenge and solution added successfully",
@@ -150,10 +166,10 @@ export const addChallenge = async (req, res) => {
 
     } catch (error) {
         auditService.error('admin_add_challenge_error', { error: error.message });
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: "Server error",
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -169,8 +185,18 @@ export const updateChallenge = async (req, res) => {
             points,
             problemLink,
             platform,
+            createdAt,
             solution,
         } = req.body;
+
+        // Convert createdAt to midnight IST if provided
+        let scheduleDate;
+        if (createdAt) {
+            const date = new Date(createdAt);
+            // Set to 18:30:00 UTC of the previous day (00:00 IST of selected day)
+            date.setUTCHours(18, 30, 0, 0);
+            scheduleDate = date;
+        }
         if (!challengeId) {
             return res.status(400).json({ success: false, message: "Challenge ID is required" });
         }
@@ -180,7 +206,7 @@ export const updateChallenge = async (req, res) => {
         }
         // Update challenge fields if provided
         if (title) challenge.title = title;
-        if (description) challenge.description = description;   
+        if (description) challenge.description = description;
         if (category) {
             // Ensure new categories exist (create if they don't)
             await ensureCategoriesExist(category);
@@ -190,11 +216,11 @@ export const updateChallenge = async (req, res) => {
         if (points) challenge.points = points;
         if (problemLink) challenge.problemLink = problemLink;
         if (platform) challenge.platform = platform;
-        
-        if (createdAt) {
-            challenge.createdAt = new Date(createdAt);
+
+        if (scheduleDate) {
+            challenge.createdAt = scheduleDate;
         }
-        
+
         const updatedChallenge = await challenge.save();
 
         let updatedSolution = null;
@@ -232,62 +258,63 @@ export const updateChallenge = async (req, res) => {
         });
     } catch (error) {
         auditService.error('admin_update_challenge_error', { error: error.message });
-        res.status(500).json({ 
-            success: false, 
+        res.status(500).json({
+            success: false,
             message: "Server error",
-            error: error.message 
+            error: error.message
         });
     }
 };
 
 // Example: GET /admin/getchallenge
 export const getTodayChallenge = async (req, res) => {
-  try {
-    // Create today's date in IST timezone (same logic as main API)
-    const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
-    const istNow = new Date(now.getTime() + istOffset);
-    
-    const today = new Date(istNow);
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    try {
+        // Get current time in UTC
+        const now = new Date();
 
-    // Convert back to UTC for database query
-    const todayUTC = new Date(today.getTime() - istOffset);
-    const tomorrowUTC = new Date(tomorrow.getTime() - istOffset);
+        // Calculate today's and tomorrow's midnight in IST (18:30 UTC of previous day)
+        const todayIST = new Date(now);
+        todayIST.setUTCHours(18, 30, 0, 0);
+        if (now < todayIST) {
+            // If current time is before today's IST midnight, adjust to previous day
+            todayIST.setDate(todayIST.getDate() - 1);
+        }
 
-    // Find today's challenge using createdAt
-    const challenge = await Challenge.findOne({
-      createdAt: {
-        $gte: todayUTC,
-        $lt: tomorrowUTC
-      }
-    }).sort({ createdAt: -1 });
+        const tomorrowIST = new Date(todayIST);
+        tomorrowIST.setDate(tomorrowIST.getDate() + 1);
 
-    if (!challenge) {
-      return res.status(404).json({
-        success: false,
-        message: "No challenge found for today",
-      });
+        // Find today's challenge using createdAt
+        // The dates are already in UTC since we set them using setUTCHours
+        const challenge = await Challenge.findOne({
+            createdAt: {
+                $gte: todayIST,
+                $lt: tomorrowIST
+            }
+        }).sort({ createdAt: -1 });
+
+        if (!challenge) {
+            return res.status(404).json({
+                success: false,
+                message: "No challenge found for today",
+            });
+        }
+
+        // Manually fetch related solution (since challenge schema has no `solution` field)
+        const solution = await Solution.findOne({ challenge: challenge._id });
+
+        return res.status(200).json({
+            success: true,
+            challenge,
+            solution: solution || null,
+        });
+    } catch (error) {
+        auditService.error('admin_get_today_challenge_error', { error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: error.message,
+        });
     }
-
-    // Manually fetch related solution (since challenge schema has no `solution` field)
-    const solution = await Solution.findOne({ challenge: challenge._id });
-
-    return res.status(200).json({
-      success: true,
-      challenge,
-      solution: solution || null,
-    });
-  } catch (error) {
-    auditService.error('admin_get_today_challenge_error', { error: error.message });
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message,
-    });
-  }
 };
 
 export const getCategories = async (req, res) => {
@@ -305,3 +332,144 @@ export const getCategories = async (req, res) => {
         });
     }
 };
+
+
+export const getChallenges = async (req, res) => {
+    try {
+        const {
+            page = 1,
+            limit = 10,
+            search = "",
+            difficulty = "",
+            category = "",
+            sortBy = "createdAt",
+            sortDirection = "desc",
+        } = req.query
+
+        const pageNumber = Number.parseInt(page)
+        const pageLimit = Number.parseInt(limit)
+        const skip = (pageNumber - 1) * pageLimit
+
+        const searchQuery = {}
+
+        // Search by title or description
+        if (search) {
+            searchQuery.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
+            ]
+        }
+
+        // Filter by difficulty
+        if (difficulty) {
+            searchQuery.difficulty = difficulty
+        }
+
+        // Filter by category
+        if (category) {
+            searchQuery.category = { $in: [category] }
+        }
+
+        const sortObject = {}
+        sortObject[sortBy] = sortDirection === "asc" ? 1 : -1
+
+        const totalChallenges = await Challenge.countDocuments(searchQuery)
+
+        const challenges = await Challenge.find(searchQuery).sort(sortObject).skip(skip).limit(pageLimit)
+
+        const totalPages = Math.ceil(totalChallenges / pageLimit)
+
+        return res.status(200).json({
+            success: true,
+            challenges,
+            pagination: {
+                currentPage: pageNumber,
+                totalPages,
+                totalChallenges,
+                hasNextPage: pageNumber * pageLimit < totalChallenges,
+                hasPrevPage: pageNumber > 1,
+                limit: pageLimit,
+            },
+        })
+    } catch (error) {
+        auditService.error("admin_get_challenges_error", { error: error.message })
+        res.status(500).json({
+            success: false,
+            message: "Error fetching challenges",
+            error: error.message,
+        })
+    }
+}
+
+export const getChallengeById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Challenge ID is required" 
+            });
+        }
+
+        const challenge = await Challenge.findById(id);
+        if (!challenge) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Challenge not found" 
+            });
+        }
+
+        // Fetch the associated solution
+        const solution = await Solution.findOne({ challenge: id });
+
+        return res.status(200).json({
+            success: true,
+            challenge,
+            solution: solution || null
+        });
+
+    } catch (error) {
+        auditService.error('admin_get_challenge_by_id_error', { error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: error.message
+        });
+    }
+};
+
+export const deleteChallenge = async (req, res) => {
+    try {
+        const { id } = req.params
+
+        if (!id) {
+            return res.status(400).json({ success: false, message: "Challenge ID is required" })
+        }
+
+        const challenge = await Challenge.findById(id)
+        if (!challenge) {
+            return res.status(404).json({ success: false, message: "Challenge not found" })
+        }
+
+        // Delete associated solution
+        await Solution.deleteOne({ challenge: id })
+
+        // Delete the challenge
+        await Challenge.findByIdAndDelete(id)
+
+        auditService.info("admin_delete_challenge", { challengeId: id, title: challenge.title })
+
+        return res.status(200).json({
+            success: true,
+            message: "Challenge deleted successfully",
+        })
+    } catch (error) {
+        auditService.error("admin_delete_challenge_error", { error: error.message })
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: error.message,
+        })
+    }
+}

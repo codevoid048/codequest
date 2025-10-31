@@ -31,9 +31,13 @@ const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onChange, label, 
     };
   }, []);
 
-  // Format date as YYYY-MM-DD for display
+  // Format date as IST with timezone indicator
   const formatDateForDisplay = (date: Date) => {
-    return date.toLocaleDateString();
+    return new Date(date).toLocaleString('en-IN', { 
+      timeZone: 'Asia/Kolkata',
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }) + ' IST';
   };
 
   // Get days in month
@@ -46,11 +50,14 @@ const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onChange, label, 
     return new Date(year, month, 1).getDay();
   };
 
-  // Check if date is in the past
+  // Check if date is in the past (comparing against IST midnight)
   const isPastDate = (date: Date) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return date < today;
+    // Get current IST date by adding offset
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+    const istDate = new Date(today.getTime() + istOffset);
+    istDate.setUTCHours(18, 30, 0, 0); // Set to previous day 18:30 UTC (00:00 IST)
+    return date < istDate;
   };
 
   // Navigate to previous month
@@ -63,9 +70,13 @@ const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onChange, label, 
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
 
-  // Handle date selection
+  // Handle date selection and set to midnight IST (UTC+5:30)
   const selectDate = (day: number) => {
+    // Create date at midnight IST
     const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    // Set to midnight IST by adjusting for UTC offset
+    // First, set to previous day 18:30 UTC (equivalent to 00:00 IST next day)
+    newDate.setUTCHours(18, 30, 0, 0);
     onChange(newDate);
     setShowCalendar(false);
   };
@@ -184,7 +195,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onChange, label, 
         />
         
         <div className="mt-1 text-sm text-muted-foreground">
-          Selected: {selectedDate.toLocaleDateString()}
+          Challenge will be posted at: {formatDateForDisplay(selectedDate)}
         </div>
       </div>
     </div>

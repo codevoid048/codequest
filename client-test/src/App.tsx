@@ -30,6 +30,7 @@ import ProblemSet from './components/ProblemSet';
 import CategoryProblems from './components/ProblemSet/CategoryProblems';
 import { ServerErrorRoute, NetworkErrorRoute, UnauthorizedRoute } from './components/ErrorRoutes';
 import { ForbiddenPage } from './components/EnhancedErrorPages';
+import ChallengeDetail from './components/Admin/ChallengeDetails.tsx';
 
 function UserApp() {
   return (
@@ -92,6 +93,7 @@ function AdminApp() {
           <Route path="/codingclubadmin" element={<Dashboard />} />
           <Route path="/codingclubadmin/users" element={<UserDashboard />} />
           <Route path="/codingclubadmin/challenges" element={<AdminChallenges />} />
+          <Route path="/codingclubadmin/challenges/:id" element={<ChallengeDetail />} />
           <Route path="/codingclubadmin/users/profile/:username" element={<ProfilePage />} />
           <Route path="/codingclubadmin/addchallenge" element={<AddChallenge />} />
           <Route path="/codingclubadmin/leaderboard" element={<Leaderboard />} />
