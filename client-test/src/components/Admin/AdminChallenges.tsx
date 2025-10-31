@@ -11,9 +11,6 @@ import {
   Search,
   SlidersHorizontal,
   Zap,
-  Trash2,
-  Eye,
-  Edit,
 } from "lucide-react";
 import React, {
   memo,
@@ -248,12 +245,9 @@ SkeletonLoader.displayName = "SkeletonLoader";
 
 // Problem Card Component
 const ProblemCard = memo(
-  ({ challenge, isToday = false, stats }: {
-    challenge: Challenge;
-    isToday?: boolean;
-    stats: { usersCount: number; challengesCount: number; solvedChallenges: number };
-  }) => {
+  ({ challenge, isToday = false, stats }: { challenge: Challenge; isToday?: boolean; stats: { usersCount: number; challengesCount: number; solvedChallenges: number } }) => {
     const [isLoading, setIsLoading] = useState(false);
+
     const navigate = useNavigate();
     const handleUpdatePOTD = useCallback(() => {
       // Navigate to AddChallenge page and just send a flag
@@ -267,8 +261,6 @@ const ProblemCard = memo(
       toast.success("Redirected to AddChallenge page to view/update POTD!");
     }, [navigate]);
 
-    const { deleteChallenge, fetchChallenges } = useAdminStore();
-
     const getDifficultyColor = useCallback((difficulty: string): string => {
       switch (difficulty.toLowerCase()) {
         case "easy":
@@ -281,18 +273,6 @@ const ProblemCard = memo(
           return "bg-gray-500/30 text-gray-500 border-gray-500/60 dark:bg-gray-500/20 dark:border-gray-500/50";
       }
     }, []);
-
-    // Handle challenge deletion
-    const handleDeleteChallenge = async (challengeId: string) => {
-      try {
-        await deleteChallenge(challengeId);
-        toast.success('Challenge deleted successfully');
-        await fetchChallenges(); // Refresh the list after deletion
-      } catch (error) {
-        console.error('Error deleting challenge:', error);
-        toast.error('Failed to delete challenge');
-      }
-    };
 
     const formatDate = (dateString: string) => {
       return new Date(dateString).toLocaleDateString("en-US", {
@@ -390,53 +370,17 @@ const ProblemCard = memo(
                       </span>
                     </div>
                     <span className="text-sm font-medium text-blue-400 dark:text-blue-600">
-                      {solvedPercentage.toFixed(2)}%
+                      { solvedPercentage.toFixed(2) }%
                     </span>
                   </div>
                 </div>
 
                 {/* Platform info */}
-                <div className="flex items-center justify-between text-sm text-gray-400 dark:text-gray-500">
+                <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
                   <span className="flex items-center gap-2 bg-secondary dark:bg-muted px-2 py-1 rounded-full text-secondary-foreground dark:text-muted-foreground">
                     <Code className="h-5 w-4 text-primary" />
                     {challenge.platform}
                   </span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/codingclubadmin/challenges/${challenge._id}`);
-                      }}
-                      className="p-2 hover:bg-gray-700 dark:hover:bg-gray-100 rounded-full transition-colors"
-                      title="View Details"
-                    >
-                      <Eye className="h-4 w-4 text-blue-500" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/codingclubadmin/addchallenge`, {
-                          state: { challenge, isEdit: true }
-                        });
-                      }}
-                      className="p-2 hover:bg-gray-700 dark:hover:bg-gray-100 rounded-full transition-colors"
-                      title="Edit Challenge"
-                    >
-                      <Edit className="h-4 w-4 text-amber-500" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm('Are you sure you want to delete this challenge?')) {
-                          handleDeleteChallenge(challenge._id);
-                        }
-                      }}
-                      className="p-2 hover:bg-gray-700 dark:hover:bg-gray-100 rounded-full transition-colors"
-                      title="Delete Challenge"
-                    >
-                      <Trash2 className="h-4 w-4 text-rose-500" />
-                    </button>
-                  </div>
                 </div>
               </div>
             )}
@@ -778,15 +722,7 @@ const AdminChallenges: React.FC = () => {
           <SkeletonLoader />
         </div>
       ) : (
-        todayChallenge && (
-          <div onClick={() => navigate(`/codingclubadmin/challenges/${todayChallenge._id}`)}>
-            <ProblemCard
-              challenge={todayChallenge}
-              isToday={true}
-              stats={stats}
-            />
-          </div>
-        )
+        todayChallenge && <ProblemCard challenge={todayChallenge} isToday={true} stats={stats} />
       )}
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -873,15 +809,7 @@ const AdminChallenges: React.FC = () => {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <div
-                  onClick={() => navigate(`/codingclubadmin/challenges/${challenge._id}`)}
-                  className="cursor-pointer"
-                >
-                  <ProblemCard
-                    challenge={challenge}
-                    stats={stats}
-                  />
-                </div>
+                <ProblemCard challenge={challenge} stats={stats} />
               </motion.div>
             ))
           )}

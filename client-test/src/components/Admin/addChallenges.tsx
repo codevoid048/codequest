@@ -242,7 +242,7 @@ export default function Admin() {
       points: formData.points,
       problemLink: formData.problemLink,
       platform: formData.platform,
-      createdAt: formData.createdAt.toISOString(),
+      createdAt: formData.createdAt,
       solution: formData.solutions,
     };
 
@@ -251,44 +251,15 @@ export default function Admin() {
         ? `${import.meta.env.VITE_API_BASE_URL}/api/admin/update-challenge`
         : `${import.meta.env.VITE_API_BASE_URL}/api/admin/add-challenges`;
 
-      // const response = await axios.post(
-      //   `${import.meta.env.VITE_API_BASE_URL}/api/admin/add-challenges`,
-      //   {
-      //     title: formData.title,
-      //     description: formData.description,
-      //     category: formData.category,
-      //     difficulty: formData.difficulty,
-      //     points: formData.points,
-      //     problemLink: formData.problemLink,
-      //     createdAt: formData.createdAt.toISOString(),
-      //     platform: formData.platform,
-      //     solution: {
-      //       explanation: formData.solutions.explanation,
-      //       cpp: formData.solutions.cpp,
-      //       java: formData.solutions.java,
-      //       python: formData.solutions.python,
-      //       timeComplexity: formData.solutions.timeComplexity,
-      //       spaceComplexity: formData.solutions.spaceComplexity,
-      //     },
-
-
-      //   },
-      //   {
-      //     headers: { "Content-Type": "application/json" },
-      //     withCredentials: true
-      //   },
-      // );
-      // console.log("Registration successful:", response.data);
-
       const response = challengeId ?
-      await axios.put(endpoint, payload,{
-        headers: { "Content-Type": "application/json"},
-        withCredentials: true,
-      })
-      :await axios.post(endpoint, payload, {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      });
+        await axios.put(endpoint, payload, {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        })
+        : await axios.post(endpoint, payload, {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        });
 
       toast.success(
         challengeId
@@ -297,11 +268,6 @@ export default function Admin() {
       );
 
       console.log("Challenge saved:", response.data);
-
-      // Success notification
-      // alert(
-      //   `Challenge created! Successfully created "${formData.title}" on ${formData.createdAt.toLocaleDateString()} from ${formData.platform}`
-      // );
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message || "An error occurred while creating the challenge.");
@@ -905,7 +871,7 @@ export default function Admin() {
                         {isSubmitting ? (
                           <div className="flex items-center gap-2">
                             <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"></div>
-                            <span>{challengeId ? "Updating..." : "Creating..."}</span>  
+                            <span>{challengeId ? "Updating..." : "Creating..."}</span>
                           </div>
                         ) : (
                           <span>{challengeId ? "Update" : "Publish"}</span>

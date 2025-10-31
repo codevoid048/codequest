@@ -25,7 +25,6 @@ import AdminLogin from './components/Admin/index';
 import Dashboard from './components/Admin/Dashboard.tsx';
 import { useAdminStore } from './context/AdminContext.tsx';
 import AdminChallenges from './components/Admin/AdminChallenges.tsx';
-import ChallengeDetails from './components/Admin/ChallengeDetails.tsx';
 import RouteSEO from './components/RouteSEO';
 import ProblemSet from './components/ProblemSet';
 import CategoryProblems from './components/ProblemSet/CategoryProblems';
@@ -93,7 +92,6 @@ function AdminApp() {
           <Route path="/codingclubadmin" element={<Dashboard />} />
           <Route path="/codingclubadmin/users" element={<UserDashboard />} />
           <Route path="/codingclubadmin/challenges" element={<AdminChallenges />} />
-          <Route path="/codingclubadmin/challenges/:id" element={<ChallengeDetails />} />
           <Route path="/codingclubadmin/users/profile/:username" element={<ProfilePage />} />
           <Route path="/codingclubadmin/addchallenge" element={<AddChallenge />} />
           <Route path="/codingclubadmin/leaderboard" element={<Leaderboard />} />
