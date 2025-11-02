@@ -1,6 +1,10 @@
 import { User } from "../models/User.js";
 import { Challenge } from "../models/Challenge.js";
 import auditService from "../services/auditService.js";
+import cacheService from "../services/cacheService.js";
+
+const CACHE_NAMESPACE = 'stats';
+const STATS_TTL = 600;
 
 const formatCount = (num) => {
     if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M+";
@@ -11,6 +15,11 @@ const formatCount = (num) => {
 
 export const getCounts = async (req, res) => {
   try {
+    const cachedStats = await cacheService.get(CACHE_NAMESPACE, 'global_stats');
+    if (cachedStats) {
+      return res.status(200).json(cachedStats);
+    }
+
     const usersCount = await User.countDocuments();
     const challengesCount = await Challenge.countDocuments();
     const collegesCount = await User.distinct("college").then(colleges => colleges.length);
@@ -19,7 +28,7 @@ export const getCounts = async (req, res) => {
       solvedUsers: { $exists: true, $not: { $size: 0 } }
     });
 
-    // 🔹 Count challenges by difficulty (Easy, Medium, Hard)
+    // Challenges count by difficulty (Easy, Medium, Hard)
     const difficulties = await Challenge.aggregate([
       {
         $group: {
@@ -38,7 +47,7 @@ export const getCounts = async (req, res) => {
       }
     ]);
 
-    // 🔹 Format difficulty data into a consistent structure
+    // Format difficulty data into a consistent structure
     const difficultyMap = { Easy: 0, Medium: 0, Hard: 0 };
     difficulties.forEach(d => {
       if (difficultyMap[d._id] !== undefined) {
@@ -52,15 +61,19 @@ export const getCounts = async (req, res) => {
       { name: "Hard", value: difficultyMap.Hard, color: "#ef4444" }
     ];
 
-    // 🔹 Send all counts + difficulty data
-    res.status(200).json({
+    // Prepare stats object
+    const statsData = {
       usersCount: formatCount(usersCount),
       challengesCount: formatCount(challengesCount),
       collegesCount: formatCount(collegesCount),
       affiliatesCount: formatCount(affiliatesCount),
       solvedChallenges: formatCount(solvedChallenges),
       difficultyDistribution: difficultyData
-    });
+    };
+
+    await cacheService.set(CACHE_NAMESPACE, 'global_stats', statsData, STATS_TTL);
+
+    res.status(200).json(statsData);
   } catch (error) {
     auditService.error("Get stats counts failed", error, {
       requestId: req.auditContext?.requestId

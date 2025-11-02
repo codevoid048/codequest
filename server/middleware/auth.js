@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 import passport from "../config/passport.js";
+import userCacheService from "../services/userCacheService.js";
 
 export const protect = async (req, res, next) => {
     let token;
@@ -8,8 +9,6 @@ export const protect = async (req, res, next) => {
     try {
 
         token = req.cookies.jwt;
-
-        // console.log("Token from cookies:", token);
 
         if(!token) {
             token = req.headers.authorization?.split(" ")[1];
@@ -21,14 +20,21 @@ export const protect = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        // console.log("Decoded token:", decoded.id);
+        let user = await userCacheService.getCachedUserProfile(decoded.id);
 
-        req.user = await User.findById(decoded.id).select('-password -gfg -codechef -otp -otpExpires -createdAt -updatedAt -resetPasswordToken -resetPasswordExpires -googleId -githubId'); // Exclude sensitive fields
+        if (!user) {
+            user = await User.findById(decoded.id).select('-password -gfg -codechef -otp -otpExpires -createdAt -updatedAt -resetPasswordToken -resetPasswordExpires -googleId -githubId');
 
-        if (!req.user) {
+            if (user) {
+                await userCacheService.cacheUserProfile(decoded.id, user);
+            }
+        }
+
+        if (!user) {
             return res.status(401).json({ message: 'Not authorized, token failed' });
         }
 
+        req.user = user;
         req.token = token;
 
         next();
