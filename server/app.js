@@ -81,6 +81,45 @@ export const cleanup = async () => {
 
 app.get('/hello', (req, res) => { return res.status(200).send("Hello, World!") })
 
+app.get('/health', async (req, res) => {
+  try {
+    const mongoose = await import('mongoose');
+    const dbStatus = mongoose.connection.readyState === 1 ? 'healthy' : 'unhealthy';
+
+    let redisStatus = 'not_configured';
+    if (process.env.REDIS_URL) {
+      try {
+        const redis = await import('redis');
+        const client = redis.createClient({ url: process.env.REDIS_URL });
+        await client.connect();
+        await client.ping();
+        await client.disconnect();
+        redisStatus = 'healthy';
+      } catch (error) {
+        redisStatus = 'unhealthy';
+      }
+    }
+
+    const health = {
+      status: dbStatus === 'healthy' ? 'healthy' : 'unhealthy',
+      timestamp: new Date().toISOString(),
+      services: {
+        database: dbStatus,
+        redis: redisStatus
+      },
+      uptime: process.uptime()
+    };
+
+    res.status(health.status === 'healthy' ? 200 : 503).json(health);
+  } catch (error) {
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      error: error.message
+    });
+  }
+});
+
 // 404 handler for unmatched routes
 app.use('*', (req, res, next) => {
   const error = new Error(`Route ${req.originalUrl} not found`);

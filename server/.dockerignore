@@ -1,3 +1,38 @@
-node_modules
-npm-debug.log
-.env
+const dockerIgnorePatterns = [
+  "node_modules",
+  "npm-debug.log*",
+  "yarn-debug.log*",
+  "yarn-error.log*",
+  ".npm",
+  ".yarn",
+  ".env*",
+  "!.env.example",
+  ".git",
+  ".gitignore",
+  "README.md",
+  ".DS_Store",
+  ".vscode",
+  ".idea",
+  "*.swp",
+  "*.swo",
+  "*~",
+  "logs",
+  "*.log",
+  "coverage",
+  ".nyc_output",
+  ".cache",
+  "dist",
+  "build",
+  ".tmp",
+  "temp",
+  "tmp",
+  ".DS_Store",
+  "Thumbs.db",
+  "*.tmp",
+  "*.temp",
+  "Dockerfile*",
+  "docker-compose*.yml",
+  ".dockerignore"
+];
+
+module.exports = dockerIgnorePatterns;
