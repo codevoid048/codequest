@@ -69,7 +69,6 @@ export const getChallenges = async (req, res) => {
 
         // Add user-specific solved status if needed
         if (targetUser && status) {
-            const mongoose = await import('mongoose');
             pipeline.push(
                 {
                     $addFields: {
@@ -181,16 +180,16 @@ export const getDailyChallenge = async (req, res) => {
 
         if (userId) {
             try {
-                targetUser = await User.findById(userId).select('solveChallenges _id');
+                targetUser = await User.findById(userId).select('isPOTDSolvedToday _id');
                 if (targetUser) {
-                    isSolved = dailyChallenge.solvedUsers?.includes(targetUser._id) || false;
+                    isSolved = targetUser.isPOTDSolvedToday || false;
                 }
             } catch (error) {
                 // Invalid user ID, continue without user context
             }
         } else if (authenticatedUser) {
             targetUser = authenticatedUser;
-            isSolved = dailyChallenge.solvedUsers?.includes(authenticatedUser._id) || false;
+            isSolved = authenticatedUser.isPOTDSolvedToday || false;
         }
 
         // Return challenge with solved status
@@ -316,7 +315,7 @@ export const checkPOTDStatus = async (req, res) => {
             return res.status(404).json({ message: 'Daily challenge not found', isSolved: false });
         }
 
-        let isSolved = dailyChallenge.solvedUsers?.includes(userId) || false;
+        let isSolved = user.isPOTDSolvedToday || false;
 
         if (isSolved) {
             return res.status(200).json({ message: "Daily challenge already solved", isSolved });

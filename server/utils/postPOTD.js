@@ -115,6 +115,13 @@ export const postPotdChallenge = async (userId, timestamp, challengeId, difficul
                 { session }
             );
 
+            // Set the isPOTDSolvedToday flag to true
+            await User.updateOne(
+                { _id: userId },
+                { $set: { isPOTDSolvedToday: true } },
+                { session }
+            );
+
             return {
                 success: true,
                 message: 'POTD challenge recorded successfully',

@@ -127,7 +127,6 @@ export const addChallenge = async (req, res) => {
         // Ensure categories exist in database (create if they don't)
         await ensureCategoriesExist(category);
 
-        // Create and save Challenge
         const newChallenge = new Challenge({
             title,
             description,

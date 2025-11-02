@@ -123,17 +123,35 @@ export default function ProfilePage() {
   useEffect(() => {
     const updatePlatforms = async () => {
       if (!profileUser || !profileUser.username) return
-      if (!isPlatformDataStale(profileUser.username, 10)) { return }
+      if (!isPlatformDataStale(profileUser.username, 60)) { return }
 
       try {
         console.log("Updating platforms...")
         const updatedUser = await fetchPlatformsData(profileUser)
-        setProfileUser(updatedUser)
-        toast.success("Data updated successfully")
-        axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/user/${profileUser.username}/update-platforms`, updatedUser);
-        updatePlatformCacheTimestamp(profileUser.username)
+        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/user/${profileUser.username}/update-platforms`, updatedUser);
+        
+        if (response.status === 200) {
+          setProfileUser(updatedUser)
+          toast.success("Data updated successfully")
+          updatePlatformCacheTimestamp(profileUser.username)
+        } else if (response.status === 429) {
+          const nextUpdateTime = new Date(response.data.nextUpdateTime)
+          toast.success(`Please wait until ${nextUpdateTime.toLocaleTimeString()} to update platform data again`)
+          updatePlatformCacheTimestamp(profileUser.username)
+        }
       } catch (error) {
         console.error("Error updating platforms:", error)
+        if (axios.isAxiosError(error) && error.response?.status === 429) {
+          const nextUpdateTime = error.response.data?.nextUpdateTime
+          if (nextUpdateTime) {
+            const nextTime = new Date(nextUpdateTime)
+            toast.success(`Please wait until ${nextTime.toLocaleTimeString()} to update platform data again`)
+          } else {
+            toast.success("Platform data was updated recently. Please wait before updating again.")
+          }
+        } else {
+          toast.error("Failed to update platform data")
+        }
         updatePlatformCacheTimestamp(profileUser.username)
       }
     }

@@ -56,9 +56,11 @@ const userSchema = new mongoose.Schema(
     points: { type: Number, default: 0 },
     rank: { type: Number, default: 0 },
     streak: { type: Number, default: 0 },
+    isPOTDSolvedToday: { type: Boolean, default: false },
+    platformsUpdatedAt: { type: Date, default: null },
 
     // All challenges solved (non-POTD)
-    solveChallenges: 
+    solveChallenges:
       {
         easy: [
           {

@@ -7,6 +7,7 @@ const challengeSchema = new mongoose.Schema({
     points: { type: Number, required: true },
     problemLink: { type: String, required: true },
     platform: { type: String, required: true },
+    isPOTD: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
     solvedUsers: [
         {

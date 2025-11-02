@@ -62,7 +62,7 @@ const resetUserStreaks = async () => {
       const bulkOps = streakResetUpdates.map(user => ({
         updateOne: {
           filter: { _id: user._id },
-          update: { $set: { streak: 0 } }
+          update: { $set: { streak: 0, isPOTDSolvedToday: false } }
         }
       }));
 
