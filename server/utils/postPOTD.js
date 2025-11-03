@@ -2,6 +2,7 @@ import { Challenge } from "../models/Challenge.js";
 import { User } from "../models/User.js";
 import mongoose from "mongoose";
 import auditService from "../services/auditService.js";
+import { formatISTDateString, isWithinYesterdayIST } from './timezone.js';
 
 export const postPotdChallenge = async (userId, timestamp, challengeId, difficulty) => {
     const session = await mongoose.startSession();
@@ -73,33 +74,24 @@ export const postPotdChallenge = async (userId, timestamp, challengeId, difficul
 
             // Only update streak if no other challenge was solved today
             if (!anyChallengeToday) {
-                // Calculate yesterday in IST
-                const yesterday = new Date(dateOnly);
-                yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayStr = new Intl.DateTimeFormat("en-IN", {
-                    timeZone: "Asia/Kolkata",
-                    year: "numeric",
-                    month: "2-digit", 
-                    day: "2-digit"
-                }).format(yesterday).split('/').reverse().join('-');
-
-                // Check if any challenge was solved yesterday
+                // Check if any challenge was solved yesterday using IST date boundaries
                 const anyYesterday = ['easy', 'medium', 'hard'].some(diff =>
                     updateResult.solveChallenges[diff]?.some(entry => {
-                        const entryDateStr = entry.timestamp?.split(' ')[0];
-                        return entryDateStr === yesterdayStr;
+                        // Parse the stored timestamp and check if it's within yesterday's IST bounds
+                        const entryTimestamp = new Date(entry.timestamp);
+                        return isWithinYesterdayIST(entryTimestamp);
                     })
                 );
 
                 // Update streak
                 const newStreak = anyYesterday ? (updateResult.streak || 0) + 1 : 1;
-                
+
                 await User.updateOne(
                     { _id: userId },
                     { $set: { streak: newStreak } },
                     { session }
                 );
-                
+
                 updateResult.streak = newStreak;
             }
 

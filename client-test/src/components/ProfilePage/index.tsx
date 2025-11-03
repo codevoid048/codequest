@@ -80,14 +80,13 @@ export default function ProfilePage() {
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
-  // Account deletion modal states
+
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [usernameInput, setUsernameInput] = useState("")
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState("")
 
-  // Create a derived heatmap from solveChallenges
   const generateHeatmapFromSolveChallenges = (user: ProfileUser | null) => {
     if (!user || !user.solveChallenges) return []
 
@@ -300,7 +299,6 @@ export default function ProfilePage() {
     )
   }
 
-  // Calculate the number of problems solved in each difficulty using the solveChallenges object
   const problemsSolved = {
     total:
       (profileUser.solveChallenges?.easy?.length || 0) +
@@ -311,7 +309,6 @@ export default function ProfilePage() {
     hard: profileUser.solveChallenges?.hard?.length || 0,
   }
 
-  // Generate the heatmap data from solveChallenges
   const heatmap = generateHeatmapFromSolveChallenges(profileUser)
 
   interface GetDaysInMonthParams {
@@ -327,18 +324,6 @@ export default function ProfilePage() {
     count: number
   }
 
-  const generateContributions = (year: number): Contribution[] => {
-    const contributions: Contribution[] = []
-    const startDate = new Date(year, 0, 1)
-    const endDate = new Date(year, 11, 31)
-    for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-      const count = Math.random() > 0.6 ? Math.floor(Math.random() * 10) : 0
-      contributions.push({ date: date.toISOString().split("T")[0], count })
-    }
-    return contributions
-  }
-
-  const contributions = generateContributions(selectedYear)
   const yearOptions = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2]
 
   interface StreakParams {
@@ -353,14 +338,31 @@ export default function ProfilePage() {
     const currentCount = currentContrib ? currentContrib.count : 0
     if (currentCount === 0) return false
 
+    // Check previous day
     const prevDate = new Date(currentDate)
     prevDate.setDate(prevDate.getDate() - 1)
-    const prevContrib = contributions.find((c) => c.date === prevDate.toISOString().split("T")[0])
+    const prevDateString = prevDate.toISOString().split("T")[0]
+    const prevContrib = heatmap.find((item) => {
+      if (item.timestamp) {
+        const itemDate = new Date(item.timestamp).toISOString().split("T")[0]
+        return itemDate === prevDateString
+      }
+      return false
+    })
+
+    // Check next day
     const nextDate = new Date(currentDate)
     nextDate.setDate(nextDate.getDate() + 1)
-    const nextContrib = contributions.find((c) => c.date === nextDate.toISOString().split("T")[0])
+    const nextDateString = nextDate.toISOString().split("T")[0]
+    const nextContrib = heatmap.find((item) => {
+      if (item.timestamp) {
+        const itemDate = new Date(item.timestamp).toISOString().split("T")[0]
+        return itemDate === nextDateString
+      }
+      return false
+    })
 
-    return (prevContrib?.count ?? 0) > 0 || (nextContrib?.count ?? 0) > 0
+    return (prevContrib ? 1 : 0) > 0 || (nextContrib ? 1 : 0) > 0
   }
 
   const containerVariants = {

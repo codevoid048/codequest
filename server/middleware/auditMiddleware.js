@@ -1,7 +1,6 @@
 import morgan from 'morgan';
 import auditService from '../services/auditService.js';
 
-// Custom Morgan token definitions
 morgan.token('id', (req) => req.auditContext?.requestId || 'unknown');
 morgan.token('user', (req) => req.user?._id?.toString() || 'anonymous');
 morgan.token('real-ip', (req) => {
@@ -11,7 +10,6 @@ morgan.token('real-ip', (req) => {
          req.ip;
 });
 
-// Custom Morgan format for structured logging
 const morganFormat = JSON.stringify({
   timestamp: ':date[iso]',
   requestId: ':id',
@@ -26,25 +24,21 @@ const morganFormat = JSON.stringify({
   referrer: ':referrer'
 });
 
-// Create audit-aware Morgan middleware
 export const httpLogger = morgan(morganFormat, {
   stream: {
     write: (message) => {
       try {
         const logData = JSON.parse(message.trim());
         
-        // Extract numeric values
         const status = parseInt(logData.status);
         const responseTime = parseFloat(logData.responseTime);
         const contentLength = parseInt(logData.contentLength) || 0;
 
-        // Determine log level based on status code
         let level = 'info';
         if (status >= 500) level = 'error';
         else if (status >= 400) level = 'warn';
         else if (status >= 300) level = 'info';
 
-        // Create structured log entry
         const auditData = {
           category: auditService.categories.API,
           event: 'http_request',
@@ -62,10 +56,8 @@ export const httpLogger = morgan(morganFormat, {
           }
         };
 
-        // Log with appropriate level
         auditService[level](`${logData.method} ${logData.url} ${status}`, auditData);
 
-        // Track slow requests separately
         if (responseTime > 1000) {
           auditService.performance('slow_request', {
             method: logData.method,
@@ -77,7 +69,6 @@ export const httpLogger = morgan(morganFormat, {
           });
         }
 
-        // Track error patterns
         if (status >= 400) {
           auditService.apiEvent('request_error', {
             method: logData.method,
@@ -90,7 +81,6 @@ export const httpLogger = morgan(morganFormat, {
         }
 
       } catch (error) {
-        // Fallback to basic logging if JSON parsing fails
         auditService.error('Failed to parse Morgan log', error, { rawMessage: message });
       }
     }
@@ -99,10 +89,8 @@ export const httpLogger = morgan(morganFormat, {
 
 // Request context middleware (sets up audit context for each request)
 export const auditContextMiddleware = (req, res, next) => {
-  // Create audit context for this request
   req.auditContext = auditService.createRequestContext(req);
   
-  // Log request start
   auditService.debug(`Request started: ${req.method} ${req.originalUrl}`, {
     requestId: req.auditContext.requestId,
     method: req.method,
@@ -112,13 +100,10 @@ export const auditContextMiddleware = (req, res, next) => {
     userAgent: req.auditContext.userAgent
   });
 
-  // Add response logging
   const originalSend = res.send;
   res.send = function(body) {
-    // Log response completion
     const duration = req.auditContext.logDuration();
     
-    // Track response size if available
     const responseSize = Buffer.isBuffer(body) ? body.length : 
                         typeof body === 'string' ? Buffer.byteLength(body) : 0;
 
@@ -136,7 +121,6 @@ export const auditContextMiddleware = (req, res, next) => {
   next();
 };
 
-// Error logging middleware (should be used after routes)
 export const auditErrorMiddleware = (error, req, res, next) => {
   const requestId = req.auditContext?.requestId || 'unknown';
   const userId = req.user?._id?.toString();
@@ -153,7 +137,6 @@ export const auditErrorMiddleware = (error, req, res, next) => {
     params: req.params
   });
 
-  // Track security-related errors
   if (error.name === 'UnauthorizedError' || error.status === 401) {
     auditService.security('unauthorized_access', {
       requestId,
@@ -176,7 +159,6 @@ export const auditErrorMiddleware = (error, req, res, next) => {
   next(error);
 };
 
-// Request body logging middleware (for sensitive operations)
 export const auditSensitiveOperation = (operation) => {
   return (req, res, next) => {
     const requestId = req.auditContext?.requestId || 'unknown';
@@ -196,7 +178,6 @@ export const auditSensitiveOperation = (operation) => {
   };
 };
 
-// Rate limiting audit helper
 export const auditRateLimit = (identifier, limit, windowMs, current) => {
   auditService.debug('Rate limit check', {
     category: auditService.categories.SECURITY,
@@ -220,7 +201,6 @@ export const auditRateLimit = (identifier, limit, windowMs, current) => {
   }
 };
 
-// Performance monitoring middleware
 export const performanceMonitor = (req, res, next) => {
   const start = process.hrtime.bigint();
   

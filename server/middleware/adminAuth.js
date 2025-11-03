@@ -8,15 +8,12 @@ export const protectAdmin = async (req, res, next) => {
     try {
 
         AdminToken = req.cookies.Admintoken;
-        // console.log("Token from cookies:", token);
 
         if (!AdminToken) {
             return res.status(401).json({ message: 'No token, authorization denied' });
         }
 
         const decoded = jwt.verify(AdminToken, process.env.JWT_SECRET);
-        // console.log("Decoded token:", decoded);
-
         req.user = await Admin.findById(decoded.id).select('-password');
 
         if (!req.user) {
@@ -26,7 +23,6 @@ export const protectAdmin = async (req, res, next) => {
         next(); 
     }
     catch (error) {
-        // console.error("JWT Verification Error:", error);
         return res.status(401).json({ message: 'Not authorized, invalid token' });
     }
 };

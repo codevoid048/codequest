@@ -10,11 +10,6 @@ export const protect = async (req, res, next) => {
 
         token = req.cookies.jwt;
 
-        if(!token) {
-            token = req.headers.authorization?.split(" ")[1];
-            // if(token) console.log("Token from headers:", token);
-        }
-
         if (!token) {
             return res.status(401).json({ message: 'No token, authorization denied' });
         }
@@ -40,7 +35,6 @@ export const protect = async (req, res, next) => {
         next();
     }
     catch (error) {
-        // console.error("JWT Verification Error:", error);
         return res.status(401).json({ message: 'Not authorized, invalid token' });
     }
 };

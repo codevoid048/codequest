@@ -5,6 +5,7 @@ import { fetchCodeforcesProfile, fetchLeetCodeProfile } from "../lib/leetcode.js
 import { Challenge } from "../models/Challenge.js";
 import { getGFGName } from "../utils/gfgService.js";
 import auditService from "../services/auditService.js";
+import { formatISTDateString, isWithinTodayIST } from '../utils/timezone.js';
 export const leetcodeData = async (req, res) => {
   try {
     const username = req.body.username; // Get username from request body
@@ -352,10 +353,10 @@ export const fetchLeetCodeStatus = async (username, challengeTitle) => {
       throw new Error("No submissions found");
     }
 
-    const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-    
+    const today = formatISTDateString();
+
     const solvedToday = recentSubmissionList.some(submission => {
-      const submissionDate = new Date(parseInt(submission.timestamp) * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+      const submissionDate = formatISTDateString(new Date(parseInt(submission.timestamp) * 1000));
       return submission.title === challengeTitle && submission.statusDisplay === "Accepted" && submissionDate === today;
     });
 
@@ -380,10 +381,10 @@ export const fetchCodeforcesStatus = async (username, challengeTitle) => {
       return { success: false, message: "Invalid Codeforces username or no submissions found" };
     }
 
-    const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+    const today = formatISTDateString();
 
     const solvedProblem = submissions.result.find((submission) => {
-      const submissionDate = new Date(submission.creationTimeSeconds * 1000).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+      const submissionDate = formatISTDateString(new Date(submission.creationTimeSeconds * 1000));
       return submission.problem.name === challengeTitle && submission.verdict === "OK" && submissionDate === today;
     });
 

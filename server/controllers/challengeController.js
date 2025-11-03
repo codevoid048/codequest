@@ -5,6 +5,7 @@ import { fetchLeetCodeStatus, fetchCodeforcesStatus } from "./platformsControlle
 import { postPotdChallenge } from "../utils/postPOTD.js";
 import auditService from "../services/auditService.js";
 import { Category } from '../models/Category.js';
+import { getISTDateBounds, formatISTDateTimeString } from '../utils/timezone.js';
 
 export const getChallenges = async (req, res) => {
     try {
@@ -54,12 +55,7 @@ export const getChallenges = async (req, res) => {
         }
 
         // Date filter for challenges (exclude today's POTD)
-        const now = new Date();
-        const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
-        const istNow = new Date(now.getTime() + istOffset);
-        const today = new Date(istNow);
-        today.setHours(0, 0, 0, 0);
-        const todayUTC = new Date(today.getTime() - istOffset);
+        const { start: todayUTC } = getISTDateBounds();
         filter.createdAt = { $lt: todayUTC };
 
         // Build aggregation pipeline for better performance
@@ -149,19 +145,8 @@ export const getDailyChallenge = async (req, res) => {
         const { userId } = req.query;
         const authenticatedUser = req.user;
 
-        // Create today's date in IST timezone
-        const now = new Date();
-        const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
-        const istNow = new Date(now.getTime() + istOffset);
-        
-        const today = new Date(istNow);
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        // Convert back to UTC for database query
-        const todayUTC = new Date(today.getTime() - istOffset);
-        const tomorrowUTC = new Date(tomorrow.getTime() - istOffset);
+        // Get today's IST date boundaries (returns UTC dates for database query)
+        const { start: todayUTC, end: tomorrowUTC } = getISTDateBounds();
 
         let dailyChallenge = await Challenge.findOne({
             createdAt: {
@@ -332,32 +317,8 @@ export const checkPOTDStatus = async (req, res) => {
         }
 
         if (responseStatus && responseStatus.success) {
-            const now = new Intl.DateTimeFormat("en-IN", {
-                timeZone: "Asia/Kolkata",
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: false,
-            }).formatToParts(new Date());
-            
-            let year = "", month = "", day = "", hour = "", minute = "", second = "";
-            
-            now.forEach(part => {
-                if (part.type === "year") year = part.value;
-                if (part.type === "month") month = part.value;
-                if (part.type === "day") day = part.value;
-                if (part.type === "hour") hour = part.value;
-                if (part.type === "minute") minute = part.value;
-                if (part.type === "second") second = part.value;
-            });
-            
-            const timestamp = {
-                date: `${year}-${month}-${day}`,
-                time: `${hour}:${minute}:${second}`
-            };
+            // Use timezone utility to format IST timestamp
+            const timestamp = formatISTDateTimeString();
 
             const postresponse = await postPotdChallenge(userId, timestamp, dailyChallengeId, dailyChallenge.difficulty);
             if (postresponse.success) {

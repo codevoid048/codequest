@@ -2,20 +2,18 @@
 
 import auditService from '../services/auditService.js';
 
-// Custom error classes for different types of errors
 export class AppError extends Error {
     constructor(message, statusCode, errorCode = null, details = null) {
         super(message);
         this.statusCode = statusCode;
         this.errorCode = errorCode;
         this.details = details;
-        this.isOperational = true; // Distinguishes operational errors from programming errors
+        this.isOperational = true; 
         
         Error.captureStackTrace(this, this.constructor);
     }
 }
 
-// Specific error types
 export class ValidationError extends AppError {
     constructor(message, details = null) {
         super(message, 400, 'VALIDATION_ERROR', details);
@@ -52,13 +50,9 @@ export class ExternalServiceError extends AppError {
     }
 }
 
-// Global error handler middleware
 export const globalErrorHandler = (err, req, res, next) => {
-    // Set default error values
     let error = { ...err };
     error.message = err.message;
-
-    // Create structured audit log
     const auditMetadata = {
         requestId: req.auditContext?.requestId,
         method: req.method,
@@ -71,7 +65,6 @@ export const globalErrorHandler = (err, req, res, next) => {
         isOperational: error.isOperational
     };
 
-    // Log different types of errors with audit service
     if (error.statusCode >= 500) {
         auditService.error('Server error occurred', error, auditMetadata);
     } else if (error.statusCode >= 400) {
@@ -80,7 +73,6 @@ export const globalErrorHandler = (err, req, res, next) => {
         auditService.info('Error handled', auditMetadata);
     }
 
-    // Mongoose validation error
     if (err.name === 'ValidationError') {
         const message = Object.values(err.errors).map(val => val.message).join(', ');
         error = new ValidationError(message);
@@ -90,7 +82,6 @@ export const globalErrorHandler = (err, req, res, next) => {
         });
     }
 
-    // Mongoose duplicate key error
     if (err.code === 11000) {
         const field = Object.keys(err.keyValue)[0];
         const message = `${field} already exists`;
@@ -102,7 +93,6 @@ export const globalErrorHandler = (err, req, res, next) => {
         });
     }
 
-    // JWT errors
     if (err.name === 'JsonWebTokenError') {
         error = new UnauthorizedError('Invalid token');
         auditService.security('invalid_jwt_token', auditMetadata);
@@ -113,7 +103,7 @@ export const globalErrorHandler = (err, req, res, next) => {
         auditService.security('expired_jwt_token', auditMetadata);
     }
 
-    // Mongoose cast error (invalid ObjectId)
+    
     if (err.name === 'CastError') {
         error = new ValidationError('Invalid ID format');
         auditService.dbOperation('cast_error', {
@@ -123,18 +113,15 @@ export const globalErrorHandler = (err, req, res, next) => {
         });
     }
 
-    // Rate limit error
     if (err.status === 429) {
         error = new AppError('Too many requests, please try again later', 429, 'RATE_LIMIT_EXCEEDED');
         auditService.security('rate_limit_error_response', auditMetadata);
     }
 
-    // Default to server error if not operational
     if (!error.isOperational) {
         error = new AppError('Something went wrong', 500, 'INTERNAL_SERVER_ERROR');
     }
 
-    // Send standardized error response
     res.status(error.statusCode || 500).json({
         success: false,
         error: {
@@ -147,14 +134,12 @@ export const globalErrorHandler = (err, req, res, next) => {
     });
 };
 
-// Async error handler wrapper
 export const asyncHandler = (fn) => {
     return (req, res, next) => {
         Promise.resolve(fn(req, res, next)).catch(next);
     };
 };
 
-// Success response helper
 export const sendSuccess = (res, data = null, message = 'Success', statusCode = 200) => {
     res.status(statusCode).json({
         success: true,
@@ -164,7 +149,6 @@ export const sendSuccess = (res, data = null, message = 'Success', statusCode = 
     });
 };
 
-// Pagination response helper
 export const sendPaginatedResponse = (res, data, pagination, message = 'Success') => {
     res.status(200).json({
         success: true,

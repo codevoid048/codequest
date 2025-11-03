@@ -1,14 +1,11 @@
 import mongoose from "mongoose";
 
-// Drop and recreate all performance indexes
 export const createOptimalIndexes = async () => {
     try {
-        // console.log('Setting up database indexes...');
         
         const usersCollection = mongoose.connection.db.collection('users');
         const challengesCollection = mongoose.connection.db.collection('challenges');
         
-        // Wait for drops to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Create essential user indexes with explicit names
@@ -37,16 +34,13 @@ export const createOptimalIndexes = async () => {
         await challengesCollection.createIndex({ title: 'text', category: 'text' }, { name: 'challenge_search_idx' });
         await challengesCollection.createIndex({ solvedUsers: 1 }, { sparse: true, name: 'solved_users_idx' });
         
-        // console.log('Database indexes created successfully');
         
     } catch (error) {
         console.error('Error setting up database indexes:', error);
     }
 };
 
-// Call this during application startup
 export const setupDatabase = async () => {
-    // Wait for MongoDB connection to be ready
     if (mongoose.connection.readyState === 1) {
         await createOptimalIndexes();
     } else {

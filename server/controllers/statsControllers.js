@@ -9,8 +9,8 @@ const STATS_TTL = 600;
 const formatCount = (num) => {
     if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M+";
     if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "k+";
-    if (num >= 100) return Math.floor(num / 100) * 100 + "+"; // 128 → 100+, 875 → 800+
-    return num.toString(); // keep exact if < 100
+    if (num >= 100) return Math.floor(num / 100) * 100 + "+";
+    return num.toString();
 };
 
 export const getCounts = async (req, res) => {
@@ -28,7 +28,6 @@ export const getCounts = async (req, res) => {
       solvedUsers: { $exists: true, $not: { $size: 0 } }
     });
 
-    // Challenges count by difficulty (Easy, Medium, Hard)
     const difficulties = await Challenge.aggregate([
       {
         $group: {
@@ -47,7 +46,6 @@ export const getCounts = async (req, res) => {
       }
     ]);
 
-    // Format difficulty data into a consistent structure
     const difficultyMap = { Easy: 0, Medium: 0, Hard: 0 };
     difficulties.forEach(d => {
       if (difficultyMap[d._id] !== undefined) {
@@ -61,7 +59,6 @@ export const getCounts = async (req, res) => {
       { name: "Hard", value: difficultyMap.Hard, color: "#ef4444" }
     ];
 
-    // Prepare stats object
     const statsData = {
       usersCount: formatCount(usersCount),
       challengesCount: formatCount(challengesCount),

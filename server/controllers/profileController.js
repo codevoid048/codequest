@@ -1,24 +1,20 @@
 import { User } from "../models/User.js"
-import { Activity } from "../models/Activity.js"
 import cloudinary from "../config/cloudinary.js"
 import { v4 as uuidv4 } from "uuid"
-import { Challenge } from "../models/Challenge.js"
 import auditService from "../services/auditService.js"
 import userCacheService from "../services/userCacheService.js"
+import { formatISTDateString, isWithinTodayIST, isWithinYesterdayIST } from '../utils/timezone.js'
 
 export const getUserProfile = async (req, res) => {
     try {
         const userId = req.user._id;
         
-        // Try to get from cache first
         let user = await userCacheService.getCachedUserProfile(userId);
         
         if (!user) {
-            // If not in cache, fetch from database
             user = await User.findById(userId).select("-password -gfg -codechef -googleId -githubId -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
             
             if (user) {
-                // Cache the user profile
                 await userCacheService.cacheUserProfile(userId, user);
             }
         }
@@ -42,24 +38,18 @@ export const updateUserProfile = async (req, res) => {
             return res.status(404).json({ message: "User not found" })
         }
 
-        // Update basic fields
         if (req.body.name) user.name = req.body.name
 
-        // Update additional fields
         if (req.body.registerNumber) user.RegistrationNumber = req.body.registerNumber
         if (req.body.branch) user.branch = req.body.branch
         if (req.body.college) user.collegeName = req.body.college
         if (req.body.isAffiliate !== undefined) user.isAffiliate = req.body.isAffiliate
 
-        // Handle profile picture (upload to Cloudinary)
         if (req.body.image) {
-            // Check if it's a new image (base64) or an existing Cloudinary URL
             if (req.body.image.startsWith("data:image")) {
                 try {
-                    // Generate a unique folder name using user ID
                     const folderName = `profiles/${user._id}`
 
-                    // Upload image to Cloudinary
                     const uploadResult = await cloudinary.uploader.upload(req.body.image, {
                         folder: folderName,
                         public_id: `profile_${uuidv4().slice(0, 8)}`,
@@ -67,19 +57,15 @@ export const updateUserProfile = async (req, res) => {
                         transformation: [{ width: 400, height: 400, crop: "fill", gravity: "face" }],
                     })
 
-                    // Store the Cloudinary URL in the user profile
                     user.profilePicture = uploadResult.secure_url
 
-                    // Optionally store the public_id to manage the image later
                     user.profilePictureId = uploadResult.public_id
                 } catch (cloudinaryError) {
-                    // console.error("Cloudinary upload error:", cloudinaryError)
                     return res.status(400).json({
                         message: "Failed to upload image to cloud storage. Please try again.",
                     })
                 }
             } else if (req.body.image.includes("cloudinary")) {
-                // It's already a Cloudinary URL, keep it as is
                 user.profilePicture = req.body.image
             } else {
                 return res.status(400).json({
@@ -88,9 +74,7 @@ export const updateUserProfile = async (req, res) => {
             }
         }
 
-        // Handle coding profiles - map to the correct schema structure
         if (req.body.otherLinks && Array.isArray(req.body.otherLinks)) {
-            // Store any non-coding platform links to otherLinks
             const otherPlatforms = req.body.otherLinks.filter(
                 (link) => !["leetcode", "codeforces", "github", "codechef", "gfg"].includes(link.platform.toLowerCase()),
             )
@@ -99,7 +83,6 @@ export const updateUserProfile = async (req, res) => {
                 user.otherLinks = otherPlatforms
             }
 
-            // Map specific coding platforms to their dedicated fields
             req.body.otherLinks.forEach((link) => {
                 const platform = link.platform.toLowerCase()
                 const url = link.url
@@ -109,7 +92,6 @@ export const updateUserProfile = async (req, res) => {
                 } else if (platform === "codeforces" && url) {
                     user.codeforces = { ...user.codeforces, username: url }
                 } else if (platform === "github" && url) {
-                    // For GitHub, you might want to store it differently
                     user.otherLinks.push({ platform: "github", url })
                 } 
                 // else if (platform === "codechef" && url) {
@@ -126,10 +108,8 @@ export const updateUserProfile = async (req, res) => {
 
         const updatedUser = await user.save()
 
-        // Invalidate user cache after update
         await userCacheService.invalidateUserCache(req.user._id);
         
-        // Cache the updated user profile
         await userCacheService.cacheUserProfile(req.user._id, updatedUser);
 
         res.status(200).json({
@@ -163,7 +143,7 @@ export const updateUserProfile = async (req, res) => {
     }
 }
 
-// Add a function to delete profile picture
+// Function to delete profile picture
 // export const deleteProfilePicture = async (req, res) => {
 //     try {
 //         const user = await User.findById(req.user._id)
@@ -194,40 +174,6 @@ export const updateUserProfile = async (req, res) => {
 //         res.status(500).json({ message: "Server error" })
 //     }
 // }
-
-export const getUserActivity = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        
-        // Try to get from cache first
-        let activities = await userCacheService.getCachedUserActivity(userId);
-        
-        if (!activities) {
-            // If not in cache, fetch from database
-            activities = await Activity.aggregate([
-                { $match: { user: userId } },
-                {
-                    $group: {
-                        _id: {
-                            $dateToString: { format: "%Y-%m-%d", date: "$date" },
-                        },
-                        count: { $sum: 1 },
-                    },
-                },
-                { $sort: { _id: 1 } },
-            ]);
-            
-            // Cache the activities
-            await userCacheService.cacheUserActivity(userId, activities);
-        }
-
-        res.status(200).json(activities)
-    } catch (error) {
-        auditService.error('user_activity_error', { userId: req.user._id, error: error.message });
-        res.status(500).json({ message: "Server error" })
-    }
-}
-
 
 // Get user by username (for public profiles)
 export const getUserByUsername = async (req, res) => {
@@ -271,22 +217,16 @@ export const updateUserStreak = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        const today = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-');
+        // Check if today's problem was already solved using IST date boundaries
+        const solvedToday = user.potdSolved.some(potd => isWithinTodayIST(potd.timestamp));
 
-        // Check if today's problem was already solved
-        const solvedDates = user.potdSolved.map(potd =>
-            new Date(potd.timestamp).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }).split('/').reverse().join('-')
-        );
-
-        if (solvedDates.includes(today)) {
+        if (solvedToday) {
             return res.status(200).json({ success: false, message: "Already solved today's POTD", streak: user.streak });
         }
 
-        // Check if yesterday's problem was solved
-        user.streak = solvedDates.includes(yesterdayStr) ? user.streak + 1 : 1;
+        // Check if yesterday's problem was solved using IST date boundaries
+        const solvedYesterday = user.potdSolved.some(potd => isWithinYesterdayIST(potd.timestamp));
+        user.streak = solvedYesterday ? user.streak + 1 : 1;
 
         // Store today's solved date
         user.potdSolved.push({ timestamp: new Date().toISOString() });
@@ -332,20 +272,3 @@ export const getUserById = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
-
-//   export const getUserById = async (req, res) => {
-//     try {
-//         const userId = req.params.id; // Get user ID from request parameters
-
-//         const user = await User.findById(userId).select("-password -resetPasswordToken -resetPasswordExpires -otp -otpExpires");
-
-//         if (!user) {
-//             return res.status(404).json({ message: "User not found" });
-//         }
-//         res.status(200).json({ user });
-
-//     } catch (error) {
-//         console.error("Error fetching user by ID:", error);
-//         res.status(500).json({ message: "Server error" });
-//     }
-// }

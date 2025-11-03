@@ -1,5 +1,4 @@
 import mongoose from "mongoose"
-import auditService from "../services/auditService.js";
 const { default: cacheService } = await import("../services/cacheService.js");
 const { warmupLeaderboardCache } = await import("../utils/leaderBoardCache.js");
 
@@ -15,7 +14,6 @@ const connectDB = async () => {
         const conn = await mongoose.connect(process.env.MONGO_URI, connectionOptions);
         console.log(`MongoDB Connected: ${conn.connection.host}`);
         
-        // Simple error handling
         mongoose.connection.on('error', (error) => {
             console.error('Database connection error:', error.message);
         });
@@ -48,7 +46,6 @@ const connectDB = async () => {
 
 export default connectDB;
 
-// Middleware to ensure database connection for serverless environments
 export const ensureDbConnection = async (req, res, next) => {
     try {
         if (mongoose.connection.readyState !== 1) {

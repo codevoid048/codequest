@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs";
 import crypto from "crypto"; // For generating OTP
 import { User } from "../models/User.js"
-import { Activity } from "../models/Activity.js"
 import { sendOTPEmail, deleteConfirmationMail, sendResetPassEmail } from "../utils/emailService.js"
 import { isEmailValid } from "../utils/isEmailValid.js";
 import mongoose from "mongoose";

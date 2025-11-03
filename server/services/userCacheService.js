@@ -49,31 +49,10 @@ class UserCacheService {
         }
     }
 
-    // Cache user activity data
-    async cacheUserActivity(userId, activityData) {
-        try {
-            await cacheService.set(CACHE_NAMESPACE, `activity_${userId}`, activityData, 900); // 15 minutes
-            auditService.cacheEvent('user_activity_cached', { userId });
-        } catch (error) {
-            auditService.error('user_activity_cache_error', { userId, error: error.message });
-        }
-    }
-
-    // Get cached user activity
-    async getCachedUserActivity(userId) {
-        try {
-            return await cacheService.get(CACHE_NAMESPACE, `activity_${userId}`);
-        } catch (error) {
-            auditService.error('user_activity_cache_get_error', { userId, error: error.message });
-            return null;
-        }
-    }
-
     // Invalidate user cache when profile is updated
     async invalidateUserCache(userId) {
         try {
             await cacheService.del(CACHE_NAMESPACE, `profile_${userId}`);
-            await cacheService.del(CACHE_NAMESPACE, `activity_${userId}`);
             auditService.cacheEvent('user_cache_invalidated', { userId });
         } catch (error) {
             auditService.error('user_cache_invalidation_error', { userId, error: error.message });
