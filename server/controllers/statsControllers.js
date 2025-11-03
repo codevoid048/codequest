@@ -22,7 +22,7 @@ export const getCounts = async (req, res) => {
 
     const usersCount = await User.countDocuments();
     const challengesCount = await Challenge.countDocuments();
-    const collegesCount = await User.distinct("college").then(colleges => colleges.length);
+    const collegesCount = await User.distinct("collegeName").then(colleges => colleges.length);
     const affiliatesCount = await User.countDocuments({ isAffiliate: true });
     const solvedChallenges = await Challenge.countDocuments({
       solvedUsers: { $exists: true, $not: { $size: 0 } }

@@ -67,9 +67,9 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/auth/admin', adminAuthRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/platforms', platformRoute);
-app.use('/api', statsRoutes);
+app.use('/api/stats', statsRoutes);
 app.use('/api/user', userRoutes);
-// app.use('/api', typeSenseRoutes);
+app.use('/api/search', typeSenseRoutes);
 
 startStreakCronJob();
 appLifecycle.initialize();

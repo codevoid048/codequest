@@ -5,6 +5,6 @@ import { getCounts } from "../controllers/statsControllers.js";
 const router = express.Router();
 
 // Get total stats
-router.get("/stats", getCounts);
+router.get("/", getCounts);
 
 export default router;

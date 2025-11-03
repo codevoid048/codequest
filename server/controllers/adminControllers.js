@@ -47,18 +47,18 @@ export const getUsers = async (req, res) => {
         const sortObject = {};
         sortObject[sortBy] = sortDirection === 'asc' ? 1 : -1;
 
-        const totalUsers = await User.countDocuments();
+        const [totalUsers, users, uniqueColleges, uniqueBranches] = await Promise.all([
+            User.countDocuments(searchQuery),
+            User.find(searchQuery)
+                .select("-password -resetPasswordToken -resetPasswordExpires -googleId -githubId -otp -otpExpires -gfg -leetCode -codechef -codeforces -otherLinks -solveChallenges")
+                .sort(sortObject)
+                .skip(skip)
+                .limit(pageLimit)
+                .lean(),
+            User.distinct('collegeName', { collegeName: { $exists: true, $ne: "" } }),
+            User.distinct('branch', { branch: { $exists: true, $ne: "" } })
+        ]);
 
-        const users = await User.find(searchQuery)
-            .select("-password -resetPasswordToken -resetPasswordExpires -googleId -githubId -otp -otpExpires -gfg -leetCode -codechef -codeforces -otherLinks -solveChallenges")
-            .sort(sortObject)
-            .skip(skip)
-            .limit(pageLimit);
-
-        const uniqueColleges = await User.distinct('collegeName', { collegeName: { $exists: true, $ne: "" } });
-        const uniqueBranches = await User.distinct('branch', { branch: { $exists: true, $ne: "" } });
-
-        const totalPages = Math.ceil(totalUsers / pageLimit);
 
         return res.status(200).json({
             success: true,
@@ -347,9 +347,10 @@ export const getChallenges = async (req, res) => {
         const sortObject = {}
         sortObject[sortBy] = sortDirection === "asc" ? 1 : -1
 
-        const totalChallenges = await Challenge.countDocuments(searchQuery)
-
-        const challenges = await Challenge.find(searchQuery).sort(sortObject).skip(skip).limit(pageLimit)
+        const [totalChallenges, challenges] = await Promise.all([
+            Challenge.countDocuments(searchQuery),
+            Challenge.find(searchQuery).sort(sortObject).skip(skip).limit(pageLimit).lean()
+        ]);
 
         const totalPages = Math.ceil(totalChallenges / pageLimit)
 

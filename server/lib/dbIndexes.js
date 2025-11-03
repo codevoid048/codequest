@@ -28,11 +28,17 @@ export const createOptimalIndexes = async () => {
         await usersCollection.createIndex({ 'codeforces.username': 1 }, { sparse: true, name: 'cf_username_idx' });
         await usersCollection.createIndex({ 'codechef.username': 1 }, { sparse: true, name: 'cc_username_idx' });
         
+        // Search indexes for better performance
+        await usersCollection.createIndex({ name: 1, username: 1 }, { name: 'user_search_idx' });
+        await usersCollection.createIndex({ collegeName: 1 }, { name: 'college_idx' });
+        await usersCollection.createIndex({ branch: 1 }, { name: 'branch_idx' });
+        
         // Challenge indexes
         await challengesCollection.createIndex({ category: 1, difficulty: 1, createdAt: -1 }, { name: 'challenge_filter_idx' });
         await challengesCollection.createIndex({ createdAt: -1 }, { name: 'challenge_date_idx' });
-        await challengesCollection.createIndex({ title: 'text', category: 'text' }, { name: 'challenge_search_idx' });
+        await challengesCollection.createIndex({ title: 1, platform: 1 }, { name: 'challenge_search_idx' });
         await challengesCollection.createIndex({ solvedUsers: 1 }, { sparse: true, name: 'solved_users_idx' });
+        await challengesCollection.createIndex({ difficulty: 1 }, { name: 'difficulty_idx' });
         
         
     } catch (error) {

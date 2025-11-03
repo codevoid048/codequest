@@ -1,109 +1,41 @@
-// import { client } from "../utils/typesenseClient.js";
 import { User } from "../models/User.js";
 import { Challenge } from "../models/Challenge.js";
 
-// export const test = async () => {
-//     try {
-//         const res = await client.health.retrieve();
-//         console.log("Typesense is alive:", res);
-//     } catch (err) {
-//         console.error("Connection failed:", err);
-//     }
-// };
-
-// export const search = async (req, res) => {
-//     const { q } = req.query;
-
-//     if (!q) return res.status(400).json({ error: "Missing search query" });
-
-//     try {
-//         // Search users
-//         const userResults = await client.collections("users").documents().search({
-//             q,
-//             query_by: "name,username,profilePicture,collegeName,branch,points,rank", // adjust as per your schema
-//             per_page: 5,
-//         });
-
-//         // Search challenges
-//         const challengeResults = await client
-//             .collections("challenges")
-//             .documents()
-//             .search({
-//                 q,
-//                 query_by: "title,description,category,difficulty,problemLink", // adjust as per your schema
-//                 per_page: 5,
-//             });
-
-//         // Add type labels
-//         const users = userResults.hits.map(hit => ({
-//             ...hit.document,
-//             type: "user",
-//         }));
-
-//         const challenges = challengeResults.hits.map(hit => ({
-//             ...hit.document,
-//             type: "challenge",
-//         }));
-
-//         // Merge & send
-//         res.json([...users, ...challenges]);
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ error: "Search failed" });
-//     }
-// };
-
-// export const searchUser = async (req, res) => {
-//     const { q } = req.query;
-
-//     if (!q) return res.status(400).json({ error: "Missing search query" });
-
-//     try {
-//         // Search users
-//         const userResults = await client.collections("users").documents().search({
-//             q,
-//             query_by: "name,username,profilePicture,collegeName,branch,points,rank",
-//         });
-
-//         // Add type labels
-//         const users = userResults.hits.map(hit => ({
-//             ...hit.document,
-//             type: "user",
-//         }));
-//         res.json([...users]);
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ error: "Search failed" });
-//     }
-// };
-
 export const search = async (req, res) => {
     const { q } = req.query;
-    if (!q) {
+    if (!q || q.trim() === "") {
         return res.status(400).json({ error: "Missing search query" });
     }
 
     try {
-        const usersList = await User.find({
-            $or: [
-                { name: { $regex: q, $options: "i" } },
-                { username: { $regex: q, $options: "i" } },
-                { collegeName: { $regex: q, $options: "i" } },
-                { branch: { $regex: q, $options: "i" } },
-            ]
-        }).limit(5).lean();
-
-        const challengesList = await Challenge.find(
-            {
+        const searchTerm = q.trim();
+        
+        const [usersList, challengesList] = await Promise.all([
+            User.find({
                 $or: [
-                    { title: new RegExp(q, "i") },
-                    { description: new RegExp(q, "i") },
-                    { category: { $in: [new RegExp(q, "i")] } },
-                    { difficulty: new RegExp(q, "i") },
-                    { platform: new RegExp(q, "i") },
-                ],
-            }
-        ).limit(5).lean();
+                    { name: { $regex: searchTerm, $options: "i" } },
+                    { username: { $regex: searchTerm, $options: "i" } },
+                    { collegeName: { $regex: searchTerm, $options: "i" } },
+                    { branch: { $regex: searchTerm, $options: "i" } }
+                ]
+            })
+            .select("name username profilePicture collegeName branch points rank")
+            .limit(5)
+            .lean(),
+
+            Challenge.find({
+                $or: [
+                    { title: { $regex: searchTerm, $options: "i" } },
+                    { description: { $regex: searchTerm, $options: "i" } },
+                    { category: { $regex: searchTerm, $options: "i" } },
+                    { difficulty: { $regex: searchTerm, $options: "i" } },
+                    { platform: { $regex: searchTerm, $options: "i" } }
+                ]
+            })
+            .select("title description category difficulty platform")
+            .limit(5)
+            .lean()
+        ]);
 
         const users = usersList.map((u) => ({
             id: u._id?.toString(),
@@ -129,45 +61,48 @@ export const search = async (req, res) => {
 
         res.json([...users, ...challenges]);
     } catch (err) {
-        // console.error("Search error:", err);
+        console.error("Search error:", err.message);
         res.status(500).json({ error: "Search failed" });
     }
 };
 
 export const searchUser = async (req, res) => {
-  const { q } = req.query;
+    const { q } = req.query;
 
-  if (!q) {
-    return res.status(400).json({ error: "Missing search query" });
-  }
+    if (!q || q.trim() === "") {
+        return res.status(400).json({ error: "Missing search query" });
+    }
 
-  try {
-    const users = await User.find({
-      $or: [
-        { name: { $regex: q, $options: "i" } },
-        { username: { $regex: q, $options: "i" } },
-        { collegeName: { $regex: q, $options: "i" } },
-        { branch: { $regex: q, $options: "i" } }
-      ]
-    })
-      .limit(10)
-      .lean();
+    try {
+        const searchTerm = q.trim();
+        
+        const users = await User.find({
+            $or: [
+                { name: { $regex: searchTerm, $options: "i" } },
+                { username: { $regex: searchTerm, $options: "i" } },
+                { collegeName: { $regex: searchTerm, $options: "i" } },
+                { branch: { $regex: searchTerm, $options: "i" } }
+            ]
+        })
+        .select("name username profilePicture collegeName branch points rank")
+        .limit(10)
+        .lean();
 
-    const formattedUsers = users.map(user => ({
-      id: user._id?.toString(),
-      name: user.name,
-      username: user.username,
-      profilePicture: user.profilePicture,
-      collegeName: user.collegeName,
-      branch: user.branch,
-      points: user.points,
-      rank: user.rank,
-      type: "user"
-    }));
+        const formattedUsers = users.map(user => ({
+            id: user._id?.toString(),
+            name: user.name,
+            username: user.username,
+            profilePicture: user.profilePicture,
+            collegeName: user.collegeName,
+            branch: user.branch,
+            points: user.points,
+            rank: user.rank,
+            type: "user"
+        }));
 
-    res.json(formattedUsers);
-  } catch (err) {
-    // console.error(err);
-    res.status(500).json({ error: "Search failed" });
-  }
+        res.json(formattedUsers);
+    } catch (err) {
+        console.error("Search user error:", err.message);
+        res.status(500).json({ error: "Search failed" });
+    }
 };

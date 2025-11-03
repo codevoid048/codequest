@@ -43,7 +43,7 @@ export const protect = async (req, res, next) => {
 export const handleGoogleCallback = (req, res, next) => {
   passport.authenticate("google", { session: false }, (err, user, info) => {
     if (err) {
-      console.error("Google auth error:", err);
+
       return res.redirect(`${process.env.CLIENT_URL}/register?error=auth_error&message=Authentication error. Please try again.`);
     }
     
@@ -60,7 +60,7 @@ export const handleGoogleCallback = (req, res, next) => {
 export const handleGithubCallback = (req, res, next) => {
   passport.authenticate("github", { session: false }, (err, user, info) => {
     if (err) {
-      console.error("GitHub auth error:", err);
+
       return res.redirect(`${process.env.CLIENT_URL}/register?error=auth_error&message=Authentication error. Please try again.`);
     }
     
