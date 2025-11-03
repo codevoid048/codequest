@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { User } from '../models/User.js';
 import auditService from '../services/auditService.js';
+import { getISTNow, formatISTDateString } from './timezone.js';
 
 const getLastSolvedDate = (challenges = []) => {
     if (!challenges.length) return null;
@@ -23,13 +24,11 @@ const resetUserStreaks = async () => {
   
   try {
     // Use IST timezone for consistent date calculation
-    const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000;
-    const istNow = new Date(now.getTime() + istOffset);
+    const istNow = getISTNow();
     
     const yesterday = new Date(istNow);
     yesterday.setDate(istNow.getDate() - 1);
-    const yesterStr = yesterday.toISOString().split("T")[0];
+    const yesterStr = formatISTDateString(yesterday);
 
     auditService.systemEvent('streak_reset_started', { 
       targetDate: yesterStr,

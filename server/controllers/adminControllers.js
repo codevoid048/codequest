@@ -4,6 +4,7 @@ import { Solution } from "../models/Solution.js";
 import { Category } from '../models/Category.js';
 import { ensureCategoriesExist } from "../utils/categoryHelper.js";
 import auditService from "../services/auditService.js";
+import { getISTDateBounds, istToUTC } from "../utils/timezone.js";
 
 export const getUsers = async (req, res) => {
     try {
@@ -98,33 +99,26 @@ export const addChallenge = async (req, res) => {
             solution,
         } = req.body;
 
-        // Convert createdAt to midnight IST (18:30 UTC of previous day)
         let scheduleDate;
         if (createdAt) {
-            const date = new Date(createdAt);
-            // Set to 18:30:00 UTC of the previous day (00:00 IST of selected day)
-            date.setUTCHours(18, 30, 0, 0);
-            scheduleDate = date;
+            const istDate = new Date(createdAt);
+            istDate.setHours(0, 0, 0, 0);
+            scheduleDate = istToUTC(istDate);
         } else {
-            // If no date provided, use next day midnight IST
-            const now = new Date();
-            const tomorrow = new Date(now);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setUTCHours(18, 30, 0, 0);
-            scheduleDate = tomorrow;
+            const tomorrowIST = new Date();
+            tomorrowIST.setDate(tomorrowIST.getDate() + 1);
+            tomorrowIST.setHours(0, 0, 0, 0);
+            scheduleDate = istToUTC(tomorrowIST);
         }
 
-        // Validate required fields
         if (!title || !description || !category || !difficulty || !points || !problemLink || !platform) {
             return res.status(400).json({ success: false, message: "All fields are required" });
         }
 
-        // Ensure category is an array of strings
         if (!Array.isArray(category)) {
             return res.status(400).json({ success: false, message: "Category must be an array of strings" });
         }
 
-        // Ensure categories exist in database (create if they don't)
         await ensureCategoriesExist(category);
 
         const newChallenge = new Challenge({
@@ -142,7 +136,6 @@ export const addChallenge = async (req, res) => {
 
         let savedSolution = null;
         if (solution) {
-            // Create solution with all fields, including explanation
             const newSolution = new Solution({
                 explanation: solution.explanation || "No explanation provided",
                 cpp: solution.cpp || "",
@@ -188,13 +181,11 @@ export const updateChallenge = async (req, res) => {
             solution,
         } = req.body;
 
-        // Convert createdAt to midnight IST if provided
         let scheduleDate;
         if (createdAt) {
-            const date = new Date(createdAt);
-            // Set to 18:30:00 UTC of the previous day (00:00 IST of selected day)
-            date.setUTCHours(18, 30, 0, 0);
-            scheduleDate = date;
+            const istDate = new Date(createdAt);
+            istDate.setHours(0, 0, 0, 0);
+            scheduleDate = istToUTC(istDate);
         }
         if (!challengeId) {
             return res.status(400).json({ success: false, message: "Challenge ID is required" });
@@ -203,11 +194,10 @@ export const updateChallenge = async (req, res) => {
         if (!challenge) {
             return res.status(404).json({ success: false, message: "Challenge not found" });
         }
-        // Update challenge fields if provided
+
         if (title) challenge.title = title;
         if (description) challenge.description = description;
         if (category) {
-            // Ensure new categories exist (create if they don't)
             await ensureCategoriesExist(category);
             challenge.category = category;
         }
@@ -268,26 +258,12 @@ export const updateChallenge = async (req, res) => {
 // Example: GET /admin/getchallenge
 export const getTodayChallenge = async (req, res) => {
     try {
-        // Get current time in UTC
-        const now = new Date();
+        const { start: todayUTC, end: tomorrowUTC } = getISTDateBounds();
 
-        // Calculate today's and tomorrow's midnight in IST (18:30 UTC of previous day)
-        const todayIST = new Date(now);
-        todayIST.setUTCHours(18, 30, 0, 0);
-        if (now < todayIST) {
-            // If current time is before today's IST midnight, adjust to previous day
-            todayIST.setDate(todayIST.getDate() - 1);
-        }
-
-        const tomorrowIST = new Date(todayIST);
-        tomorrowIST.setDate(tomorrowIST.getDate() + 1);
-
-        // Find today's challenge using createdAt
-        // The dates are already in UTC since we set them using setUTCHours
         const challenge = await Challenge.findOne({
             createdAt: {
-                $gte: todayIST,
-                $lt: tomorrowIST
+                $gte: todayUTC,
+                $lt: tomorrowUTC
             }
         }).sort({ createdAt: -1 });
 
@@ -298,7 +274,6 @@ export const getTodayChallenge = async (req, res) => {
             });
         }
 
-        // Manually fetch related solution (since challenge schema has no `solution` field)
         const solution = await Solution.findOne({ challenge: challenge._id });
 
         return res.status(200).json({

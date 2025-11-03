@@ -375,10 +375,8 @@ export default function ProfilePage() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   }
 
-  // Determine if the logged-in user is viewing their own profile
   const isOwnProfile = user?._id === profileUser._id
 
-  // Find social links from otherLinks array
   const findSocialLink = (platform: string) => {
     if (!profileUser.otherLinks) return null
     const link = profileUser.otherLinks.find((link) => link.platform.toLowerCase() === platform.toLowerCase())
@@ -389,7 +387,6 @@ export default function ProfilePage() {
   const linkedinLink = findSocialLink("linkedin")
   const githubLink = findSocialLink("github")
 
-  // Helper function to create the date-contributions mapping from heatmap data
   interface HeatmapItem {
     timestamp?: string
     _id?: string
@@ -459,30 +456,29 @@ export default function ProfilePage() {
     return dateContributionsMap
   }
 
-  return (
+ return (
     <TooltipProvider>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <motion.div
-          className="flex flex-col lg:flex-row gap-6"
+          className="flex flex-col md:flex-row gap-6"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* Sidebar - Profile Details */}
-          <motion.div className="lg:w-1/4" variants={cardVariants}>
+          <motion.div className="md:w-80 lg:w-1/3 xl:w-1/4 flex-shrink-0" variants={cardVariants}>
             <Card className="overflow-hidden shadow-lg border-0 relative">
-              {/* Settings Icon - Only show for own profile */}
               {isOwnProfile && (
-                <div className="absolute top-6 right-0 z-10">
+                <div className="absolute top-6 right-6 z-10">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-gray-800 backdrop-blur-sm"
+                        className="h-8 w-8 text-gray-800 backdrop-blur-sm hover:bg-white/20 transition-colors"
                         onClick={() => setShowDeleteModal(true)}
                       >
-                        <Settings className="h-8 w-8" />
+                        <Settings className="h-5 w-5" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -494,81 +490,108 @@ export default function ProfilePage() {
 
               <div className="h-24 bg-gradient-to-r from-purple-500 to-cyan-500"></div>
               <div className="px-6 pb-6 -mt-12">
-                <Avatar className="w-24 h-24 border-4 border-white shadow-xl mx-auto">
-                  <AvatarImage
-                    src={profileUser.profilePicture || "/placeholder.svg?height=128&width=128"}
-                    alt={profileUser.name || "User"}
-                  />
-                  <AvatarFallback className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500">
-                    {profileUser.name?.charAt(0) || "?"}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="w-24 h-24 border-4 border-white shadow-xl mx-auto ring-2 ring-purple-200">
+                    <AvatarImage
+                      src={profileUser.profilePicture || "/placeholder.svg?height=128&width=128"}
+                      alt={profileUser.name || "User"}
+                    />
+                    <AvatarFallback className="text-4xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500">
+                      {profileUser.name?.charAt(0) || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  {profileUser.rank && (
+                    <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md">
+                        <ChevronUp className="h-3 w-3 mr-1" />
+                        #{profileUser.rank}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
-                <div className="mt-4 text-center">
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text text-transparent">
+                <div className="mt-6 text-center">
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text text-transparent mb-1">
                     {profileUser.name}
                   </h1>
-                  <p className="text-lg text-muted-foreground">@{profileUser.username}</p>
+                  <p className="text-lg text-muted-foreground font-medium">@{profileUser.username}</p>
 
-                  <div className="mt-2">
-                    <p className="text-sm flex items-center justify-center text-muted-foreground">
-                      <ChevronUp className="h-4 w-4 text-green-500 mr-1" />
-                      Position #{profileUser.rank || "N/A"}
-                    </p>
-                  </div>
-
-                  <div className="mt-5 space-y-3">
+                  <div className="mt-4 space-y-3">
                     {profileUser.collegeName && (
-                      <p className="text-sm flex items-center gap-2 justify-center">
-                        <School className="h-4 w-4 text-purple-500" /> {profileUser.collegeName}
-                      </p>
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground rounded-lg py-2 px-3">
+                        <School className="h-4 w-4 text-purple-500" />
+                        <span className="font-medium">{profileUser.collegeName}</span>
+                      </div>
                     )}
                     {profileUser.branch && (
-                      <p className="text-sm flex items-center gap-2 justify-center">
-                        <Code2 className="h-4 w-4 text-cyan-500" /> {profileUser.branch}
-                      </p>
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground rounded-lg py-2 px-3">
+                        <Code2 className="h-4 w-4 text-cyan-500" />
+                        <span className="font-medium">{profileUser.branch}</span>
+                      </div>
                     )}
                     {profileUser.RegistrationNumber && (
-                      <p className="text-sm flex items-center gap-2 justify-center">
-                        <MapPin className="h-4 w-4 text-pink-500" /> {profileUser.RegistrationNumber}
-                      </p>
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground rounded-lg py-2 px-3">
+                        <MapPin className="h-4 w-4 text-pink-500" />
+                        <span className="font-medium">{profileUser.RegistrationNumber}</span>
+                      </div>
                     )}
                   </div>
 
                   <div className="mt-6 flex justify-center gap-3">
                     {profileUser.otherLinks?.find((link) => link.platform === "Twitter")?.url && (
-                      <Button variant="outline" size="icon" className="rounded-full" asChild>
-                        {twitterLink && (
-                          <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
-                            <Twitter className="h-4 w-4 text-sky-500" />
-                          </Link>
-                        )}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" size="icon" className="rounded-full hover:bg-sky-50 hover:border-sky-200 transition-colors" asChild>
+                            {twitterLink && (
+                              <Link to={twitterLink} target="_blank" rel="noopener noreferrer">
+                                <Twitter className="h-4 w-4 text-sky-500" />
+                              </Link>
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Twitter</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                     {profileUser.otherLinks?.find((link) => link.platform === "LinkedIn")?.url && (
-                      <Button variant="outline" size="icon" className="rounded-full" asChild>
-                        {linkedinLink && (
-                          <Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
-                            <Linkedin className="h-4 w-4 text-blue-600" />
-                          </Link>
-                        )}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" size="icon" className="rounded-full hover:bg-blue-50 hover:border-blue-200 transition-colors" asChild>
+                            {linkedinLink && (
+                              <Link to={linkedinLink} target="_blank" rel="noopener noreferrer">
+                                <Linkedin className="h-4 w-4 text-blue-600" />
+                              </Link>
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>LinkedIn</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                     {profileUser.otherLinks?.find((link) => link.platform === "GitHub")?.url && (
-                      <Button variant="outline" size="icon" className="rounded-full" asChild>
-                        {githubLink && (
-                          <Link to={githubLink} target="_blank" rel="noopener noreferrer">
-                            <Github className="h-4 w-4" />
-                          </Link>
-                        )}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="outline" size="icon" className="rounded-full hover:bg-gray-50 hover:border-gray-200 transition-colors" asChild>
+                            {githubLink && (
+                              <Link to={githubLink} target="_blank" rel="noopener noreferrer">
+                                <Github className="h-4 w-4" />
+                              </Link>
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>GitHub</p>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
 
                   {isOwnProfile && (
                     <div className="mt-6">
                       <Button
-                        className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600"
+                        className="w-full bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 shadow-md hover:shadow-lg transition-all duration-200"
                         onClick={() => navigate("/profile/edit-profile")}
                       >
                         Edit Profile
@@ -664,17 +687,17 @@ export default function ProfilePage() {
           </motion.div>
 
           {/* Main Content - Stats Cards */}
-          <motion.div className="lg:w-3/4" variants={cardVariants}>
-            <div className="flex flex-col md:flex-row gap-4">
-              <motion.div variants={cardVariants} whileHover={{ y: -5 }} className="md:w-1/3">
-                <Card className="shadow-lg border-0 overflow-hidden">
+          <motion.div className="flex-1 min-w-0" variants={cardVariants}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+                <Card className="shadow-lg border-0 overflow-hidden h-full">
                   <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
                   <CardContent className="pt-6">
                     <div className="flex items-center">
-                      <div className="bg-blue-100 p-3 rounded-lg mr-4">
+                      <div className="bg-blue-100 p-3 rounded-lg mr-4 flex-shrink-0">
                         <Code2 className="h-6 w-6 text-blue-500" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-muted-foreground">Problems Solved</p>
                         <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
                           {problemsSolved.total}
@@ -685,15 +708,15 @@ export default function ProfilePage() {
                 </Card>
               </motion.div>
 
-              <motion.div variants={cardVariants} whileHover={{ y: -5 }} className="md:w-1/3">
-                <Card className="shadow-lg border-0 overflow-hidden">
+              <motion.div variants={cardVariants} whileHover={{ y: -5 }}>
+                <Card className="shadow-lg border-0 overflow-hidden h-full">
                   <div className="h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
                   <CardContent className="pt-6">
                     <div className="flex items-center">
-                      <div className="bg-amber-100 p-3 rounded-lg mr-4">
+                      <div className="bg-amber-100 p-3 rounded-lg mr-4 flex-shrink-0">
                         <Trophy className="h-6 w-6 text-amber-500" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-muted-foreground">Total Points</p>
                         <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
                           {profileUser.points || 0}
@@ -704,15 +727,15 @@ export default function ProfilePage() {
                 </Card>
               </motion.div>
 
-              <motion.div variants={cardVariants} whileHover={{ y: -5 }} className="md:w-1/3">
-                <Card className="shadow-lg border-0 overflow-hidden">
+              <motion.div variants={cardVariants} whileHover={{ y: -5 }} className="sm:col-span-2 lg:col-span-1">
+                <Card className="shadow-lg border-0 overflow-hidden h-full">
                   <div className="h-1 bg-gradient-to-r from-red-500 to-pink-500"></div>
                   <CardContent className="pt-6">
                     <div className="flex items-center">
-                      <div className="bg-red-100 p-3 rounded-lg mr-4">
+                      <div className="bg-red-100 p-3 rounded-lg mr-4 flex-shrink-0">
                         <Flame className="h-6 w-6 text-red-500" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
                         <h3 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
                           {profileUser.streak || 0}
@@ -734,13 +757,13 @@ export default function ProfilePage() {
                   <CardDescription>Track your progress across difficulty levels</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
                     <motion.div
                       variants={cardVariants}
                       whileHover={{ scale: 1.03 }}
-                      className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm sm:w-1/3"
+                      className="text-center p-4 md:p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm"
                     >
-                      <div className="relative w-28 h-28 mx-auto">
+                      <div className="relative w-20 h-20 md:w-28 md:h-28 mx-auto">
                         <svg className="w-full h-full" viewBox="0 0 36 36">
                           <path
                             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -757,18 +780,18 @@ export default function ProfilePage() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-3xl font-bold text-green-600">{problemsSolved.easy}</div>
+                          <div className="text-2xl md:text-3xl font-bold text-green-600">{problemsSolved.easy}</div>
                         </div>
                       </div>
-                      <div className="text-sm font-medium text-green-800 mt-3">Easy</div>
+                      <div className="text-xs md:text-sm font-medium text-green-800 mt-2 md:mt-3">Easy</div>
                     </motion.div>
 
                     <motion.div
                       variants={cardVariants}
                       whileHover={{ scale: 1.03 }}
-                      className="text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm sm:w-1/3"
+                      className="text-center p-4 md:p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-sm"
                     >
-                      <div className="relative w-28 h-28 mx-auto">
+                      <div className="relative w-20 h-20 md:w-28 md:h-28 mx-auto">
                         <svg className="w-full h-full" viewBox="0 0 36 36">
                           <path
                             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -785,18 +808,18 @@ export default function ProfilePage() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-3xl font-bold text-yellow-600">{problemsSolved.medium}</div>
+                          <div className="text-2xl md:text-3xl font-bold text-yellow-600">{problemsSolved.medium}</div>
                         </div>
                       </div>
-                      <div className="text-sm font-medium text-yellow-800 mt-3">Medium</div>
+                      <div className="text-xs md:text-sm font-medium text-yellow-800 mt-2 md:mt-3">Medium</div>
                     </motion.div>
 
                     <motion.div
                       variants={cardVariants}
                       whileHover={{ scale: 1.03 }}
-                      className="text-center p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm sm:w-1/3"
+                      className="text-center p-4 md:p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm"
                     >
-                      <div className="relative w-28 h-28 mx-auto">
+                      <div className="relative w-20 h-20 md:w-28 md:h-28 mx-auto">
                         <svg className="w-full h-full" viewBox="0 0 36 36">
                           <path
                             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -813,10 +836,10 @@ export default function ProfilePage() {
                           />
                         </svg>
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-3xl font-bold text-red-600">{problemsSolved.hard}</div>
+                          <div className="text-2xl md:text-3xl font-bold text-red-600">{problemsSolved.hard}</div>
                         </div>
                       </div>
-                      <div className="text-sm font-medium text-red-800 mt-3">Hard</div>
+                      <div className="text-xs md:text-sm font-medium text-red-800 mt-2 md:mt-3">Hard</div>
                     </motion.div>
                   </div>
                 </CardContent>
@@ -846,9 +869,9 @@ export default function ProfilePage() {
                   <CardDescription>Your coding activity for {selectedYear}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto pb-4">
-                    <div className="min-w-[950px]">
-                      <div className="flex gap-4">
+                  <div className="overflow-x-auto pb-4 -mx-2 px-2">
+                    <div className="min-w-[700px] md:min-w-[850px]">
+                      <div className="flex gap-2 md:gap-3 lg:gap-4">
                         {Array.from({ length: 12 }).map((_, monthIndex) => {
                           const daysInMonth = getDaysInMonth(monthIndex, selectedYear)
                           const firstDayOfMonth = new Date(selectedYear, monthIndex, 1).getDay()
@@ -870,12 +893,12 @@ export default function ProfilePage() {
 
                           const dateContributionsMap = createDateContributionsMap(heatmap, selectedYear, monthIndex)
                           return (
-                            <div key={monthIndex} className="flex-none">
-                              <div className="text-xs text-muted-foreground text-center mb-2">
-                                {monthNames[monthIndex]}
+                            <div key={monthIndex} className="flex-none min-w-[50px] md:min-w-[65px]">
+                              <div className="text-[10px] md:text-xs text-muted-foreground text-center mb-1 md:mb-2 font-medium">
+                                {monthNames[monthIndex].slice(0, 3)}
                               </div>
                               <div
-                                className="grid gap-1"
+                                className="grid gap-0.5 md:gap-1"
                                 style={{
                                   gridTemplateRows: `repeat(7, 1fr)`,
                                   gridTemplateColumns: `repeat(${numWeeks}, 1fr)`,
@@ -914,8 +937,8 @@ export default function ProfilePage() {
                                   return (
                                     <motion.div
                                       key={dayIndex}
-                                      className={`h-4 w-4 rounded-sm ${getIntensityColor(contributionCount)} ${isToday ? "ring-2 ring-black dark:ring-white" : ""
-                                        } ${inStreak && isSolved ? "shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
+                                      className={`h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 rounded-sm ${getIntensityColor(contributionCount)} ${isToday ? "ring-1 md:ring-2 ring-black dark:ring-white" : ""
+                                        } ${inStreak && isSolved ? "shadow-[0_0_3px_1px_rgba(34,197,94,0.5)] md:shadow-[0_0_5px_2px_rgba(34,197,94,0.5)]" : ""}`}
                                       style={{
                                         gridRow: dayOfWeek + 1,
                                         gridColumn: Math.floor((dayIndex + firstDayOfMonth) / 7) + 1,
@@ -924,25 +947,24 @@ export default function ProfilePage() {
                                           ? `${contributionCount} contribution${contributionCount > 1 ? "s" : ""}`
                                           : "No contributions"
                                         }`}
-                                      whileHover={{ scale: 1.5, zIndex: 10 }}
+                                      whileHover={{ scale: 1.3, zIndex: 10 }}
                                       transition={{ duration: 0.2 }}
                                     />
                                   )
                                 })}
                               </div>
-                              <div className="text-xs text-muted-foreground text-center mt-1">
-                                {Object.values(dateContributionsMap).reduce((sum, count) => sum + count, 0)}{" "}
-                                contributions
+                              <div className="text-[10px] md:text-xs text-muted-foreground text-center mt-1">
+                                {Object.values(dateContributionsMap).reduce((sum, count) => sum + count, 0)}
                               </div>
                             </div>
                           )
                         })}
                       </div>
                     </div>
-                    <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground mt-4">
+                    <div className="flex items-center justify-end gap-1.5 md:gap-2 text-[10px] md:text-xs text-muted-foreground mt-3 md:mt-4">
                       <span>Less</span>
-                      <div className="h-3 w-3 rounded-sm bg-gray-300"></div>
-                      <div className="h-3 w-3 rounded-sm bg-green-700"></div>
+                      <div className="h-2.5 w-2.5 md:h-3 md:w-3 rounded-sm bg-gray-300"></div>
+                      <div className="h-2.5 w-2.5 md:h-3 md:w-3 rounded-sm bg-green-700"></div>
                       <span>More</span>
                     </div>
                   </div>

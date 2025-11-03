@@ -1,5 +1,6 @@
 import cacheService from "../services/cacheService.js";
 import auditService from "../services/auditService.js";
+import { formatISTDateString } from "../utils/timezone.js";
 
 const CACHE_NAMESPACE = 'challenges';
 const CHALLENGE_TTL = 3600; // 1 hour
@@ -10,7 +11,7 @@ class ChallengeCacheService {
     // Cache today's challenge (POTD)
     async cacheTodaysChallenge(challengeData) {
         try {
-            const today = new Date().toISOString().split('T')[0];
+            const today = formatISTDateString();
             await cacheService.set(CACHE_NAMESPACE, `potd_${today}`, challengeData, POTD_TTL);
             await cacheService.set(CACHE_NAMESPACE, 'potd_latest', challengeData, POTD_TTL);
             auditService.cacheEvent('potd_cached', { date: today });
@@ -22,7 +23,7 @@ class ChallengeCacheService {
     // Get cached today's challenge
     async getCachedTodaysChallenge() {
         try {
-            const today = new Date().toISOString().split('T')[0];
+            const today = formatISTDateString();
             let potd = await cacheService.get(CACHE_NAMESPACE, `potd_${today}`);
             
             if (!potd) {

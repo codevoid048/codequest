@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { isPastDateIST, istToUTC } from "@/lib/timezone";
 
 interface DatePickerProps {
   selectedDate: Date;
@@ -52,12 +53,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onChange, label, 
 
   // Check if date is in the past (comparing against IST midnight)
   const isPastDate = (date: Date) => {
-    const today = new Date();
-    // Get current IST date by adding offset
-    const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
-    const istDate = new Date(today.getTime() + istOffset);
-    istDate.setUTCHours(18, 30, 0, 0); // Set to previous day 18:30 UTC (00:00 IST)
-    return date < istDate;
+    return isPastDateIST(date);
   };
 
   // Navigate to previous month
@@ -73,11 +69,14 @@ const DatePicker: React.FC<DatePickerProps> = ({ selectedDate, onChange, label, 
   // Handle date selection and set to midnight IST (UTC+5:30)
   const selectDate = (day: number) => {
     // Create date at midnight IST
-    const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    // Set to midnight IST by adjusting for UTC offset
-    // First, set to previous day 18:30 UTC (equivalent to 00:00 IST next day)
-    newDate.setUTCHours(18, 30, 0, 0);
-    onChange(newDate);
+    const istDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    istDate.setHours(0, 0, 0, 0); // Set to midnight IST
+
+    // Convert IST date to UTC for storage
+    const utcDate = istToUTC(istDate);
+    if (utcDate) {
+      onChange(utcDate);
+    }
     setShowCalendar(false);
   };
 

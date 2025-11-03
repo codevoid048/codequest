@@ -8,26 +8,25 @@ import mongoose from "mongoose";
 // import { client } from "../utils/typesenseClient.js";
 import { warmupLeaderboardCache } from "../utils/leaderBoardCache.js";
 import auditService from "../services/auditService.js";
+import { getISTNow } from "../utils/timezone.js";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 
 const setAuthCookies = (res, user, token) => {
-  // Store JWT in HTTP-only cookie
   res.cookie("jwt", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
+    maxAge: 24 * 60 * 60 * 1000,
   });
 
-  // Store user ID and email in HTTP-only cookie
   res.cookie("user", JSON.stringify({ id: user._id, email: user.email }), {
-    httpOnly: true, // Prevent JavaScript access
+    httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
+    maxAge: 24 * 60 * 60 * 1000,
   });
 };
 
@@ -116,8 +115,7 @@ export const registerUser = async (req, res) => {
 
       // Generate a 6-digit OTP
       const otp = crypto.randomInt(100000, 999999).toString();
-      const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-      const otpExpires = nowIST.getTime() + 5 * 60 * 1000; // OTP expires in 5 minutes
+      const otpExpires = getISTNow().getTime() + 5 * 60 * 1000;
 
       // Use upsert with atomic operation to prevent race conditions
       await User.findOneAndUpdate(
@@ -245,8 +243,7 @@ export const verifyEmail = async (req, res) => {
       return res.status(400).json({ error: "Email already verified, Please login" });
     }
 
-    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    if (user.otpExpires < nowIST.getTime()) {
+    if (user.otpExpires < getISTNow().getTime()) {
       auditService.authEvent('verification_failed', {
         requestId: req.auditContext?.requestId,
         email,
@@ -463,8 +460,7 @@ export const forgotPassword = async (req, res) => {
 
     // Save Token & Expiry in DB
     user.resetPasswordToken = resetToken;
-    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-    user.resetPasswordExpires = nowIST.getTime() + 15 * 60 * 1000;
+    user.resetPasswordExpires = getISTNow().getTime() + 15 * 60 * 1000;
     await user.save();
 
     // Send Reset Link via Email
@@ -487,7 +483,7 @@ export const resetPassword = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
 
-    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const nowIST = getISTNow();
     if (!user || user.resetPasswordToken !== token || user.resetPasswordExpires < nowIST.getTime()) {
       return res.status(400).json({ message: "Invalid or expired token" });
     }
